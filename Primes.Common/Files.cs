@@ -28,6 +28,20 @@ namespace Primes.Common.Files
 
 
 
+        /// <summary>
+        /// Reads a <see cref="KnownPrimesResourceFile"/> from a file.
+        /// </summary>
+        /// <param name="path">Path of the file to read from.</param>
+        /// <param name="file"><see cref="KnownPrimesResourceFile"/> read from the given path.</param>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="System.Security.SecurityException"></exception>
         public static void Deserialize(string path, out KnownPrimesResourceFile file)
         {
             file = new KnownPrimesResourceFile(Version.zero, new ulong[] { 0 });
@@ -75,6 +89,19 @@ namespace Primes.Common.Files
                 file = new KnownPrimesResourceFile(ver, highestCheckedInFile, primes);
             }
         }
+        /// <summary>
+        /// Writes a <see cref="KnownPrimesResourceFile"/> to a file.
+        /// </summary>
+        /// <param name="path">The path to write to.</param>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="System.Security.SecurityException"></exception>
         public void Serialize(string path)
         {
             if (version.IsLatest())
@@ -110,6 +137,11 @@ namespace Primes.Common.Files
 
 
 
+        /// <summary>
+        /// Generates a <see cref="KnownPrimesResourceFile"/> from an array of <see cref="PrimeJob"/>s.
+        /// </summary>
+        /// <param name="jobs">The jobs to be used to generate the <see cref="KnownPrimesResourceFile"/>.</param>
+        /// <returns><see cref="KnownPrimesResourceFile"/> with the primes from the given <see cref="PrimeJob"/> array.</returns>
         public static KnownPrimesResourceFile GenerateKnownPrimesResourceFromJobs(PrimeJob[] jobs)
         {
             List<ulong> knownPrimes = new List<ulong>();
@@ -240,7 +272,22 @@ namespace Primes.Common.Files
 
 
 
-        public static void Deserialize(string path, out PrimeJob job)
+        /// <summary>
+        /// Reads a <see cref="PrimeJob"/> from a file.
+        /// </summary>
+        /// <param name="path">Path of the file to read from.</param>
+        /// <returns><see cref="PrimeJob"/> read from the given path.</returns>
+        /// <exception cref="IncompatibleVersionException">Thrown when attempting to deserialize a <see cref="PrimeJob"/> of an incompatible version.</exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="System.Security.SecurityException"></exception>
+        public static PrimeJob Deserialize(string path)
         {
             /* v1.0.0
             * 3 bytes          Version     version (1 byte major, 1 byte minor, 1 byte patch)
@@ -260,7 +307,7 @@ namespace Primes.Common.Files
             * xxx              ulong[]     primes
             */
 
-            job = new PrimeJob(Version.zero, 0, 0);
+            PrimeJob job = new PrimeJob(Version.zero, 0, 0);
             byte[] bytes = File.ReadAllBytes(path);
 
             Version ver = new Version(bytes[0], bytes[1], bytes[2]);
@@ -299,10 +346,27 @@ namespace Primes.Common.Files
 
                 job = new PrimeJob(ver, batch, start, count, progress, ref primes);
             }
+
+            return job;
         }
-        public static void PeekProgressFromFile(string path, out Status status)
+        /// <summary>
+        /// Checks what the status of a certain <see cref="PrimeJob"/> file is.
+        /// </summary>
+        /// <param name="path">The path to the file to read from.</param>
+        /// <returns><see cref="Status"/> representing the status of the checked <see cref="PrimeJob"/> file.</returns>
+        /// <exception cref="IncompatibleVersionException">Thrown when attempting to peek status from a <see cref="PrimeJob"/> of an incompatible version.</exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="System.Security.SecurityException"></exception>
+        public static Status PeekStatusFromFile(string path)
         {
-            status = Status.None;
+            Status status = Status.None;
             byte[] allBytes = File.ReadAllBytes(path);
 
             Version ver = new Version(allBytes[0], allBytes[1], allBytes[2]);
@@ -344,7 +408,23 @@ namespace Primes.Common.Files
                 else
                     status = Status.Started;
             }
+
+            return status;
         }
+        /// <summary>
+        /// Writes a <see cref="PrimeJob"/> to a file.
+        /// </summary>
+        /// <param name="path">The path to write to.</param>
+        /// <exception cref="IncompatibleVersionException">Thrown when attempting to write a <see cref="PrimeJob"/> of an incompatible version.</exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="System.Security.SecurityException"></exception>
         public void Serialize(string path)
         {
             if (version.IsLatest())
@@ -386,8 +466,21 @@ namespace Primes.Common.Files
 
 
 
+        /// <summary>
+        /// Generates a <see cref="PrimeJob"/> array from the given arguments.
+        /// </summary>
+        /// <param name="start">The first number to be checked.</param>
+        /// <param name="countPerJob">The amount of numbers to be checked per job.</param>
+        /// <param name="jobCount">The number of jobs to generate.</param>
+        /// <param name="startingBatch">The batch number for the first job batch.</param>
+        /// <param name="jobsPerBatch">The number of jobs to be grouped per batch.</param>
+        /// <returns><see cref="PrimeJob"/> array containing the generated jobs.</returns>
+        /// <exception cref="ArgumentException">Thrown when jobsPerBatch is smaller than one.</exception>
         public static PrimeJob[] GenerateJobs(ulong start, ulong countPerJob, ulong jobCount, uint startingBatch, int jobsPerBatch)
         {
+            if (jobsPerBatch < 1)
+                throw new ArgumentException("Argument 'jobsPerBatch' must be greater than zero.");
+
             PrimeJob[] jobs = new PrimeJob[jobCount];
 
             uint b = startingBatch;
@@ -395,7 +488,7 @@ namespace Primes.Common.Files
 
             for (int i = 0; i < jobs.Length; i++)
             {
-                jobs[i] = new PrimeJob(PrimeJob.Version.latest, b, start + (countPerJob * (ulong)i), countPerJob);
+                jobs[i] = new PrimeJob(Version.latest, b, start + (countPerJob * (ulong)i), countPerJob);
 
                 jobsInBatch++;
 
@@ -408,6 +501,14 @@ namespace Primes.Common.Files
 
             return jobs;
         }
+        /// <summary>
+        /// Checks if a <see cref="PrimeJob"/> passes basic integrity tests.
+        /// </summary>
+        /// <param name="job">A reference to the <see cref="PrimeJob"/> to be checked.</param>
+        /// <param name="cleanDuplicates">Wether or not to remove duplicated values. (true = remove duplicates)</param>
+        /// <param name="message">A string containing the check log.</param>
+        /// <returns>A boolean representing wether or not the job passed all tests.</returns>
+        /// <remarks>This method will check for: parity (except for number 2), order, duplicated values and value in range.</remarks>
         public static bool CheckJob(ref PrimeJob job, bool cleanDuplicates, out string message)
         {
             message = string.Empty;
@@ -465,6 +566,12 @@ namespace Primes.Common.Files
             if (message != string.Empty) return false;
             return true;
         }
+        /// <summary>
+        /// Checks all <see cref="PrimeJob"/> files in a directory (and subdirectories) against basic integrity tests.
+        /// </summary>
+        /// <param name="path">The path of the directory to be checked.</param>
+        /// <param name="good">The number of tests that indicate file integrity.</param>
+        /// <param name="bad">The number of tests that indicate file corruption.</param>
         public static void CheckJobsInFolder(string path, out int good, out int bad)
         {
             string[] jobPaths = Utils.GetSubFiles(path, "*.primejob");
@@ -473,14 +580,20 @@ namespace Primes.Common.Files
 
             for (int i = 0; i < jobPaths.Length; i++)
             {
-                PrimeJob.Deserialize(jobPaths[i], out PrimeJob job);
+                PrimeJob job = Deserialize(jobPaths[i]);
 
-                if (PrimeJob.CheckJob(ref job, false, out string _))
+                if (CheckJob(ref job, false, out string _))
                     good++;
                 else
                     bad++;
             }
         }
+        /// <summary>
+        /// Checks and cleans all <see cref="PrimeJob"/> files in a directory (and subdirectories) against basic integrity tests, removing any duplicated values.
+        /// </summary>
+        /// <param name="path">The path of the directory to be checked.</param>
+        /// <param name="good">The number of tests that indicate file integrity.</param>
+        /// <param name="bad">The number of tests that indicate file corruption. These may include corrected duplicated values.</param>
         public static void CleanJobsInFolder(string path, out int good, out int bad)
         {
             string[] jobPaths = Utils.GetSubFiles(path, "*.primejob");
@@ -489,16 +602,13 @@ namespace Primes.Common.Files
 
             for (int i = 0; i < jobPaths.Length; i++)
             {
-                PrimeJob.Deserialize(jobPaths[i], out PrimeJob job);
+                PrimeJob job = Deserialize(jobPaths[i]);
 
-                if (PrimeJob.CheckJob(ref job, true, out string message))
+                if (CheckJob(ref job, true, out string _))
                     good++;
                 else
                 {
-                    if (!message.Contains("fixed"))
-                        bad++;
-                    else
-                        good++;
+                    bad++;
                 }
 
                 job.Serialize(jobPaths[i]);

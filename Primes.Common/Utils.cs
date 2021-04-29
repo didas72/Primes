@@ -18,7 +18,7 @@ namespace Primes.Common
 
             for (int i = 0; i < files.Length; i++)
             {
-                PrimeJob.PeekProgressFromFile(files[i], out PrimeJob.Status ret);
+                PrimeJob.Status ret = PrimeJob.PeekStatusFromFile(files[i]);
 
                 if (ret == PrimeJob.Status.Not_started)
                     doableJobs.Enqueue(files[i]);
