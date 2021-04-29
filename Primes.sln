@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Primes", "Primes\Primes.csproj", "{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Primes.Common", "Primes.Common\Primes.Common.csproj", "{8765A43E-8C86-48FD-8525-4948536B5F08}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobManagement", "JobManagement\JobManagement.csproj", "{F8C30429-B143-43BE-879A-39671121ADCC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8765A43E-8C86-48FD-8525-4948536B5F08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8765A43E-8C86-48FD-8525-4948536B5F08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8765A43E-8C86-48FD-8525-4948536B5F08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8765A43E-8C86-48FD-8525-4948536B5F08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8C30429-B143-43BE-879A-39671121ADCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8C30429-B143-43BE-879A-39671121ADCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8C30429-B143-43BE-879A-39671121ADCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8C30429-B143-43BE-879A-39671121ADCC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
