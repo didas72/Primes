@@ -64,7 +64,7 @@ namespace Primes
 
                         try
                         {
-                            PrimeJob.Deserialize(path, out PrimeJob job);
+                            PrimeJob job = PrimeJob.Deserialize(path);
 
                             File.Delete(path);
 

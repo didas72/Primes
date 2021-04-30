@@ -5,25 +5,51 @@ using System.IO;
 
 namespace Primes.Common.Files
 {
+    /// <summary>
+    /// Memory representation of a KnownPrimesResource file. Provides several methods for creating, serializing and deserializing files. 
+    /// </summary>
     public class KnownPrimesResourceFile
     {
-        public readonly Version version;
-        public ulong highestCheckedInFile;
-        public ulong[] primes;
+        /// <summary>
+        /// The file structure version.
+        /// </summary>
+        public Version FileVersion { get; }
+        /// <summary>
+        /// The highest number checked when creating the file.
+        /// </summary>
+        public ulong HighestCheckedInFile { get; set; }
+        /// <summary>
+        /// Known primes.
+        /// </summary>
+        public ulong[] Primes { get; set; }
 
 
 
-        public static KnownPrimesResourceFile empty = new KnownPrimesResourceFile(Version.zero, 0, new ulong[0]);
+        /// <summary>
+        /// Default empty instance.
+        /// </summary>
+        public static KnownPrimesResourceFile Empty { get; } = new KnownPrimesResourceFile(Version.Zero, 0, new ulong[0]);
 
 
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="KnownPrimesResourceFile"/> of the specified version and containing the given primes.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="primes">The primes to be stored.</param>
         public KnownPrimesResourceFile(Version version, ulong[] primes)
         {
-            this.version = version; if (primes.Length > 0) highestCheckedInFile = primes.Last(); else highestCheckedInFile = 0; this.primes = primes;
+            FileVersion = version; if (primes.Length > 0) HighestCheckedInFile = primes.Last(); else HighestCheckedInFile = 0; Primes = primes;
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="KnownPrimesResourceFile"/> of the specified version, containing the given primes and keeping the 'highestCheckedInFile' parameter.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="highestCheckedInFile">The highest number checked when creating the file.</param>
+        /// <param name="primes">The primes to be stored.</param>
         public KnownPrimesResourceFile(Version version, ulong highestCheckedInFile, ulong[] primes)
         {
-            this.version = version; this.highestCheckedInFile = highestCheckedInFile; this.primes = primes;
+            FileVersion = version; HighestCheckedInFile = highestCheckedInFile; Primes = primes;
         }
 
 
@@ -44,7 +70,7 @@ namespace Primes.Common.Files
         /// <exception cref="System.Security.SecurityException"></exception>
         public static void Deserialize(string path, out KnownPrimesResourceFile file)
         {
-            file = new KnownPrimesResourceFile(Version.zero, new ulong[] { 0 });
+            file = new KnownPrimesResourceFile(Version.Zero, new ulong[] { 0 });
 
             /*  knownPrimes.rsrc v1.0.0
              *  3 bytes     Version     version (1 byte major, 1 byte minor, 1 byte patch)
@@ -104,34 +130,34 @@ namespace Primes.Common.Files
         /// <exception cref="System.Security.SecurityException"></exception>
         public void Serialize(string path)
         {
-            if (version.IsLatest())
+            if (FileVersion.IsLatest())
             {
-                byte[] bytes = new byte[15 + primes.Length * 8];
+                byte[] bytes = new byte[15 + Primes.Length * 8];
 
-                bytes[0] = version.major; bytes[1] = version.minor; bytes[2] = version.patch;
+                bytes[0] = FileVersion.major; bytes[1] = FileVersion.minor; bytes[2] = FileVersion.patch;
 
-                Array.Copy(BitConverter.GetBytes(highestCheckedInFile), 0, bytes, 3, 8);
-                Array.Copy(BitConverter.GetBytes(primes.Length), 0, bytes, 11, 4);
+                Array.Copy(BitConverter.GetBytes(HighestCheckedInFile), 0, bytes, 3, 8);
+                Array.Copy(BitConverter.GetBytes(Primes.Length), 0, bytes, 11, 4);
 
-                Buffer.BlockCopy(primes, 0, bytes, 15, primes.Length * 8);
+                Buffer.BlockCopy(Primes, 0, bytes, 15, Primes.Length * 8);
 
                 File.WriteAllBytes(path, bytes);
             }
-            else if (version.IsEqual(new Version(1, 0, 0)))
+            else if (FileVersion.IsEqual(new Version(1, 0, 0)))
             {
-                byte[] bytes = new byte[7 + primes.Length * 8];
+                byte[] bytes = new byte[7 + Primes.Length * 8];
 
-                bytes[0] = version.major; bytes[1] = version.minor; bytes[2] = version.patch;
+                bytes[0] = FileVersion.major; bytes[1] = FileVersion.minor; bytes[2] = FileVersion.patch;
 
-                Array.Copy(BitConverter.GetBytes(primes.Length), 0, bytes, 3, 4);
+                Array.Copy(BitConverter.GetBytes(Primes.Length), 0, bytes, 3, 4);
 
-                Buffer.BlockCopy(primes, 0, bytes, 7, primes.Length * 8);
+                Buffer.BlockCopy(Primes, 0, bytes, 7, Primes.Length * 8);
 
                 File.WriteAllBytes(path, bytes);
             }
             else
             {
-                throw new IncompatibleVersionException($"Attempted to serialize known primes resource of version {version} but no serialization method was implemented for such version.");
+                throw new IncompatibleVersionException($"Attempted to serialize known primes resource of version {FileVersion} but no serialization method was implemented for such version.");
             }
         }
 
@@ -150,29 +176,58 @@ namespace Primes.Common.Files
 
             foreach (PrimeJob job in jobs)
             {
-                knownPrimes.AddRange(job.primes);
+                knownPrimes.AddRange(job.Primes);
 
-                if (job.start + job.count > highest)
-                    highest = job.start + job.count;
+                if (job.Start + job.Count > highest)
+                    highest = job.Start + job.Count;
             }
 
-            return new KnownPrimesResourceFile(KnownPrimesResourceFile.Version.latest, highest, knownPrimes.ToArray());
+            return new KnownPrimesResourceFile(Version.Latest, highest, knownPrimes.ToArray());
         }
 
 
 
+        /// <summary>
+        /// Struct that represents a file version.
+        /// </summary>
         public struct Version
         {
-            public readonly byte major, minor, patch;
+            /// <summary>
+            /// Major increment of the version.
+            /// </summary>
+            public readonly byte major;
+            /// <summary>
+            /// Minor increment of the version.
+            /// </summary>
+            public readonly byte minor;
+            /// <summary>
+            /// Patch increment of the version.
+            /// </summary>
+            public readonly byte patch;
 
 
 
-            public static Version zero = new Version(0, 0, 0);
-            public static Version latest = new Version(1, 1, 0);
-            public static Version[] compatible = new Version[] { new Version(1, 0, 0), new Version(1, 1, 0) };
+            /// <summary>
+            /// Default zero instance.
+            /// </summary>
+            public static Version Zero { get; }  = new Version(0, 0, 0);
+            /// <summary>
+            /// Default latest instance.
+            /// </summary>
+            public static Version Latest { get; } = new Version(1, 1, 0);
+            /// <summary>
+            /// Array containing all compatible versions.
+            /// </summary>
+            public static Version[] Compatible { get; } = new Version[] { new Version(1, 0, 0), new Version(1, 1, 0) };
 
 
 
+            /// <summary>
+            /// Initializes a new instance of <see cref="Version"/> with the given major, minor and patch increments.
+            /// </summary>
+            /// <param name="major">Major increment.</param>
+            /// <param name="minor">Minor increment.</param>
+            /// <param name="patch">Patch increment.</param>
             public Version(byte major, byte minor, byte patch)
             {
                 this.major = major; this.minor = minor; this.patch = patch;
@@ -180,94 +235,224 @@ namespace Primes.Common.Files
 
 
 
+            /// <summary>
+            /// Converts the <see cref="Version"/> instance to a string representation.
+            /// </summary>
+            /// <returns>String representing the version.</returns>
             public override string ToString()
             {
                 return $"v{major}.{minor}.{patch}";
             }
+            /// <summary>
+            /// Checks if or not two instances of <see cref="Version"/> have the same value.
+            /// </summary>
+            /// <param name="a"></param>
+            /// <param name="b"></param>
+            /// <returns>True if the instances have the same value, false otherwise.</returns>
             public static bool IsEqual(Version a, Version b)
             {
                 if (a.major == b.major && a.minor == b.minor && a.patch == b.patch)
                     return true;
                 return false;
             }
+            /// <summary>
+            /// Checks if or not the given <see cref="Version"/> has the same value as the current instance.
+            /// </summary>
+            /// <param name="a"></param>
+            /// <returns>True if the instance has the same value, false otherwise.</returns>
             public bool IsEqual(Version a)
             {
                 return IsEqual(this, a);
             }
+            /// <summary>
+            /// Checks if the given <see cref="Version"/> is the latest one.
+            /// </summary>
+            /// <param name="ver"></param>
+            /// <returns>True if the given instance is the latest, false otherwise.</returns>
             public static bool IsLatest(Version ver)
             {
-                return IsEqual(Version.latest, ver);
+                return IsEqual(Latest, ver);
             }
+            /// <summary>
+            /// Checks if the current instance of <see cref="Version"/> is the latest one.
+            /// </summary>
+            /// <returns>True if the current instance is the latest, false otherwise.</returns>
             public bool IsLatest()
             {
-                return IsEqual(Version.latest, this);
+                return IsEqual(Latest, this);
             }
+            /// <summary>
+            /// Checks if the given <see cref="Version"/> is compatible.
+            /// </summary>
+            /// <param name="ver"></param>
+            /// <returns>True if the given instance is compatible, false otherwise.</returns>
             public static bool IsCompatible(Version ver)
             {
-                return compatible.Contains(ver);
+                return Compatible.Contains(ver);
             }
+            /// <summary>
+            /// Checks if the current <see cref="Version"/> is compatible.
+            /// </summary>
+            /// <returns>True if the current instance is compatible, false otherwise.</returns>
             public bool IsCompatible()
             {
-                return compatible.Contains(this);
+                return Compatible.Contains(this);
             }
         }
 
 
 
+        /// <summary>
+        /// Exception thrown when incompatible versions are found.
+        /// </summary>
         public class IncompatibleVersionException : Exception
         {
+            /// <summary>
+            /// Initializes a new instance of <see cref="IncompatibleVersionException"/> with no message.
+            /// </summary>
             public IncompatibleVersionException() : base() { }
+            /// <summary>
+            /// Initializes a new instance of <see cref="IncompatibleVersionException"/> with the given message.
+            /// </summary>
+            /// <param name="message"></param>
             public IncompatibleVersionException(string message) : base(message) { }
         }
     }
 
+    /// <summary>
+    /// Memory representation of a PrimeJob file. Provides several methods for creating, serializing and deserializing files.
+    /// </summary>
     public class PrimeJob
     {
+        /// <summary>
+        /// Enum used to represent the status of a given <see cref="PrimeJob"/>.
+        /// </summary>
         public enum Status
         {
+            /// <summary>
+            /// The given <see cref="PrimeJob"/> has not been started.
+            /// </summary>
             Not_started,
+            /// <summary>
+            /// The given PrimeJob has been started but not finished.
+            /// </summary>
             Started,
+            /// <summary>
+            /// The given PrimeJob is finished.
+            /// </summary>
             Finished,
+            /// <summary>
+            /// Default value.
+            /// </summary>
             None
         }
 
 
 
-        public readonly Version version;
-        public readonly uint batch;
-        public readonly ulong start, count;
-        public ulong progress; //0 = not started, xxx = progress, count = done, ulong.MaxValue = error
-        public List<ulong> primes;
+        /// <summary>
+        /// The file structure version.
+        /// </summary>
+        public Version FileVersion { get; }
+        /// <summary>
+        /// Number used to group PrimeJobs together.
+        /// </summary>
+        public uint Batch { get; }
+        /// <summary>
+        /// The first number to be checked.
+        /// </summary>
+        public ulong Start { get; }
+        /// <summary>
+        /// The amount of numbers to be checked.
+        /// </summary>
+        public ulong Count { get; }
+        /// <summary>
+        /// How many numbers have already been checked.
+        /// </summary>
+        public ulong Progress { get; set; } //0 = not started, xxx = progress, count = done, ulong.MaxValue = error
+        /// <summary>
+        /// The prime numbers found in this job.
+        /// </summary>
+        public List<ulong> Primes { get; set; }
 
 
 
-        public static PrimeJob empty = new PrimeJob(Version.zero, 0, 0, 0, new List<ulong>());
+        /// <summary>
+        /// Default empty instance.
+        /// </summary>
+        public static PrimeJob Empty { get; } = new PrimeJob(Version.Zero, 0, 0, 0, new List<ulong>());
 
 
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start and count. Primes defaults to empty, Progress defaults to 0 and Batch defaults to 0.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="start">The first number to be checked.</param>
+        /// <param name="count">The amount of numbers to be checked.</param>
         public PrimeJob(Version version, ulong start, ulong count)
         {
-            this.version = version; batch = 0; this.start = start; this.count = count; progress = 0; this.primes = new List<ulong>();
+            FileVersion = version; Batch = 0; Start = start; Count = count; Progress = 0; Primes = new List<ulong>();
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start, count, progress and primes. Batch defaults to 0.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="start">The first number to be checked.</param>
+        /// <param name="count">The amount of numbers to be checked.</param>
+        /// <param name="progress">The amount of numbers that have already been checked.</param>
+        /// <param name="primes">The prime numbers found in this job.</param>
         public PrimeJob(Version version, ulong start, ulong count, ulong progress, ref ulong[] primes)
         {
-            this.version = version; batch = 0; this.start = start; this.count = count; this.progress = progress; this.primes = primes.ToList();
+            FileVersion = version; Batch = 0; Start = start; Count = count; Progress = progress; Primes = primes.ToList();
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start, count, progress and primes. Batch defaults to 0.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="start">The first number to be checked.</param>
+        /// <param name="count">The amount of numbers to be checked.</param>
+        /// <param name="progress">The amount of numbers that have already been checked.</param>
+        /// <param name="primes">The prime numbers found in this job.</param>
         public PrimeJob(Version version, ulong start, ulong count, ulong progress, List<ulong> primes)
         {
-            this.version = version; batch = 0; this.start = start; this.count = count; this.progress = progress; this.primes = primes;
+            FileVersion = version; Batch = 0; Start = start; Count = count; Progress = progress; Primes = primes;
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start, count, and batch. Progress defaults to 0 and primes to empty.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="batch">The batch to group this file with.</param>
+        /// <param name="start">The first number to be checked.</param>
+        /// <param name="count">The amount of numbers to be checked.</param>
         public PrimeJob(Version version, uint batch, ulong start, ulong count)
         {
-            this.version = version; this.batch = batch; this.start = start; this.count = count; progress = 0; this.primes = new List<ulong>();
+            FileVersion = version; Batch = batch; Start = start; Count = count; Progress = 0; Primes = new List<ulong>();
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start, count, batch and primes.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="batch">The batch to group this file with.</param>
+        /// <param name="start">The first number to be checked.</param>
+        /// <param name="count">The amount of numbers to be checked.</param>
+        /// <param name="progress">The amount of numbers that have already been checked.</param>
+        /// <param name="primes">The prime numbers found in this job.</param>
         public PrimeJob(Version version, uint batch, ulong start, ulong count, ulong progress, ref ulong[] primes)
         {
-            this.version = version; this.batch = batch; this.start = start; this.count = count; this.progress = progress; this.primes = primes.ToList();
+            FileVersion = version; Batch = batch; Start = start; Count = count; Progress = progress; Primes = primes.ToList();
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start, count, batch and primes.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="batch">The batch to group this file with.</param>
+        /// <param name="start">The first number to be checked.</param>
+        /// <param name="count">The amount of numbers to be checked.</param>
+        /// <param name="progress">The amount of numbers that have already been checked.</param>
+        /// <param name="primes">The prime numbers found in this job.</param>
         public PrimeJob(Version version, uint batch, ulong start, ulong count, ulong progress, List<ulong> primes)
         {
-            this.version = version; this.batch = batch; this.start = start; this.count = count; this.progress = progress; this.primes = primes;
+            FileVersion = version; Batch = batch; Start = start; Count = count; Progress = progress; Primes = primes;
         }
 
 
@@ -307,7 +492,7 @@ namespace Primes.Common.Files
             * xxx              ulong[]     primes
             */
 
-            PrimeJob job = new PrimeJob(Version.zero, 0, 0);
+            PrimeJob job = new PrimeJob(Version.Zero, 0, 0);
             byte[] bytes = File.ReadAllBytes(path);
 
             Version ver = new Version(bytes[0], bytes[1], bytes[2]);
@@ -427,40 +612,40 @@ namespace Primes.Common.Files
         /// <exception cref="System.Security.SecurityException"></exception>
         public void Serialize(string path)
         {
-            if (version.IsLatest())
+            if (FileVersion.IsLatest())
             {
-                byte[] bytes = new byte[35 + primes.Count * 8];
+                byte[] bytes = new byte[35 + Primes.Count * 8];
 
-                bytes[0] = version.major; bytes[1] = version.minor; bytes[2] = version.patch;
+                bytes[0] = FileVersion.major; bytes[1] = FileVersion.minor; bytes[2] = FileVersion.patch;
 
-                Array.Copy(BitConverter.GetBytes(batch), 0, bytes, 3, 4);
-                Array.Copy(BitConverter.GetBytes(start), 0, bytes, 7, 8);
-                Array.Copy(BitConverter.GetBytes(count), 0, bytes, 15, 8);
-                Array.Copy(BitConverter.GetBytes(progress), 0, bytes, 23, 8);
-                Array.Copy(BitConverter.GetBytes(primes.Count), 0, bytes, 31, 4);
+                Array.Copy(BitConverter.GetBytes(Batch), 0, bytes, 3, 4);
+                Array.Copy(BitConverter.GetBytes(Start), 0, bytes, 7, 8);
+                Array.Copy(BitConverter.GetBytes(Count), 0, bytes, 15, 8);
+                Array.Copy(BitConverter.GetBytes(Progress), 0, bytes, 23, 8);
+                Array.Copy(BitConverter.GetBytes(Primes.Count), 0, bytes, 31, 4);
 
-                Buffer.BlockCopy(primes.ToArray(), 0, bytes, 35, primes.Count * 8);
+                Buffer.BlockCopy(Primes.ToArray(), 0, bytes, 35, Primes.Count * 8);
 
                 File.WriteAllBytes(path, bytes);
             }
-            else if (version.IsEqual(new Version(1, 0, 0)))
+            else if (FileVersion.IsEqual(new Version(1, 0, 0)))
             {
-                byte[] bytes = new byte[31 + primes.Count * 8];
+                byte[] bytes = new byte[31 + Primes.Count * 8];
 
-                bytes[0] = version.major; bytes[1] = version.minor; bytes[2] = version.patch;
+                bytes[0] = FileVersion.major; bytes[1] = FileVersion.minor; bytes[2] = FileVersion.patch;
 
-                Array.Copy(BitConverter.GetBytes(start), 0, bytes, 3, 8);
-                Array.Copy(BitConverter.GetBytes(count), 0, bytes, 11, 8);
-                Array.Copy(BitConverter.GetBytes(progress), 0, bytes, 19, 8);
-                Array.Copy(BitConverter.GetBytes(primes.Count), 0, bytes, 27, 4);
+                Array.Copy(BitConverter.GetBytes(Start), 0, bytes, 3, 8);
+                Array.Copy(BitConverter.GetBytes(Count), 0, bytes, 11, 8);
+                Array.Copy(BitConverter.GetBytes(Progress), 0, bytes, 19, 8);
+                Array.Copy(BitConverter.GetBytes(Primes.Count), 0, bytes, 27, 4);
 
-                Buffer.BlockCopy(primes.ToArray(), 0, bytes, 31, primes.Count * 8);
+                Buffer.BlockCopy(Primes.ToArray(), 0, bytes, 31, Primes.Count * 8);
 
                 File.WriteAllBytes(path, bytes);
             }
             else
             {
-                throw new IncompatibleVersionException($"Attempted to serialize job of version {version} but no serialization method was implemented for such version. IsCompatible={version.IsCompatible()}.");
+                throw new IncompatibleVersionException($"Attempted to serialize job of version {FileVersion} but no serialization method was implemented for such version. IsCompatible={FileVersion.IsCompatible()}.");
             }
         }
 
@@ -488,7 +673,7 @@ namespace Primes.Common.Files
 
             for (int i = 0; i < jobs.Length; i++)
             {
-                jobs[i] = new PrimeJob(Version.latest, b, start + (countPerJob * (ulong)i), countPerJob);
+                jobs[i] = new PrimeJob(Version.Latest, b, start + (countPerJob * (ulong)i), countPerJob);
 
                 jobsInBatch++;
 
@@ -507,59 +692,59 @@ namespace Primes.Common.Files
         /// <param name="job">A reference to the <see cref="PrimeJob"/> to be checked.</param>
         /// <param name="cleanDuplicates">Wether or not to remove duplicated values. (true = remove duplicates)</param>
         /// <param name="message">A string containing the check log.</param>
-        /// <returns>A boolean representing wether or not the job passed all tests.</returns>
+        /// <returns>A boolean representing if or not the job passed all tests.</returns>
         /// <remarks>This method will check for: parity (except for number 2), order, duplicated values and value in range.</remarks>
         public static bool CheckJob(ref PrimeJob job, bool cleanDuplicates, out string message)
         {
             message = string.Empty;
 
             //Check that header matches content
-            if (job.progress > job.count)
+            if (job.Progress > job.Count)
                 message += "Progress is higher than count\n";
 
 
-            if (job.primes.Count > 1)
+            if (job.Primes.Count > 1)
             {
-                ulong last = job.primes[0];
+                ulong last = job.Primes[0];
 
                 //Check first prime number
                 if ((last % 2) == 0 && last != 2) //Check it is odd or two
                     message += $"Prime at index 0 is even. Value {last}\n";
 
-                if (last < job.start) //Check it is within expected range
+                if (last < job.Start) //Check it is within expected range
                     message += $"Prime at index 0 is smaller than job start. Value {last}\n";
-                else if (last > job.start + job.count)
+                else if (last > job.Start + job.Count)
                     message += $"Prime at index 0 is greater than job start plus job count. Value {last}\n";
 
 
                 //Check all of the others
-                for (int i = 1; i < job.primes.Count; i++)
+                for (int i = 1; i < job.Primes.Count; i++)
                 {
-                    if (last > job.primes[i]) //Check they are in order
-                        message += $"Prime at index {i} smaller than the previous. Value {job.primes[i]}\n";
+                    if (last > job.Primes[i]) //Check they are in order
+                        message += $"Prime at index {i} smaller than the previous. Value {job.Primes[i]}\n";
 
-                    if (last == job.primes[i]) //Check there are no duplicates
+                    if (last == job.Primes[i]) //Check there are no duplicates
                     {
                         if (cleanDuplicates)
                         {
-                            job.primes.RemoveAt(i);
+                            job.Primes.RemoveAt(i);
 
-                            message += $"Prime at index {i} was duplicated and was fixed. Value {job.primes[i]}\n";
+                            message += $"Prime at index {i} was duplicated and was fixed. Value {job.Primes[i]}\n";
                         }
                         else
-                            message += $"Prime at index {i} is duplicated. Value {job.primes[i]}\n";
+                            message += $"Prime at index {i} is duplicated. Value {job.Primes[i]}\n";
                     }
 
 
-                    if ((job.primes[i] % 2) == 0) //Check they are odd (second and higher should never be 2)
-                        message += $"Prime at index {i} is even. Value {job.primes[i]}\n";
+                    if ((job.Primes[i] % 2) == 0) //Check they are odd (second and higher should never be 2)
+                        message += $"Prime at index {i} is even. Value {job.Primes[i]}\n";
 
-                    if (job.primes[i] < job.start) //Check they are within expected range
-                        message += $"Prime at index {i} is smaller than job start. Value {job.primes[i]}\n";
-                    else if (job.primes[i] > job.start + job.count)
-                        message += $"Prime at index {i} is greater than job start plus job count. Value {job.primes[i]}\n";
+                    if (job.Primes[i] < job.Start) //Check they are within expected range
+                        message += $"Prime at index {i} is smaller than job start. Value {job.Primes[i]}\n";
+                    else if (job.Primes[i] > job.Start + job.Count)
+                        message += $"Prime at index {i} is greater than job start plus job count. Value {job.Primes[i]}\n";
 
-                    last = job.primes[i]; //Update value to check the order
+                    last = job.Primes[i]; //Update value to check the order
                 }
             }
 
@@ -617,18 +802,47 @@ namespace Primes.Common.Files
 
 
 
+        /// <summary>
+        /// Struct that represents a file verion.
+        /// </summary>
         public struct Version
         {
-            public readonly byte major, minor, patch;
+            /// <summary>
+            /// Major increment of the version.
+            /// </summary>
+            public readonly byte major;
+            /// <summary>
+            /// Minor increment of the version.
+            /// </summary>
+            public readonly byte minor;
+            /// <summary>
+            /// Patch increment of the version.
+            /// </summary>
+            public readonly byte patch;
 
 
 
-            public static Version zero = new Version(0, 0, 0);
-            public static Version latest = new Version(1, 1, 0);
-            public static Version[] compatible = new Version[] { new Version(1, 0, 0), new Version(1, 1, 0) };
+            /// <summary>
+            /// Default zero instance.
+            /// </summary>
+            public static Version Zero { get; } = new Version(0, 0, 0);
+            /// <summary>
+            /// Default latest instance.
+            /// </summary>
+            public static Version Latest { get; } = new Version(1, 1, 0);
+            /// <summary>
+            /// Array containing all compatible versions.
+            /// </summary>
+            public static Version[] Compatible { get; } = new Version[] { new Version(1, 0, 0), new Version(1, 1, 0) };
 
 
 
+            /// <summary>
+            /// Initializes a new instance of <see cref="Version"/> with the given major, minor and patch increments.
+            /// </summary>
+            /// <param name="major">Major increment.</param>
+            /// <param name="minor">Minor increment.</param>
+            /// <param name="patch">Patch increment.</param>
             public Version(byte major, byte minor, byte patch)
             {
                 this.major = major; this.minor = minor; this.patch = patch;
@@ -636,43 +850,86 @@ namespace Primes.Common.Files
 
 
 
+            /// <summary>
+            /// Converts the <see cref="Version"/> instance to a string representation.
+            /// </summary>
+            /// <returns>String representing the version.</returns>
             public override string ToString()
             {
                 return $"v{major}.{minor}.{patch}";
             }
+            /// <summary>
+            /// Checks if or not two instances of <see cref="Version"/> have the same value.
+            /// </summary>
+            /// <param name="a"></param>
+            /// <param name="b"></param>
+            /// <returns>True if the instances have the same value, false otherwise.</returns>
             public static bool IsEqual(Version a, Version b)
             {
                 if (a.major == b.major && a.minor == b.minor && a.patch == b.patch)
                     return true;
                 return false;
             }
+            /// <summary>
+            /// Checks if or not the given <see cref="Version"/> has the same value as the current instance.
+            /// </summary>
+            /// <param name="a"></param>
+            /// <returns>True if the instance has the same value, false otherwise.</returns>
             public bool IsEqual(Version a)
             {
                 return IsEqual(this, a);
             }
+            /// <summary>
+            /// Checks if the given <see cref="Version"/> is the latest one.
+            /// </summary>
+            /// <param name="ver"></param>
+            /// <returns>True if the given instance is the latest, false otherwise.</returns>
             public static bool IsLatest(Version ver)
             {
-                return IsEqual(Version.latest, ver);
+                return IsEqual(Latest, ver);
             }
+            /// <summary>
+            /// Checks if the current instance of <see cref="Version"/> is the latest one.
+            /// </summary>
+            /// <returns>True if the current instance is the latest, false otherwise.</returns>
             public bool IsLatest()
             {
-                return IsEqual(latest);
+                return IsEqual(Latest, this);
             }
+            /// <summary>
+            /// Checks if the given <see cref="Version"/> is compatible.
+            /// </summary>
+            /// <param name="ver"></param>
+            /// <returns>True if the given instance is compatible, false otherwise.</returns>
             public static bool IsCompatible(Version ver)
             {
-                return compatible.Contains(ver);
+                return Compatible.Contains(ver);
             }
+            /// <summary>
+            /// Checks if the current <see cref="Version"/> is compatible.
+            /// </summary>
+            /// <returns>True if the current instance is compatible, false otherwise.</returns>
             public bool IsCompatible()
             {
-                return compatible.Contains(this);
+                return Compatible.Contains(this);
             }
         }
 
 
 
+        /// <summary>
+        /// Exception thrown when incompatible versions are found.
+        /// </summary>
         public class IncompatibleVersionException: Exception
         {
+            /// <summary>
+            /// Initializes a new instance of <see cref="IncompatibleVersionException"/> with no message.
+            /// </summary>
             public IncompatibleVersionException() : base() { }
+            /// <summary>
+            /// Initializes a new instance of <see cref="IncompatibleVersionException"/> with the given message.
+            /// </summary>
+            /// <param name="message"></param>
             public IncompatibleVersionException(string message) : base(message) { }
         }
     }

@@ -48,14 +48,14 @@ namespace Primes
 
         public void DoWork(PrimeJob job)
         {
-            CurrentBatch = job.batch;
+            CurrentBatch = job.Batch;
 
             DateTime startingTime = DateTime.Now;
 
-            ulong current = Math.Max(job.start + job.progress, 2);
+            ulong current = Math.Max(job.Start + job.Progress, 2);
             bool result;
 
-            if (current == 2) { job.primes.Add(2); current++; } //2 exception if we're there
+            if (current == 2) { job.Primes.Add(2); current++; } //2 exception if we're there
             else if (current % 2 == 0) current++; //ignore if pair
 
             ulong[] primes = new ulong[primeBufferSize];//temp buffer for primes
@@ -65,13 +65,13 @@ namespace Primes
 
             while (true)
             {
-                if (current >= job.start + job.count)
+                if (current >= job.Start + job.Count)
                 {
-                    job.progress = job.count;
+                    Progress = job.Count;
 
                     TimeSpan elapsed = DateTime.Now - startingTime;
 
-                    Program.LogEvent(Program.EventType.Info, $"Finished job {job.start} of batch {job.batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WorkerThread#{workerId:D2}", true);
+                    Program.LogEvent(Program.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WorkerThread#{workerId:D2}", true);
 
                     ConsoleUI.RegisterJobSeconds(workerId, elapsed.TotalSeconds);
 
@@ -91,18 +91,18 @@ namespace Primes
                 {
                     primes[i++] = current;
 
-                    Progress = (float)((current - job.start) * 100 / (double)job.count);
+                    Progress = (float)((current - job.Start) * 100 / (double)job.Count);
 
                     if (i >= primes.Length)
                     {
-                        job.primes.AddRange(primes);//only add the primes to the list when we have 100 (avoid redoing arrays hundreds of times)
+                        job.Primes.AddRange(primes);//only add the primes to the list when we have 100 (avoid redoing arrays hundreds of times)
                         i = 0;
                         primes = new ulong[primeBufferSize];
                     }
 
                     if (!doWork)
                     {
-                        Program.LogEvent(Program.EventType.Info, $"Pausing job {job.start} of batch {job.batch}. Saving.", $"WorkerThread#{workerId:D2}", true);
+                        Program.LogEvent(Program.EventType.Info, $"Pausing job {job.Start} of batch {job.Batch}. Saving.", $"WorkerThread#{workerId:D2}", true);
 
                         break;
                     }
@@ -113,17 +113,17 @@ namespace Primes
 
 
 
-            job.primes.AddRange(GetFirst(primes, i));
+            job.Primes.AddRange(GetFirst(primes, i));
 
 
 
-            if (job.progress != job.count)
+            if (Progress != job.Count)
             {
-                job.progress = current - job.start + 1;
+                Progress = current - job.Start + 1;
 
                 try
                 {
-                    job.Serialize(Path.Combine(jobPath, $"{job.start}.primejob"));
+                    job.Serialize(Path.Combine(jobPath, $"{job.Start}.primejob"));
                 }
                 catch (Exception e)
                 {
@@ -132,11 +132,11 @@ namespace Primes
             }
             else
             {
-                Directory.CreateDirectory(Path.Combine(dumpPath, $"{job.batch}"));
+                Directory.CreateDirectory(Path.Combine(dumpPath, $"{job.Batch}"));
 
                 try
                 {
-                    job.Serialize(Path.Combine(dumpPath, $"{job.batch}\\{job.start}.primejob"));
+                    job.Serialize(Path.Combine(dumpPath, $"{job.Batch}\\{job.Start}.primejob"));
                 }
                 catch (Exception e)
                 {

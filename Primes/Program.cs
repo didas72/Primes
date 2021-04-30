@@ -257,7 +257,7 @@ namespace Primes
             {
                 KnownPrimesResourceFile.Deserialize(knwonPrimesFilePath, out KnownPrimesResourceFile file);
 
-                knowPrimes = file.primes;
+                knowPrimes = file.Primes;
 
                 resourcesLoaded = true;
             }
