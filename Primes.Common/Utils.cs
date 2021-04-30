@@ -8,8 +8,22 @@ using Primes.Common.Files;
 
 namespace Primes.Common
 {
+    /// <summary>
+    /// Class that contains several genereral-purpose methods.
+    /// </summary>
     public static class Utils
     {
+        /// <summary>
+        /// Gets a <see cref="Queue{T}"/> with paths of all doable jobs in a directory and it's subdirectories.
+        /// </summary>
+        /// <param name="path">The full path of the directory to be checked.</param>
+        /// <returns><see cref="Queue{T}"/> with paths of all incomplete jobs in the given directory.</returns>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
         public static Queue<string> GetDoableJobs(string path)
         {
             string[] files = GetSubFiles(path, "*.primejob");
@@ -28,6 +42,17 @@ namespace Primes.Common
 
             return doableJobs;
         }
+        /// <summary>
+        /// Checks if a directory has any doable jobs in it or in it's subdirectories.
+        /// </summary>
+        /// <param name="path">The full path of the directory to be checked.</param>
+        /// <returns>True if there are doable jobs in the given directory, false otherwise.</returns>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
         public static bool HasDoableJobs(string path)
         {
             if (GetSubFiles(path, "*.primejob").Length != 0)
@@ -38,6 +63,17 @@ namespace Primes.Common
 
 
 
+        /// <summary>
+        /// Gets all files in the given directory and it's subdirectories.
+        /// </summary>
+        /// <param name="directory">The full path of the directory to be checked.</param>
+        /// <returns>Array containing the full paths of every file found.</returns>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
         public static string[] GetSubFiles(string directory)
         {
             List<string> files = new List<string>();
@@ -50,6 +86,18 @@ namespace Primes.Common
 
             return files.ToArray();
         }
+        /// <summary>
+        /// Gets all files in the given directory and it's subdirectories that match the given search pattern.
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <param name="searchPattern"></param>
+        /// <returns>Array containing the full paths of every file found.</returns>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
         public static string[] GetSubFiles(string directory, string searchPattern)
         {
             List<string> files = new List<string>();
@@ -62,6 +110,14 @@ namespace Primes.Common
 
             return files.ToArray();
         }
+        /// <summary>
+        /// Sorts file paths by their numeric values. Values must be ulong compatible.
+        /// </summary>
+        /// <param name="filenames">The paths to sort by filename.</param>
+        /// <returns>Sorted paths array.</returns>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="FormatException"></exception>
+        /// <exception cref="OverflowException"></exception>
         public static string[] SortFiles(string[] filenames)
         {
             Dictionary<ulong, string> files = new Dictionary<ulong, string>();
@@ -86,22 +142,25 @@ namespace Primes.Common
                 files.Remove(lowest);
             }
 
-            foreach (string s in sorted)
-                Console.WriteLine(s);
-
             return sorted.ToArray();
         }
 
 
 
-        public static Queue<T> EnqueueRange<T>(Queue<T> queue, T[] values)
+        /// <summary>
+        /// Enqueues multiple items at once.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="queue">Reference to the <see cref="Queue{T}"/> to enqueue to.</param>
+        /// <param name="values">The values to be enqueued.</param>
+        public static void EnqueueRange<T>(ref Queue<T> queue, T[] values)
         {
             List<T> f = new List<T>();
 
             f.AddRange(queue.ToArray());
             f.AddRange(values);
 
-            return new Queue<T>(f.ToArray());
+            queue = new Queue<T>(f);
         }
     }
 }
