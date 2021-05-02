@@ -2,8 +2,16 @@
 
 namespace Primes.Common
 {
+	/// <summary>
+	/// Class that contains several math-related methods.
+	/// </summary>
     public static class Mathf
     {
+		/// <summary>
+		/// Checks if a number is prime or not, using PeakRead's method.
+		/// </summary>
+		/// <param name="number">The number to be checked.</param>
+		/// <returns>True if the number is prime, false otherwise.</returns>
 		public static bool IsPrime(ulong number)
 		{
 			if (number == 2 || number == 3)
@@ -22,6 +30,12 @@ namespace Primes.Common
 
 			return true;
 		}
+		/// <summary>
+		/// Checks if a number is prime or not, based on previously checked numbers, using Didas72's method.
+		/// </summary>
+		/// <param name="number">The number to be checked.</param>
+		/// <param name="knownPrimes">A reference to an array of known prime numbers.</param>
+		/// <returns>True if the number is prime, false otherwise.</returns>
 		public static bool IsPrime(ulong number, ref ulong[] knownPrimes)
 		{
 			int i = 0;
@@ -49,6 +63,11 @@ namespace Primes.Common
 
 
 
+		/// <summary>
+		/// Calculates the closest integer to the square root of the given number, always rounding upwards.
+		/// </summary>
+		/// <param name="number">The number whose square root is wanted.</param>
+		/// <returns>Upwards-rounded square root.</returns>
 		public static ulong UlongSqrtHigh(ulong number)
 		{
 			if (number < 1)
@@ -75,6 +94,12 @@ namespace Primes.Common
 
 
 
+		/// <summary>
+		/// Adds two <see cref="ulong"/> values, throwing an <see cref="OverflowException"/> if relevant.
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
+		/// <returns>Sum of the give numbers.</returns>
 		public static ulong SafeAdd(ulong a, ulong b)
 		{
 			if (a / 2 + b / 2 > ulong.MaxValue / 2)
@@ -85,6 +110,11 @@ namespace Primes.Common
 
 
 
+		/// <summary>
+		/// Calculates 10 to the power of exp.
+		/// </summary>
+		/// <param name="exp"></param>
+		/// <returns></returns>
 		public static ulong Exp(byte exp)
 		{
 			ulong s = 1;
@@ -97,6 +127,12 @@ namespace Primes.Common
 
 			return s;
 		}
+		/// <summary>
+		/// Calculates s time 10 to the power of exp.
+		/// </summary>
+		/// <param name="s"></param>
+		/// <param name="exp"></param>
+		/// <returns></returns>
 		public static ulong Exp(ulong s, byte exp)
 		{
 			while (exp > 0)
