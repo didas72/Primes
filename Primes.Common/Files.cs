@@ -648,6 +648,43 @@ namespace Primes.Common.Files
                 throw new IncompatibleVersionException($"Attempted to serialize job of version {FileVersion} but no serialization method was implemented for such version. IsCompatible={FileVersion.IsCompatible()}.");
             }
         }
+        /// <summary>
+        /// Checks what the status of a certain <see cref="PrimeJob"/> is.
+        /// </summary>
+        /// <returns><see cref="Status"/> representing the status of the checked <see cref="PrimeJob"/> file.</returns>
+        /// <exception cref="IncompatibleVersionException">Thrown when attempting to peek status from a <see cref="PrimeJob"/> of an incompatible version.</exception>
+        public Status PeekStatus()
+        {
+            Status status = Status.None;
+
+            if (!FileVersion.IsCompatible())
+            {
+                throw new IncompatibleVersionException($"Attempted to peek progress from job of version {FileVersion} but no serialization method was implemented for such version.");
+            }
+            else if (!FileVersion.IsLatest())
+            {
+                if (FileVersion.IsEqual(new Version(1, 0, 0)))
+                {
+                    if (Progress == 0)
+                        status = Status.Not_started;
+                    else if (Progress == Count)
+                        status = Status.Finished;
+                    else
+                        status = Status.Started;
+                }
+            }
+            else //it is latest
+            {
+                if (Progress == 0)
+                    status = Status.Not_started;
+                else if (Progress == Count)
+                    status = Status.Finished;
+                else
+                    status = Status.Started;
+            }
+
+            return status;
+        }
 
 
 

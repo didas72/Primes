@@ -48,5 +48,20 @@ namespace Primes.Common
 
             return f;
         }
+        /// <summary>
+        /// Gets the first X values from an array.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="array"></param>
+        /// <param name="amount">The number of values to return.</param>
+        /// <returns></returns>
+        public static T[] GetFirst<T>(this T[] array, int amount)
+        {
+            T[] ret = new T[amount];
+
+            Array.Copy(array, ret, amount);
+
+            return ret;
+        }
     }
 }

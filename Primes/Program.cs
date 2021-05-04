@@ -6,7 +6,7 @@ using Primes;
 using Primes.Common;
 using Primes.Common.Files;
 
-namespace Primes
+namespace Primes.Exec
 {
     public class Program
     {

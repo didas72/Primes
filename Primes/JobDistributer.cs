@@ -8,7 +8,7 @@ using Primes;
 using Primes.Common;
 using Primes.Common.Files;
 
-namespace Primes
+namespace Primes.Exec
 {
     public class JobDistributer
     {
@@ -16,6 +16,8 @@ namespace Primes
         private readonly string jobPath;
         private Thread distributingThread;
         public Worker[] Workers { get; private set; }
+
+
 
         public JobDistributer(ushort workerCount, string jobPath, string dumpPath)
         {

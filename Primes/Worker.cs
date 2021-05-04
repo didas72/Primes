@@ -6,7 +6,7 @@ using Primes;
 using Primes.Common;
 using Primes.Common.Files;
 
-namespace Primes
+namespace Primes.Exec
 {
     public class Worker
     {
@@ -113,13 +113,13 @@ namespace Primes
 
 
 
-            job.Primes.AddRange(GetFirst(primes, i));
+            job.Primes.AddRange(primes.GetFirst(i));
 
 
 
             if (Progress != job.Count)
             {
-                Progress = current - job.Start + 1;
+                Progress = current - job.Start;
 
                 try
                 {
@@ -149,15 +149,6 @@ namespace Primes
             doWork = false;
 
             CurrentBatch = 0;
-        }
-        private ulong[] GetFirst(ulong[] nums, int amount)
-        {
-            ulong[] ret = new ulong[amount];
-
-            for (int i = 0; i < amount; i++)
-                ret[i] = nums[i];
-
-            return ret;
         }
     }
 }
