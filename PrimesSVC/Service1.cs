@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Linq;
 using System.ServiceProcess;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace Primes.Service
 {
@@ -17,12 +13,39 @@ namespace Primes.Service
             InitializeComponent();
         }
 
+
+
         protected override void OnStart(string[] args)
         {
-        }
+            CheckSource();
 
+            PrimesProgram.log = new EventLog() { Source = "PrimesSVC", Log = "PrimesSVCLog" };
+
+            PrimesProgram.log.WriteEntry("Log started.");
+
+            PrimesProgram.Start();
+        }
         protected override void OnStop()
         {
+            PrimesProgram.Stop();
+        }
+        protected override void OnContinue()
+        {
+            //continue
+        }
+        protected override void OnPause()
+        {
+            //pause
+        }
+        protected override void OnShutdown()
+        {
+            OnStop();
+        }
+
+        private static void CheckSource()
+        {
+            if (!EventLog.SourceExists("PrimesSVC"))
+                EventLog.CreateEventSource("PrimesSVC", "PrimesSVCLog");
         }
     }
 }

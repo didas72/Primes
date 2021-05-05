@@ -10,12 +10,11 @@ using Primes.Common.Files;
 
 namespace Primes.Service
 {
-    class JobDistributer
+    public class JobDistributer
     {
         public Worker[] Workers { get; private set; }
         public List<PrimeJob> PendingJobDumps { get; set; }
         public List<TimeSpan> LastElapsed { get; set; }
-
         private Thread distributingThread;
         private Thread dumpingThread;
         private volatile bool distribute = false;
@@ -45,19 +44,39 @@ namespace Primes.Service
 
         public void StartWork()
         {
-            distribute = true;
+            if (!distribute)
+            {
+                distribute = true;
 
-            distributingThread = new Thread(() => DistributingLoop());
-            distributingThread.Start();
+                distributingThread = new Thread(() => DistributingLoop());
+                distributingThread.Start();
 
-            dumpingThread = new Thread(DumpingLoop);
-            dumpingThread.Start();
+                dumpingThread = new Thread(DumpingLoop);
+                dumpingThread.Start();
+            }
         }
         public void StopWork()
         {
             distribute = false;
 
             StopAllWorkers();
+            WaitForAllWorkers();
+        }
+
+
+
+        public void RescaleWorkers(int workerCount)
+        {
+            if (Working())
+                StopWork();
+
+            Workers = new Worker[workerCount];
+
+            for (int i = 0; i < workerCount; i++)
+            {
+                Workers[i] = new Worker(i);
+                Workers[i].JobComplete += JobComplete;
+            }
         }
 
 
@@ -84,7 +103,7 @@ namespace Primes.Service
                         }
                         catch (Exception e)
                         {
-                            Program.log.WriteEntry($"{e.Message}", EventLogEntryType.Error);
+                            PrimesProgram.log.WriteEntry($"{e.Message}", EventLogEntryType.Error);
 
                             continue;
                         }
@@ -131,7 +150,7 @@ namespace Primes.Service
                         }
                         catch (Exception e)
                         {
-                            Program.log.WriteEntry($"{e.Message}", EventLogEntryType.Error);
+                            PrimesProgram.log.WriteEntry($"{e.Message}", EventLogEntryType.Error);
                         }
 
                         break;
@@ -144,7 +163,7 @@ namespace Primes.Service
                         }
                         catch (Exception e)
                         {
-                            Program.log.WriteEntry($"{e.Message}", EventLogEntryType.Error);
+                            PrimesProgram.log.WriteEntry($"{e.Message}", EventLogEntryType.Error);
                         }
 
                         break;
@@ -185,7 +204,7 @@ namespace Primes.Service
         
 
 
-        private bool Working()
+        public bool Working()
         {
             foreach (Worker w in Workers)
                 if (w.IsWorking) return true;

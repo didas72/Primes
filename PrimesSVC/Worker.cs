@@ -9,7 +9,7 @@ using Primes.Common.Files;
 
 namespace Primes.Service
 {
-    class Worker
+    public class Worker
     {
         public Thread Thread { get; set; }
         public int WorkerID { get; }
@@ -82,8 +82,8 @@ namespace Primes.Service
 
 
 
-                if (Program.knowPrimes != null)
-                    result = Mathf.IsPrime(current, ref Program.knowPrimes);
+                if (PrimesProgram.knowPrimes != null)
+                    result = Mathf.IsPrime(current, ref PrimesProgram.knowPrimes);
                 else
                     result = Mathf.IsPrime(current);
 

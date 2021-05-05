@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Primes.Common", "Primes.Com
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobManagement", "JobManagement\JobManagement.csproj", "{F8C30429-B143-43BE-879A-39671121ADCC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesSVC", "PrimesSVC\PrimesSVC.csproj", "{CCFB8628-8B37-435E-9637-6B27A89D01D3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{F8C30429-B143-43BE-879A-39671121ADCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8C30429-B143-43BE-879A-39671121ADCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8C30429-B143-43BE-879A-39671121ADCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCFB8628-8B37-435E-9637-6B27A89D01D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCFB8628-8B37-435E-9637-6B27A89D01D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCFB8628-8B37-435E-9637-6B27A89D01D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCFB8628-8B37-435E-9637-6B27A89D01D3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
