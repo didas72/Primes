@@ -22,26 +22,27 @@ namespace Primes.Service
 
         public static ulong[] knowPrimes = null;
         public static EventLog log;
-        public static string home, jobsPath, completePath;
-
-        public static JobDistributer distributer;
-
-        public static NamedPipeServerStream pipe;
 
         private static Timer updatesTimer;
-        private static Timer modeSwitchTimer;
+        private static Timer computeModeSwitchTimer;
 
-        private volatile static ServiceMode mode = ServiceMode.None;
+        private static PerformanceCounter totalCPU;
+        private static PerformanceCounter localCPU;
+
+        private volatile static ServiceComputeMode computeMode = ServiceComputeMode.None;
+        private volatile static ServiceMasterMode masterMode = ServiceMasterMode.None;
 
 
 
         public static void Start()
         {
-            mode = ServiceMode.Starting;
+            masterMode = ServiceMasterMode.Starting;
 
             Init();
 
             updatesTimer.Start();
+
+            computeMode = ServiceComputeMode.Waiting_Idle;
 
             log.WriteEntry("Started");
         }
@@ -49,10 +50,12 @@ namespace Primes.Service
         {
             log.WriteEntry("Stopping");
 
-            mode = ServiceMode.Stopping;
+            masterMode = ServiceMasterMode.Stopping;
 
             updatesTimer.Stop();
-            modeSwitchTimer.Stop();
+            computeModeSwitchTimer.Stop();
+
+            System.Threading.Thread.Sleep(10);
 
             Cleanup();
         }
@@ -61,20 +64,17 @@ namespace Primes.Service
 
         public static void UpdatesTimerElapsed(object sender, ElapsedEventArgs e)
         {
-            log.WriteEntry("Updating service mode");
-            UpdateServiceMode();
-
-            log.WriteEntry("Checking pipe");
-            CheckPipe();
+            log.WriteEntry("Updating service computeMode");
+            UpdateServiceComputeMode();
         }
         public static void ModeSwitchElapsed(object sender, ElapsedEventArgs e)
         {
-            log.WriteEntry("Switching mode");
+            log.WriteEntry("Switching computeMode");
 
-            if (mode == ServiceMode.Waiting_Switch_Full)
-                mode = ServiceMode.Compute_Full;
-            else if (mode == ServiceMode.Waiting_Switch_Partial)
-                mode = ServiceMode.Compute_Partial;
+            if (computeMode == ServiceComputeMode.Waiting_Switch_Full)
+                computeMode = ServiceComputeMode.Compute_Full;
+            else if (computeMode == ServiceComputeMode.Waiting_Switch_Partial)
+                computeMode = ServiceComputeMode.Compute_Partial;
             else return;
 
             ApplyMode();
@@ -82,164 +82,87 @@ namespace Primes.Service
 
 
 
-        private static void UpdateServiceMode()
+        public static void AllJobsDistributed(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+        private static void UpdateServiceComputeMode()
         {
             GetCPUUsage(out float our, out float total);
 
             float others = total - our;
 
-            switch (mode)
+            switch (computeMode)
             {
-                case ServiceMode.Waiting_Idle:
+                case ServiceComputeMode.Waiting_Idle:
 
                     if (others < partialIdleThreshold) //if enough free CPU time, start switch to partial compute
                     {
-                        mode = ServiceMode.Waiting_Switch_Partial;
-                        modeSwitchTimer.Start();
+                        computeMode = ServiceComputeMode.Waiting_Switch_Partial;
+                        computeModeSwitchTimer.Start();
                     }
 
                     break;
 
-                case ServiceMode.Waiting_Switch_Partial:
+                case ServiceComputeMode.Waiting_Switch_Partial:
 
                     if (others >= partialIdleThreshold) //if not enough free CPU time, abort switch
                     {
-                        mode = ServiceMode.Waiting_Idle;
-                        modeSwitchTimer.Stop();
+                        computeMode = ServiceComputeMode.Waiting_Idle;
+                        computeModeSwitchTimer.Stop();
                     }
 
                     break;
 
-                case ServiceMode.Compute_Partial:
+                case ServiceComputeMode.Compute_Partial:
 
                     if (others >= partialIdleThreshold) //if not enough CPU time, return to idle
                     {
-                        mode = ServiceMode.Waiting_Idle;
+                        computeMode = ServiceComputeMode.Waiting_Idle;
                     }
                     else if (others < fullIdleThreshold) //if enought free CPU time, start switch to full compute
                     {
-                        mode = ServiceMode.Waiting_Switch_Full;
-                        modeSwitchTimer.Start();
+                        computeMode = ServiceComputeMode.Waiting_Switch_Full;
+                        computeModeSwitchTimer.Start();
                     }
 
                     break;
 
-                case ServiceMode.Waiting_Switch_Full:
+                case ServiceComputeMode.Waiting_Switch_Full:
 
                     if (others >= partialIdleThreshold) //if not enough CPU time, return to idle
                     {
-                        mode = ServiceMode.Waiting_Idle;
-                        modeSwitchTimer.Stop();
+                        computeMode = ServiceComputeMode.Waiting_Idle;
+                        computeModeSwitchTimer.Stop();
                     }
                     else if (others >= fullIdleThreshold) //if not enough CPU time, return to partial compute
                     {
-                        mode = ServiceMode.Waiting_Switch_Partial;
-                        modeSwitchTimer.Stop();
-                        modeSwitchTimer.Start(); //reset to wait for further usage
+                        computeMode = ServiceComputeMode.Waiting_Switch_Partial;
+                        computeModeSwitchTimer.Stop();
+                        computeModeSwitchTimer.Start(); //reset to wait for further usage
                     }
 
                     break;
 
-                case ServiceMode.Compute_Full:
+                case ServiceComputeMode.Compute_Full:
 
                     if (others >= partialIdleThreshold) //if not enough CPU time, return to idle
                     {
-                        mode = ServiceMode.Waiting_Idle;
+                        computeMode = ServiceComputeMode.Waiting_Idle;
                     }
                     else if (others >= fullIdleThreshold) //if not enough CPU time, return to partial compute
                     {
-                        mode = ServiceMode.Waiting_Switch_Partial;
-                        modeSwitchTimer.Start(); //reset to wait for further usage
+                        computeMode = ServiceComputeMode.Waiting_Switch_Partial;
+                        computeModeSwitchTimer.Start(); //reset to wait for further usage
                     }
 
                     break;
             }
 
             ApplyMode();
-        }
-        private static void ApplyMode()
-        {
-            log.WriteEntry($"Applying mode {mode}");
-
-            switch(mode)
-            {
-                case ServiceMode.Waiting_Idle:
-
-                    if (distributer.Working())
-                        distributer.StopWork();
-
-                    break;
-
-                case ServiceMode.Compute_Partial:
-
-                    int threadCount = (int)Math.Min(1, Math.Floor(Environment.ProcessorCount * partialThreadsMult));
-
-                    if (distributer.Workers.Length != threadCount)
-                    {
-                        distributer.RescaleWorkers(threadCount);
-
-                        distributer.StartWork();
-                    }
-
-                    if (!distributer.Working())
-                        distributer.StartWork();
-
-                    break;
-
-                case ServiceMode.Compute_Full:
-
-                    threadCount = (int)Math.Min(1, Math.Floor(Environment.ProcessorCount * fullThreadsMult));
-
-                    if (distributer.Workers.Length != threadCount)
-                    {
-                        distributer.RescaleWorkers(threadCount);
-
-                        distributer.StartWork();
-                    }
-
-                    if (!distributer.Working())
-                        distributer.StartWork();
-
-                    break;
-
-                case ServiceMode.Waiting_Switch_Full:
-
-                    if (distributer.Working())
-                        distributer.StopWork();
-
-                    break;
-
-                case ServiceMode.Waiting_Switch_Partial:
-
-                    if (distributer.Working())
-                        distributer.StopWork();
-
-                    break;
-
-                case ServiceMode.Stopping:
-
-                    if (distributer.Working())
-                        distributer.StopWork();
-
-                    break;
-            }
-        }
-
-
-
-        private static void CheckPipe()
-        {
-            /*try
-            {
-                if (pipe.Position + 1 != pipe.Length) //pending reads
-                {
-                    throw new NotImplementedException("Pipe handling has not been implemented yet.");
-                }
-            }
-            catch (Exception e)
-            {
-                log.WriteEntry(e.Message);
-            }*/
         }
 
 
@@ -250,9 +173,9 @@ namespace Primes.Service
 
             InitDistributer();
 
-            InitPipe();
-
             InitTimers();
+
+            InitPerformanceCounters();
 
             log.WriteEntry("Service started.");
         }
@@ -282,24 +205,13 @@ namespace Primes.Service
             {
                 distributer = new JobDistributer(jobsPath, completePath, Environment.ProcessorCount);
 
+                distributer.AllJobsDistributed += AllJobsDistributed;
+
                 log.WriteEntry("Distributer initialized.");
             }
             catch (Exception e)
             {
                 log.WriteEntry($"InitDistributer() error: {e.Message}", EventLogEntryType.Error);
-            }
-        }
-        public static void InitPipe()
-        {
-            try
-            {
-                pipe = new NamedPipeServerStream("Didas72PrimesService", PipeDirection.InOut);
-
-                log.WriteEntry("Pipe initialized.");
-            }
-            catch (Exception e)
-            {
-                log.WriteEntry($"InitPipe() error: {e.Message}", EventLogEntryType.Error);
             }
         }
         public static void InitTimers()
@@ -314,13 +226,14 @@ namespace Primes.Service
 
                 updatesTimer.Elapsed += UpdatesTimerElapsed;
 
-                modeSwitchTimer = new Timer
+                computeModeSwitchTimer = new Timer
                 {
                     Interval = 60000, //60 seconds of idle to allow to start work
                     AutoReset = false,
+                    Enabled = false,
                 };
 
-                updatesTimer.Elapsed += ModeSwitchElapsed;
+                computeModeSwitchTimer.Elapsed += ModeSwitchElapsed;
 
                 log.WriteEntry("Timers initialized.");
             }
@@ -329,53 +242,70 @@ namespace Primes.Service
                 log.WriteEntry($"InitTimers() error: {e.Message}", EventLogEntryType.Error);
             }
         }
+        public static void InitPerformanceCounters()
+        {
+            localCPU = new PerformanceCounter("Process", "% Processor Time", Process.GetCurrentProcess().ProcessName);
+            totalCPU = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+
+            localCPU.NextValue(); //do first retrieve, always = 0
+            totalCPU.NextValue();
+
+            log.WriteEntry("Performance counters initialized.");
+        }
         public static void Cleanup()
         {
             try
             {
                 updatesTimer.Dispose();
-                modeSwitchTimer.Dispose();
-
-                log.WriteEntry("Closing log.");
-
-                log.Dispose();
+                computeModeSwitchTimer.Dispose();
             }
             catch (Exception e)
             {
                 log.WriteEntry($"Cleanup() error: {e.Message}", EventLogEntryType.Error);
             }
+
+            log.WriteEntry("Closing log.");
+
+            log.Dispose();
         }
 
 
 
-        private static void GetCPUUsage(out float our, out float total)
+        public static void GetCPUUsage(out float local, out float total)
         {
+            local = 0f;
+            total = 0f;
+
             try
             {
-                our = new PerformanceCounter("Processor", "% Processor Time", "PrimesSVC.exe").NextValue();
-                total = new PerformanceCounter("Processor", "% Processor Time", "_Total").NextValue();
+                local = localCPU.NextValue();
+                total = totalCPU.NextValue();
             }
             catch (Exception e)
             {
                 log.WriteEntry($"GetCPUUsage() error: {e.Message}", EventLogEntryType.Error);
-
-                our = 0f;
-                total = 0f;
             }
         }
+    }
 
-
-
-        public enum ServiceMode
-        {
-            None,
-            Starting,
-            Stopping,
-            Waiting_Idle,
-            Waiting_Switch_Partial,
-            Waiting_Switch_Full,
-            Compute_Partial,
-            Compute_Full,
-        }
+    public enum ServiceMasterMode
+    {
+        None,
+        Starting,
+        Stopping,
+        Compute_CPU_Usage,
+        Compute_Schedule,
+        Idle_No_Jobs,
+        Idle_User_Request,
+        Idle,
+    }
+    public enum ServiceComputeMode
+    {
+        None,
+        Waiting_Idle,
+        Waiting_Switch_Partial,
+        Waiting_Switch_Full,
+        Compute_Partial,
+        Compute_Full,
     }
 }

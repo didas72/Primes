@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.ServiceProcess;
-using System.Threading;
 
 namespace Primes.Service
 {

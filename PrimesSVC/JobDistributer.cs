@@ -22,6 +22,9 @@ namespace Primes.Service
         private readonly string completePath;
 
 
+        public EventHandler AllJobsDistributed;
+
+
 
         public JobDistributer(string jobPath, string completePath, int workerCount)
         {
@@ -53,6 +56,8 @@ namespace Primes.Service
 
                 dumpingThread = new Thread(DumpingLoop);
                 dumpingThread.Start();
+
+                PrimesProgram.log.WriteEntry("Starting work...");
             }
         }
         public void StopWork()
@@ -67,6 +72,8 @@ namespace Primes.Service
 
         public void RescaleWorkers(int workerCount)
         {
+            PrimesProgram.log.WriteEntry($"Rescaling workers from {Workers.Length} to {workerCount}");
+
             if (Working())
                 StopWork();
 
@@ -89,15 +96,13 @@ namespace Primes.Service
             {
                 for (int i = 0; i < Workers.Length; i++)
                 {
-                    if (!Workers[i].IsWorking && jobFiles.Count > 0)
+                    if (!Workers[i].IsWorking && Utils.GetDoableJob(jobPath, out string currentJobPath))
                     {
-                        string path = jobFiles.Dequeue();
-
                         try
                         {
-                            PrimeJob job = PrimeJob.Deserialize(path);
+                            PrimeJob job = PrimeJob.Deserialize(currentJobPath);
 
-                            File.Delete(path);
+                            File.Delete(currentJobPath);
 
                             Workers[i].StartWork(job);
                         }
@@ -108,9 +113,11 @@ namespace Primes.Service
                             continue;
                         }
                     }
-                    else if (jobFiles.Count <= 0)
+                    else if (!Utils.HasDoableJobs(jobPath))
                     {
                         distribute = false;
+
+                        AllJobsDistributed(this, new EventArgs());
 
                         break;
                     }
@@ -118,6 +125,8 @@ namespace Primes.Service
             }
 
             WaitForAllWorkers();
+
+            PrimesProgram.log.WriteEntry("Distribution loop ended.");
         }
         private void DumpingLoop()
         {
@@ -171,6 +180,8 @@ namespace Primes.Service
 
                 job = null;
             }
+
+            PrimesProgram.log.WriteEntry("Dumping loop ended.");
         }
 
 

@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="JobDistributer.cs" />
     <Compile Include="PrimesProgram.cs" />
+    <Compile Include="PrimesWork.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>

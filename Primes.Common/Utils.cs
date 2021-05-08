@@ -34,13 +34,36 @@ namespace Primes.Common
             {
                 PrimeJob.Status ret = PrimeJob.PeekStatusFromFile(files[i]);
 
-                if (ret == PrimeJob.Status.Not_started)
-                    doableJobs.Enqueue(files[i]);
-                else if (ret == PrimeJob.Status.Started)
+                if (ret == PrimeJob.Status.Not_started || ret == PrimeJob.Status.Started)
                     doableJobs.Enqueue(files[i]);
             }
 
             return doableJobs;
+        }
+        /// <summary>
+        /// Gets a string with the path of a doable job in a directory and it's subdirectories.
+        /// </summary>
+        /// <param name="path">The full path of the directory to be checked.</param>
+        /// <param name="jobPath">The full path to the job found.</param>
+        /// <returns>True if a doable job is found, false otherwise.</returns>
+        public static bool GetDoableJob(string path, out string jobPath)
+        {
+            jobPath = string.Empty;
+
+            string[] files = GetSubFiles(path, "*.primejob");
+
+            for (int i = 0; i < files.Length; i++)
+            {
+                PrimeJob.Status ret = PrimeJob.PeekStatusFromFile(files[i]);
+
+                if (ret == PrimeJob.Status.Not_started || ret == PrimeJob.Status.Started)
+                {
+                    jobPath = files[i];
+                    return true;
+                }
+            }
+
+            return false;
         }
         /// <summary>
         /// Checks if a directory has any doable jobs in it or in it's subdirectories.
