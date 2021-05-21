@@ -354,6 +354,10 @@ namespace Primes.Common.Files
         /// </summary>
         public Version FileVersion { get; }
         /// <summary>
+        /// The file compression flags.
+        /// </summary>
+        public Comp FileCompression { get; }
+        /// <summary>
         /// Number used to group PrimeJobs together.
         /// </summary>
         public uint Batch { get; }
@@ -482,8 +486,18 @@ namespace Primes.Common.Files
             * 4 bytes          int         primesInFile
             * xxx              ulong[]     primes
             */
-            /* v1.0.1
+            /* v1.1.0
             * 3 bytes          Version     version (1 byte major, 1 byte minor, 1 byte patch)
+            * 4 bytes          uint        batch
+            * 8 bytes          ulong       start
+            * 8 bytes          ulong       count
+            * 8 bytes          ulong       progress
+            * 4 bytes          int         primesInFile
+            * xxx              ulong[]     primes
+            */
+            /* v1.2.0
+            * 3 bytes          Version     version (1 byte major, 1 byte minor, 1 byte patch)
+            * 1 byte           Comp        compression header (1 bit compressed, 0bX000000, 1 bit PeakRead compression)
             * 4 bytes          uint        batch
             * 8 bytes          ulong       start
             * 8 bytes          ulong       count
@@ -949,6 +963,40 @@ namespace Primes.Common.Files
             public bool IsCompatible()
             {
                 return Compatible.Contains(this);
+            }
+        }
+
+
+
+        /// <summary>
+        /// Struct that represents a file compression status.
+        /// </summary>
+        public struct Comp
+        {
+            public readonly bool IsCompressed;
+            public readonly bool PeakReadCompression;
+
+
+
+            /// <summary>
+            /// Initializes a new instance of <see cref="Comp"/> with the given IsCompressed and PeakReadCompression flags.
+            /// </summary>
+            /// <param name="IsCompressed">Wether or not the file is compressed.</param>
+            /// <param name="PeakReadCompression">Wether or not PeakRead Compression was used.</param>
+            public Comp(bool IsCompressed, bool PeakReadCompression)
+            {
+                this.IsCompressed = IsCompressed; this.PeakReadCompression = PeakReadCompression;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of <see cref="Comp"/> from a give byte storing the needed flags.
+            /// </summary>
+            /// <param name="source">Byte containing flags.</param>
+            public Comp(byte source)
+            {
+                IsCompressed = (source & 0b10000000) != 0b10000000;
+
+                PeakReadCompression = (source & 0b00000001) != 0b00000001;
             }
         }
 
