@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 
+using Primes.Common.Serializers;
+
 namespace Primes.Common.Files
 {
     /// <summary>
@@ -58,7 +60,7 @@ namespace Primes.Common.Files
         /// Reads a <see cref="KnownPrimesResourceFile"/> from a file.
         /// </summary>
         /// <param name="path">Path of the file to read from.</param>
-        /// <param name="file"><see cref="KnownPrimesResourceFile"/> read from the given path.</param>
+        /// <returns>Deserialized <see cref="KnownPrimesResourceFile"/></returns>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="PathTooLongException"></exception>
@@ -68,21 +70,9 @@ namespace Primes.Common.Files
         /// <exception cref="FileNotFoundException"></exception>
         /// <exception cref="NotSupportedException"></exception>
         /// <exception cref="System.Security.SecurityException"></exception>
-        public static void Deserialize(string path, out KnownPrimesResourceFile file)
+        public static KnownPrimesResourceFile Deserialize(string path)
         {
-            file = new KnownPrimesResourceFile(Version.Zero, new ulong[] { 0 });
-
-            /*  knownPrimes.rsrc v1.0.0
-             *  3 bytes     Version     version (1 byte major, 1 byte minor, 1 byte patch)
-             *  4 bytes     int         primesInFile
-             *  xxx         ulong[]     primes
-             */
-            /*  knownPrimes.rsrc v1.1.0
-             *  3 bytes     Version     version (1 byte major, 1 byte minor, 1 byte patch)
-             *  8 bytes     ulong       highestCheckedInFile (highest number till which we checked to make this file, used to later append more primes to the file)
-             *  4 bytes     int         primesInFile
-             *  xxx         ulong[]     primes
-             */
+            KnownPrimesResourceFile file = new KnownPrimesResourceFile(Version.Zero, new ulong[] { 0 });
 
             byte[] bytes = File.ReadAllBytes(path);
 
@@ -92,32 +82,24 @@ namespace Primes.Common.Files
             {
                 throw new IncompatibleVersionException($"Attempted to deserialize known primes resource of version {ver} but no serialization method was implemented for such version.");
             }
-            else if (!ver.IsLatest())
+            else if (ver.IsLatest())
+            {
+                file = KnownPrimesResourceFileSerializer.Deserializev1_1_0(bytes);
+            }
+            else
             {
                 if (ver.IsEqual(new Version(1, 0, 0)))
                 {
-                    int primesInFile = BitConverter.ToInt32(bytes, 3);
-
-                    ulong[] primes = new ulong[primesInFile];
-                    Buffer.BlockCopy(bytes, 7, primes, 0, primesInFile * 8);
-
-                    file = new KnownPrimesResourceFile(ver, primes);
+                    file = KnownPrimesResourceFileSerializer.Deserializev1_0_0(bytes);
                 }
             }
-            else //it is latest
-            {
-                ulong highestCheckedInFile = BitConverter.ToUInt64(bytes, 3);
-                int primesInFile = BitConverter.ToInt32(bytes, 11);
 
-                ulong[] primes = new ulong[primesInFile];
-                Buffer.BlockCopy(bytes, 15, primes, 0, primesInFile * 8);
-
-                file = new KnownPrimesResourceFile(ver, highestCheckedInFile, primes);
-            }
+            return file;
         }
         /// <summary>
         /// Writes a <see cref="KnownPrimesResourceFile"/> to a file.
         /// </summary>
+        /// <param name="file">Reference to the <see cref="KnownPrimesResourceFile"/> to serialize.</param>
         /// <param name="path">The path to write to.</param>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="ArgumentNullException"></exception>
@@ -128,36 +110,26 @@ namespace Primes.Common.Files
         /// <exception cref="FileNotFoundException"></exception>
         /// <exception cref="NotSupportedException"></exception>
         /// <exception cref="System.Security.SecurityException"></exception>
-        public void Serialize(string path)
+        public static void Serialize(ref KnownPrimesResourceFile file, string path)
         {
-            if (FileVersion.IsLatest())
+            if (!file.FileVersion.IsCompatible())
             {
-                byte[] bytes = new byte[15 + Primes.Length * 8];
-
-                bytes[0] = FileVersion.major; bytes[1] = FileVersion.minor; bytes[2] = FileVersion.patch;
-
-                Array.Copy(BitConverter.GetBytes(HighestCheckedInFile), 0, bytes, 3, 8);
-                Array.Copy(BitConverter.GetBytes(Primes.Length), 0, bytes, 11, 4);
-
-                Buffer.BlockCopy(Primes, 0, bytes, 15, Primes.Length * 8);
-
-                File.WriteAllBytes(path, bytes);
+                throw new IncompatibleVersionException($"Attempted to serialize known primes resource of version {file.FileVersion} but no serialization method was implemented for such version.");
             }
-            else if (FileVersion.IsEqual(new Version(1, 0, 0)))
+            else if (file.FileVersion.IsLatest())
             {
-                byte[] bytes = new byte[7 + Primes.Length * 8];
-
-                bytes[0] = FileVersion.major; bytes[1] = FileVersion.minor; bytes[2] = FileVersion.patch;
-
-                Array.Copy(BitConverter.GetBytes(Primes.Length), 0, bytes, 3, 4);
-
-                Buffer.BlockCopy(Primes, 0, bytes, 7, Primes.Length * 8);
+                byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_1_0(ref file);
 
                 File.WriteAllBytes(path, bytes);
             }
             else
             {
-                throw new IncompatibleVersionException($"Attempted to serialize known primes resource of version {FileVersion} but no serialization method was implemented for such version.");
+                if (file.FileVersion.IsEqual(new Version(1, 0, 0)))
+                {
+                    byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_0_0(ref file);
+
+                    File.WriteAllBytes(path, bytes);
+                }
             }
         }
 
@@ -190,7 +162,7 @@ namespace Primes.Common.Files
         /// <summary>
         /// Struct that represents a file version.
         /// </summary>
-        public struct Version
+        public readonly struct Version
         {
             /// <summary>
             /// Major increment of the version.
@@ -318,6 +290,8 @@ namespace Primes.Common.Files
             public IncompatibleVersionException(string message) : base(message) { }
         }
     }
+
+
 
     /// <summary>
     /// Memory representation of a PrimeJob file. Provides several methods for creating, serializing and deserializing files.
@@ -478,35 +452,8 @@ namespace Primes.Common.Files
         /// <exception cref="System.Security.SecurityException"></exception>
         public static PrimeJob Deserialize(string path)
         {
-            /* v1.0.0
-            * 3 bytes          Version     version (1 byte major, 1 byte minor, 1 byte patch)
-            * 8 bytes          ulong       start
-            * 8 bytes          ulong       count
-            * 8 bytes          ulong       progress
-            * 4 bytes          int         primesInFile
-            * xxx              ulong[]     primes
-            */
-            /* v1.1.0
-            * 3 bytes          Version     version (1 byte major, 1 byte minor, 1 byte patch)
-            * 4 bytes          uint        batch
-            * 8 bytes          ulong       start
-            * 8 bytes          ulong       count
-            * 8 bytes          ulong       progress
-            * 4 bytes          int         primesInFile
-            * xxx              ulong[]     primes
-            */
-            /* v1.2.0
-            * 3 bytes          Version     version (1 byte major, 1 byte minor, 1 byte patch)
-            * 1 byte           Comp        compression header (1 bit compressed, 0bX000000, 1 bit PeakRead compression)
-            * 4 bytes          uint        batch
-            * 8 bytes          ulong       start
-            * 8 bytes          ulong       count
-            * 8 bytes          ulong       progress
-            * 4 bytes          int         primesInFile
-            * xxx              ulong[]     primes
-            */
-
             PrimeJob job = new PrimeJob(Version.Zero, 0, 0);
+
             byte[] bytes = File.ReadAllBytes(path);
 
             Version ver = new Version(bytes[0], bytes[1], bytes[2]);
@@ -515,35 +462,20 @@ namespace Primes.Common.Files
             {
                 throw new IncompatibleVersionException($"Attempted to deserialize job of version {ver} but no serialization method was implemented for such version.");
             }
-            else if (!ver.IsLatest())
+            else if (ver.IsLatest())
             {
-                if (ver.IsEqual(new Version(1, 0, 0)))
-                {
-                    ulong start = BitConverter.ToUInt64(bytes, 3);
-                    ulong count = BitConverter.ToUInt64(bytes, 11);
-                    ulong progress = BitConverter.ToUInt64(bytes, 19);
-
-                    int primesInFile = BitConverter.ToInt32(bytes, 27);
-
-                    ulong[] primes = new ulong[primesInFile];
-                    Buffer.BlockCopy(bytes, 31, primes, 0, primesInFile * 8);
-
-                    job = new PrimeJob(ver, start, count, progress, ref primes);
-                }
+                job = PrimeJobSerializer.Deserializev1_2_0(ref bytes);
             }
-            else //it is latest
+            else
             {
-                uint batch = BitConverter.ToUInt32(bytes, 3);
-                ulong start = BitConverter.ToUInt64(bytes, 7);
-                ulong count = BitConverter.ToUInt64(bytes, 15);
-                ulong progress = BitConverter.ToUInt64(bytes, 23);
-
-                int primesInFile = BitConverter.ToInt32(bytes, 31);
-
-                ulong[] primes = new ulong[primesInFile];
-                Buffer.BlockCopy(bytes, 35, primes, 0, primesInFile * 8);
-
-                job = new PrimeJob(ver, batch, start, count, progress, ref primes);
+                if (ver.IsEqual(new Version(1, 1, 0)))
+                {
+                    job = PrimeJobSerializer.Deserializev1_1_0(ref bytes);
+                }
+                else if (ver.IsEqual(new Version(1, 0, 0)))
+                {
+                    job = PrimeJobSerializer.Deserializev1_0_0(ref bytes);
+                }
             }
 
             return job;
@@ -565,10 +497,9 @@ namespace Primes.Common.Files
         /// <exception cref="System.Security.SecurityException"></exception>
         public static Status PeekStatusFromFile(string path)
         {
-            Status status = Status.None;
-            byte[] allBytes = File.ReadAllBytes(path);
+            byte[] bytes = File.ReadAllBytes(path);
 
-            Version ver = new Version(allBytes[0], allBytes[1], allBytes[2]);
+            Version ver = new Version(bytes[0], bytes[1], bytes[2]);
 
             if (!ver.IsCompatible())
             {
@@ -578,41 +509,24 @@ namespace Primes.Common.Files
             {
                 if (ver.IsEqual(new Version(1, 0, 0)))
                 {
-                    byte[] bytes = new byte[16];
-                    Array.Copy(allBytes, 11, bytes, 0, 16);
-
-                    ulong count = BitConverter.ToUInt64(bytes, 0);
-                    ulong progress = BitConverter.ToUInt64(bytes, 8);
-
-                    if (progress == 0)
-                        status = Status.Not_started;
-                    else if (progress == count)
-                        status = Status.Finished;
-                    else
-                        status = Status.Started;
+                    return PrimeJobSerializer.PeekStatusv1_0_0(ref bytes);
+                }
+                else if (ver.IsEqual(new Version(1, 1, 0)))
+                {
+                    return PrimeJobSerializer.PeekStatusv1_1_0(ref bytes);
                 }
             }
             else //it is latest
             {
-                byte[] bytes = new byte[16];
-                Array.Copy(allBytes, 15, bytes, 0, 16);
-
-                ulong count = BitConverter.ToUInt64(bytes, 0);
-                ulong progress = BitConverter.ToUInt64(bytes, 8);
-
-                if (progress == 0)
-                    status = Status.Not_started;
-                else if (progress == count)
-                    status = Status.Finished;
-                else
-                    status = Status.Started;
+                return PrimeJobSerializer.PeekStatusv1_2_0(ref bytes);
             }
 
-            return status;
+            return Status.None;
         }
         /// <summary>
         /// Writes a <see cref="PrimeJob"/> to a file.
         /// </summary>
+        /// <param name="job">The job to serialize.</param>
         /// <param name="path">The path to write to.</param>
         /// <exception cref="IncompatibleVersionException">Thrown when attempting to write a <see cref="PrimeJob"/> of an incompatible version.</exception>
         /// <exception cref="ArgumentException"></exception>
@@ -624,42 +538,32 @@ namespace Primes.Common.Files
         /// <exception cref="FileNotFoundException"></exception>
         /// <exception cref="NotSupportedException"></exception>
         /// <exception cref="System.Security.SecurityException"></exception>
-        public void Serialize(string path)
+        public static void Serialize(ref PrimeJob job, string path)
         {
-            if (FileVersion.IsLatest())
+            if (!job.FileVersion.IsCompatible())
             {
-                byte[] bytes = new byte[35 + Primes.Count * 8];
-
-                bytes[0] = FileVersion.major; bytes[1] = FileVersion.minor; bytes[2] = FileVersion.patch;
-
-                Array.Copy(BitConverter.GetBytes(Batch), 0, bytes, 3, 4);
-                Array.Copy(BitConverter.GetBytes(Start), 0, bytes, 7, 8);
-                Array.Copy(BitConverter.GetBytes(Count), 0, bytes, 15, 8);
-                Array.Copy(BitConverter.GetBytes(Progress), 0, bytes, 23, 8);
-                Array.Copy(BitConverter.GetBytes(Primes.Count), 0, bytes, 31, 4);
-
-                Buffer.BlockCopy(Primes.ToArray(), 0, bytes, 35, Primes.Count * 8);
+                throw new IncompatibleVersionException($"Attempted to deserialize job of version {job.FileVersion} but no serialization method was implemented for such version.");
+            }
+            else if (job.FileVersion.IsLatest())
+            {
+                byte[] bytes = PrimeJobSerializer.Serializev1_2_0(ref job);
 
                 File.WriteAllBytes(path, bytes);
             }
-            else if (FileVersion.IsEqual(new Version(1, 0, 0)))
+            else 
             {
-                byte[] bytes = new byte[31 + Primes.Count * 8];
+                if (job.FileVersion.Equals(new Version(1, 1, 0)))
+                {
+                    byte[] bytes = PrimeJobSerializer.Serializev1_1_0(ref job);
 
-                bytes[0] = FileVersion.major; bytes[1] = FileVersion.minor; bytes[2] = FileVersion.patch;
+                    File.WriteAllBytes(path, bytes);
+                }
+                else if (job.FileVersion.Equals(new Version(1, 0, 0)))
+                {
+                    byte[] bytes = PrimeJobSerializer.Serializev1_0_0(ref job);
 
-                Array.Copy(BitConverter.GetBytes(Start), 0, bytes, 3, 8);
-                Array.Copy(BitConverter.GetBytes(Count), 0, bytes, 11, 8);
-                Array.Copy(BitConverter.GetBytes(Progress), 0, bytes, 19, 8);
-                Array.Copy(BitConverter.GetBytes(Primes.Count), 0, bytes, 27, 4);
-
-                Buffer.BlockCopy(Primes.ToArray(), 0, bytes, 31, Primes.Count * 8);
-
-                File.WriteAllBytes(path, bytes);
-            }
-            else
-            {
-                throw new IncompatibleVersionException($"Attempted to serialize job of version {FileVersion} but no serialization method was implemented for such version. IsCompatible={FileVersion.IsCompatible()}.");
+                    File.WriteAllBytes(path, bytes);
+                }
             }
         }
         /// <summary>
@@ -847,7 +751,7 @@ namespace Primes.Common.Files
                     bad++;
                 }
 
-                job.Serialize(jobPaths[i]);
+                PrimeJob.Serialize(ref job, jobPaths[i]);
             }
         }
 
@@ -856,7 +760,7 @@ namespace Primes.Common.Files
         /// <summary>
         /// Struct that represents a file verion.
         /// </summary>
-        public struct Version
+        public readonly struct Version
         {
             /// <summary>
             /// Major increment of the version.
@@ -880,11 +784,11 @@ namespace Primes.Common.Files
             /// <summary>
             /// Default latest instance.
             /// </summary>
-            public static Version Latest { get; } = new Version(1, 1, 0);
+            public static Version Latest { get; } = new Version(1, 2, 0);
             /// <summary>
             /// Array containing all compatible versions.
             /// </summary>
-            public static Version[] Compatible { get; } = new Version[] { new Version(1, 0, 0), new Version(1, 1, 0) };
+            public static Version[] Compatible { get; } = new Version[] { new Version(1, 0, 0), new Version(1, 1, 0), new Version(1, 2, 0) };
 
 
 
@@ -910,7 +814,7 @@ namespace Primes.Common.Files
                 return $"v{major}.{minor}.{patch}";
             }
             /// <summary>
-            /// Checks if or not two instances of <see cref="Version"/> have the same value.
+            /// Checks wether or not two instances of <see cref="Version"/> have the same value.
             /// </summary>
             /// <param name="a"></param>
             /// <param name="b"></param>
@@ -922,7 +826,7 @@ namespace Primes.Common.Files
                 return false;
             }
             /// <summary>
-            /// Checks if or not the given <see cref="Version"/> has the same value as the current instance.
+            /// Checks wether or not the given <see cref="Version"/> has the same value as the current instance.
             /// </summary>
             /// <param name="a"></param>
             /// <returns>True if the instance has the same value, false otherwise.</returns>
@@ -971,33 +875,67 @@ namespace Primes.Common.Files
         /// <summary>
         /// Struct that represents a file compression status.
         /// </summary>
-        public struct Comp
+        public readonly struct Comp
         {
-            public readonly bool IsCompressed;
-            public readonly bool PeakReadCompression;
+            private readonly byte flags;
+
+
+
+            /// <summary>
+            /// Flag for the use of Numerical Chain Compression
+            /// </summary>
+            public bool NCC { get => (flags & 0b00000010) != 0; }//NNS stands for Numerical Chain Compression
+            /// <summary>
+            /// Flag for the use of Optimized Number Sequence Storage
+            /// </summary>
+            public bool ONSS { get => (flags & 0b00000001) != 0; } //aka PeakRead Compression, ONSS stands for Optimized Number Sequence Storage
 
 
 
             /// <summary>
             /// Initializes a new instance of <see cref="Comp"/> with the given IsCompressed and PeakReadCompression flags.
             /// </summary>
-            /// <param name="IsCompressed">Wether or not the file is compressed.</param>
-            /// <param name="PeakReadCompression">Wether or not PeakRead Compression was used.</param>
-            public Comp(bool IsCompressed, bool PeakReadCompression)
+            /// <param name="NCC">Wether Numerical Chain Compression was used. <see cref="NCC"/></param>
+            /// <param name="ONSS">Wether Optimized Number Sequence Storage was used. <see cref="ONSS"/></param>
+            public Comp(bool NCC, bool ONSS)
             {
-                this.IsCompressed = IsCompressed; this.PeakReadCompression = PeakReadCompression;
+                flags = 0;
+                flags = NCC ? (byte)(flags | 0b00000010) : flags;
+                flags = ONSS ? (byte)(flags | 0b00000001) : flags;
             }
-
             /// <summary>
-            /// Initializes a new instance of <see cref="Comp"/> from a give byte storing the needed flags.
+            /// Initializes a new instance of <see cref="Comp"/> from a give byte containing the needed flags.
             /// </summary>
             /// <param name="source">Byte containing flags.</param>
             public Comp(byte source)
             {
-                IsCompressed = (source & 0b10000000) != 0b10000000;
-
-                PeakReadCompression = (source & 0b00000001) != 0b00000001;
+                flags = source;
             }
+
+
+
+            /// <summary>
+            /// Checks wether or not any compression was used.
+            /// </summary>
+            /// <returns>True if compression was used, false otherwise.</returns>
+            public bool IsCompressed() => NCC || ONSS;
+            /// <summary>
+            /// Checks wether or not the given <see cref="Comp"/> represents the use of any compression.
+            /// </summary>
+            /// <param name="comp">The value to check.</param>
+            /// <returns>True if compression was used, false otherwise.</returns>
+            public static bool IsCompressed(Comp comp) => comp.IsCompressed();
+            /// <summary>
+            /// Serializes the current <see cref="Comp"/> object.
+            /// </summary>
+            /// <returns><see cref="byte"/> containing the compression flags.</returns>
+            public byte GetByte() => flags;
+            /// <summary>
+            /// Serializes the given <see cref="Comp"/> object.
+            /// </summary>
+            /// <param name="comp">The value to serialize.</param>
+            /// <returns><see cref="byte"/> containing the compression flags.</returns>
+            public static byte GetByte(Comp comp) => comp.GetByte();
         }
 
 
