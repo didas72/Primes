@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Diagnostics;
-using System.Threading;
+
+
 
 using Primes;
 using Primes.Common;
@@ -13,63 +15,93 @@ namespace JobManagement
         static void Main()
         {
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
-            //Please ignore this project.            
+            //Please ignore this project.
 
-            //ulong[] src = new ulong[] { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 255646 };
-            ulong[] src = GetPrimes();
+            //Current code was made to update files made using older file strucutre versions to new formats and correct any errors.
 
-            Console.WriteLine("ONSS");
+            string sourcePath = "D:\\Documents\\primes\\fixing\\source\\";
+            string uncompressedPath = "D:\\Documents\\primes\\fixing\\uncompressed\\";
+            string cleanedPath = "D:\\Documents\\primes\\fixing\\cleaned\\";
+            string finalPath = "D:\\Documents\\primes\\fixing\\final\\";
 
-            byte[] ONSS_bytes = Compression.ONSS.Compress(src);
+            string[] sourceFiles = Directory.GetFiles(sourcePath, "*.7z");
 
-            ulong[] ONSS_ulongs = Compression.ONSS.Uncompress(ONSS_bytes);
+            uint passed = 0, failed = 0;
 
-            /*for (int i = 0; i < src.Length; i++)
+            foreach(string s in sourceFiles)
             {
-                Console.WriteLine($"{src[i]} u {ONSS_ulongs[i]}");
-            }*/
+                string dirName = Path.GetFileNameWithoutExtension(s);
 
-            for (int i = 0; i < src.Length; i++)
-            {
-                if (ONSS_ulongs[i] != src[i])
-                    Console.WriteLine($"Error at {i}, {ONSS_ulongs[i]} != {src[i]}s");
+                Console.WriteLine($"Uncompressing. {dirName}");
+
+                Uncompress7z(s, uncompressedPath);
+
+                string[] jobs = Directory.GetFiles(Path.Combine(uncompressedPath, dirName));
+
+                Directory.CreateDirectory(Path.Combine(cleanedPath, dirName));
+
+                Console.WriteLine("Checking and compressing.");
+
+                foreach(string j in jobs)
+                {
+                    string fileName = Path.GetFileName(j);
+
+                    PrimeJob job = PrimeJob.Deserialize(j);
+
+                    if (!PrimeJob.CheckJob(ref job, true, out string msg))
+                    {
+                        failed++;
+                        Console.WriteLine(msg);
+                    }
+                    else
+                        passed++;
+
+                    PrimeJob newJob = new PrimeJob(PrimeJob.Version.Latest, new PrimeJob.Comp(true, false), job.Batch, job.Start, job.Count, job.Progress, job.Primes);
+
+                    PrimeJob.Serialize(ref newJob, Path.Combine(cleanedPath, dirName, fileName));
+                }
+
+                Console.WriteLine("Compressing.");
+
+                Compress7z(Path.Combine(cleanedPath, dirName + "\\"), Path.Combine(finalPath, dirName + ".7z"));
+
+                Console.WriteLine("Cleaning.");
+
+                Directory.Delete(Path.Combine(uncompressedPath, dirName), true);
+                Directory.Delete(Path.Combine(cleanedPath, dirName), true);
             }
 
-            Console.WriteLine("NCC");
-
-            byte[] NCC_bytes = Compression.NCC.Compress(src);
-
-            ulong[] NCC_ulongs = Compression.NCC.Uncompress(NCC_bytes);
-
-            /*for (int i = 0; i < src.Length; i++)
-            {
-                Console.WriteLine($"{src[i]} u {NCC_ulongs[i]}");
-            }*/
-
-            for (int i = 0; i < src.Length; i++)
-            {
-                if (NCC_ulongs[i] != src[i])
-                    Console.WriteLine($"Error at {i}, {NCC_ulongs[i]} != {src[i]}s");
-            }
-
-            Console.WriteLine($"Source: {src.Length * 8}B");
-            Console.WriteLine($"ONSS Compressed: {ONSS_bytes.Length}B");
-            Console.WriteLine($"ONSS Compression ratio: {ONSS_bytes.Length * 100f / (src.Length * 8)}%");
-            Console.WriteLine($"NCC Compressed: {NCC_bytes.Length}B");
-            Console.WriteLine($"NCC Compression ratio: {NCC_bytes.Length * 100f / (src.Length * 8)}%");
+            Console.WriteLine($"Done. {passed} passed and {failed} failed.");
 
             Console.ReadLine();
         }
 
-        private static ulong[] GetPrimes()
+        public static void Compress7z(string sourceDir, string outDir)
         {
-            PrimeJob job = PrimeJob.Deserialize("D:\\Documents\\primes\\complete\\71\\700000000000.primejob");
+            ProcessStartInfo i = new ProcessStartInfo
+            {
+                FileName = "7za.exe",
+                Arguments = $"a {outDir} {sourceDir}",
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+            Console.WriteLine($"a {outDir} {sourceDir}");
 
-            PrimeJob.CheckJob(ref job, true, out string msg);
+            
+            Process p = Process.Start(i);
+            p.WaitForExit();
+        }
 
-            Console.WriteLine($"Check message: '{msg}'");
+        public static void Uncompress7z(string sourceDir, string outDir)
+        {
+            ProcessStartInfo i = new ProcessStartInfo
+            {
+                FileName = "7za.exe",
+                Arguments = $"x {sourceDir} -o{outDir}",
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
 
-            return job.Primes.ToArray();
+            Process p = Process.Start(i);
+            p.WaitForExit();
         }
     }
 }

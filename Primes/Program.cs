@@ -255,7 +255,7 @@ namespace Primes.Exec
 
             try
             {
-                KnownPrimesResourceFile.Deserialize(knwonPrimesFilePath, out KnownPrimesResourceFile file);
+                KnownPrimesResourceFile file = KnownPrimesResourceFile.Deserialize(knwonPrimesFilePath);
 
                 knowPrimes = file.Primes;
 

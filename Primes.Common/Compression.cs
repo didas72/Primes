@@ -45,15 +45,13 @@ namespace Primes.Common.Files
                         bytes.AddRange(BitConverter.GetBytes(ulongs[header]));
 
                         reference = ulongs[header];
-
-                        header++;
                     }
                     else
                     {
                         bytes.AddRange(BitConverter.GetBytes((ushort)delta));
-
-                        header++;
                     }
+
+                    header++;
                 }
 
                 return bytes.ToArray();
@@ -145,15 +143,13 @@ namespace Primes.Common.Files
                     {
                         bytes.AddRange(new byte[] { 0, 0 });
                         bytes.AddRange(BitConverter.GetBytes(ulongs[header]));
-
-                        header++;
                     }
                     else
                     {
                         bytes.AddRange(BitConverter.GetBytes((ushort)delta));
-
-                        header++;
                     }
+
+                    header++;
                 }
 
                 return bytes.ToArray();

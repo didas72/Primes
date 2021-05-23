@@ -369,7 +369,7 @@ namespace Primes.Common.Files
         /// <param name="count">The amount of numbers to be checked.</param>
         public PrimeJob(Version version, ulong start, ulong count)
         {
-            FileVersion = version; Batch = 0; Start = start; Count = count; Progress = 0; Primes = new List<ulong>();
+            FileVersion = version; FileCompression = Comp.Default; Batch = 0; Start = start; Count = count; Progress = 0; Primes = new List<ulong>();
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start, count, progress and primes. Batch defaults to 0.
@@ -381,7 +381,7 @@ namespace Primes.Common.Files
         /// <param name="primes">The prime numbers found in this job.</param>
         public PrimeJob(Version version, ulong start, ulong count, ulong progress, ref ulong[] primes)
         {
-            FileVersion = version; Batch = 0; Start = start; Count = count; Progress = progress; Primes = primes.ToList();
+            FileVersion = version; FileCompression = Comp.Default; Batch = 0; Start = start; Count = count; Progress = progress; Primes = primes.ToList();
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start, count, progress and primes. Batch defaults to 0.
@@ -393,7 +393,7 @@ namespace Primes.Common.Files
         /// <param name="primes">The prime numbers found in this job.</param>
         public PrimeJob(Version version, ulong start, ulong count, ulong progress, List<ulong> primes)
         {
-            FileVersion = version; Batch = 0; Start = start; Count = count; Progress = progress; Primes = primes;
+            FileVersion = version; FileCompression = Comp.Default; Batch = 0; Start = start; Count = count; Progress = progress; Primes = primes;
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start, count, and batch. Progress defaults to 0 and primes to empty.
@@ -404,7 +404,7 @@ namespace Primes.Common.Files
         /// <param name="count">The amount of numbers to be checked.</param>
         public PrimeJob(Version version, uint batch, ulong start, ulong count)
         {
-            FileVersion = version; Batch = batch; Start = start; Count = count; Progress = 0; Primes = new List<ulong>();
+            FileVersion = version; FileCompression = Comp.Default; Batch = batch; Start = start; Count = count; Progress = 0; Primes = new List<ulong>();
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start, count, batch and primes.
@@ -417,7 +417,7 @@ namespace Primes.Common.Files
         /// <param name="primes">The prime numbers found in this job.</param>
         public PrimeJob(Version version, uint batch, ulong start, ulong count, ulong progress, ref ulong[] primes)
         {
-            FileVersion = version; Batch = batch; Start = start; Count = count; Progress = progress; Primes = primes.ToList();
+            FileVersion = version; FileCompression = Comp.Default; Batch = batch; Start = start; Count = count; Progress = progress; Primes = primes.ToList();
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start, count, batch and primes.
@@ -430,7 +430,33 @@ namespace Primes.Common.Files
         /// <param name="primes">The prime numbers found in this job.</param>
         public PrimeJob(Version version, uint batch, ulong start, ulong count, ulong progress, List<ulong> primes)
         {
-            FileVersion = version; Batch = batch; Start = start; Count = count; Progress = progress; Primes = primes;
+            FileVersion = version; FileCompression = Comp.Default; Batch = batch; Start = start; Count = count; Progress = progress; Primes = primes;
+        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, compression, start, count, batch and primes.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="compression">The file compression method.</param>
+        /// <param name="batch">The batch to group this file with.</param>
+        /// <param name="start">The first number to be checked.</param>
+        /// <param name="count">The amount of numbers to be checked.</param>
+        public PrimeJob(Version version, Comp compression, uint batch, ulong start, ulong count)
+        {
+            FileVersion = version; FileCompression = compression; Batch = batch; Start = start; Count = count; Progress = 0; Primes = new List<ulong>();
+        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, compression, start, count, batch and primes.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="compression">The file compression method.</param>
+        /// <param name="batch">The batch to group this file with.</param>
+        /// <param name="start">The first number to be checked.</param>
+        /// <param name="count">The amount of numbers to be checked.</param>
+        /// <param name="progress">The amount of numbers that have already been checked.</param>
+        /// <param name="primes">The prime numbers found in this job.</param>
+        public PrimeJob(Version version, Comp compression, uint batch, ulong start, ulong count, ulong progress, List<ulong> primes)
+        {
+            FileVersion = version; FileCompression = compression; Batch = batch; Start = start; Count = count; Progress = progress; Primes = primes;
         }
 
 
@@ -628,7 +654,7 @@ namespace Primes.Common.Files
 
             for (int i = 0; i < jobs.Length; i++)
             {
-                jobs[i] = new PrimeJob(Version.Latest, b, start + (countPerJob * (ulong)i), countPerJob);
+                jobs[i] = new PrimeJob(Version.Latest, new Comp(true, false), b, start + (countPerJob * (ulong)i), countPerJob);
 
                 jobsInBatch++;
 
@@ -878,6 +904,13 @@ namespace Primes.Common.Files
         public readonly struct Comp
         {
             private readonly byte flags;
+
+
+
+            /// <summary>
+            /// Default value.
+            /// </summary>
+            public static Comp Default { get; } = new Comp(true, false);
 
 
 

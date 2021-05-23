@@ -123,7 +123,7 @@ namespace Primes.Exec
 
                 try
                 {
-                    job.Serialize(Path.Combine(jobPath, $"{job.Start}.primejob"));
+                    PrimeJob.Serialize(ref job, Path.Combine(jobPath, $"{job.Start}.primejob"));
                 }
                 catch (Exception e)
                 {
@@ -136,7 +136,7 @@ namespace Primes.Exec
 
                 try
                 {
-                    job.Serialize(Path.Combine(dumpPath, $"{job.Batch}\\{job.Start}.primejob"));
+                    PrimeJob.Serialize(ref job, Path.Combine(dumpPath, $"{job.Batch}\\{job.Start}.primejob"));
                 }
                 catch (Exception e)
                 {

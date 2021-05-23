@@ -262,7 +262,6 @@ namespace Primes.Common.Serializers
             }
 
             bytes.AddRange(primeBytes);
-            //copy prime bytes to normal bytes
 
             return bytes.ToArray();
         }
