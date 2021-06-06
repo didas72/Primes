@@ -171,31 +171,6 @@ namespace Primes.Exec
                         return false;
                     }
                 }
-
-                /*if (args[i] == "-u")
-                {
-                    if (args.Length >= i)
-                    {
-                        if (byte.TryParse(args[i + 1], out byte muArg))
-                        {
-                            if (100 > muArg && muArg > 0)
-                            {
-                                Properties.Settings.Default.maxCPUusage = muArg;
-                                Properties.Settings.Default.Save();
-                            }
-                            else
-                            {
-                                Print("Argument '-u' must be followed by an integer between 1 and 100.");
-                                return false;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Print("Argument '-u' must be followed by an integer between 1 and 100.");
-                        return false;
-                    }
-                }*/
             }
 
             return true;

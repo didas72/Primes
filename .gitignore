@@ -1,3 +1,5 @@
 # Ignore bin folders everywhere
 **/bin
 **/obj
+**/Intermediate
+**/v16

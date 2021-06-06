@@ -70,8 +70,8 @@ namespace Primes.Common
 		/// <returns>Upwards-rounded square root.</returns>
 		public static ulong UlongSqrtHigh(ulong number)
 		{
-			if (number < 1)
-				throw new ArgumentException(number + " is smaller than 1, the minimum value for the integer square root.");
+			if (number < 3)
+				return number;
 
 			ulong max = 4294967295, min = 1, c, c2;
 

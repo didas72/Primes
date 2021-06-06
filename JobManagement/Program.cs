@@ -17,8 +17,46 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
-            //Current code was made to update files made using older file strucutre versions to new formats and correct any errors.
+            Stopwatch w = new Stopwatch();
 
+            w.Start();
+
+            for (ulong i = 1; i < 100001; i++)
+            {
+                UlongSqrtHighSPDTEST(i * 163 - 3);
+            }
+
+            w.Stop();
+
+            Console.WriteLine(w.ElapsedMilliseconds);
+        }
+
+        public static ulong UlongSqrtHighSPDTEST(ulong number)
+        {
+            if (number < 3)
+                return number;
+
+            ulong max = 4294967295, min = 1, c, c2;
+
+            while (true)
+            {
+                c = min + ((max - min) / 2);
+                c2 = c * c;
+
+                if (c2 < number)
+                    min = c;
+                else if (c2 > number)
+                    max = c;
+                else
+                    return c;
+
+                if (max - min <= 1)
+                    return max;
+            }
+        }
+
+        public static void FixAndUpdate()
+        {
             string sourcePath = "D:\\Documents\\primes\\fixing\\source\\";
             string uncompressedPath = "D:\\Documents\\primes\\fixing\\uncompressed\\";
             string cleanedPath = "D:\\Documents\\primes\\fixing\\cleaned\\";
@@ -28,7 +66,7 @@ namespace JobManagement
 
             uint passed = 0, failed = 0;
 
-            foreach(string s in sourceFiles)
+            foreach (string s in sourceFiles)
             {
                 string dirName = Path.GetFileNameWithoutExtension(s);
 
@@ -42,7 +80,7 @@ namespace JobManagement
 
                 Console.WriteLine("Checking and compressing.");
 
-                foreach(string j in jobs)
+                foreach (string j in jobs)
                 {
                     string fileName = Path.GetFileName(j);
 
@@ -75,7 +113,7 @@ namespace JobManagement
 
             Console.ReadLine();
         }
-
+		
         public static void Compress7z(string sourceDir, string outDir)
         {
             ProcessStartInfo i = new ProcessStartInfo
