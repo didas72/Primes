@@ -14,11 +14,16 @@ namespace Primes.Common
 		/// <returns>True if the number is prime, false otherwise.</returns>
 		public static bool IsPrime(ulong number)
 		{
-			if (number == 2 || number == 3)
+			if (number < 2)
+				return false;
+
+			if (number < 4)
 				return true;
 
-			ulong current = 3;
-			ulong sqrt = UlongSqrtHigh(number);
+			if ((number % 2) == 0)
+				return false;
+
+			ulong current = 5, sqrt = UlongSqrtHigh(number);
 
 			while (current <= sqrt)
 			{
@@ -38,25 +43,35 @@ namespace Primes.Common
 		/// <returns>True if the number is prime, false otherwise.</returns>
 		public static bool IsPrime(ulong number, ref ulong[] knownPrimes)
 		{
-			int i = 0;
-			ulong knownPrime = 3;
-			ulong sqrt = UlongSqrtHigh(number);
+			if (number < 2)
+				return false;
 
-			do
+			if (number < 4)
+				return true;
+
+			if ((number % 2) == 0)
+				return false;
+
+			int i = 0;
+			ulong current = 5, sqrt = UlongSqrtHigh(number);
+
+			while (current < sqrt)
 			{
 				if (i < knownPrimes.Length)
 				{
-					knownPrime = knownPrimes[i++];
+					current = knownPrimes[i++];
 				}
 				else //if we run out of primes
 				{
-					knownPrime += 2;
+					current += 2;
+
+					if ((current % 2) == 0)
+						current--;
 				}
 
-				if (number % knownPrime == 0)
+				if (number % current == 0)
 					return false;
 			}
-			while (knownPrime < sqrt);
 
 			return true;
 		}

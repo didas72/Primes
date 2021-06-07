@@ -71,6 +71,7 @@ bool IsPrime(const unsigned long long& number, const unsigned long long* knownPr
 		if (i < KPLength)
 		{
 			current = *(knownPrimes + i);
+			i++;
 		}
 		else
 		{
@@ -82,8 +83,6 @@ bool IsPrime(const unsigned long long& number, const unsigned long long* knownPr
 
 		if ((number % current) == 0)
 			return false;
-
-		current += 2;
 	}
 
 	return true;
