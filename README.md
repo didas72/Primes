@@ -35,11 +35,11 @@ At some point we plan to take all the data we're collecting to do some research 
 ### The code projects
 
 Currently there are 5 projects inside this solution:
-* Primes(.exe)
-* PrimesSVC
+* Primes(.exe) (Somewhat broken)
+* PrimesSVC (W.I.P)
 * Job Management
 * Primes.Common
-* PrimesCpp
+* PrimesCpp (W.I.P)
 
 Primes(.exe) was the first project created. It is a C# console application that runs on .NET Framework 4.7.2 and has minimal UI. It runs several `Worker`s in parallel, each doing `PrimeJob`s on it's own and saving them to disk. Each worker has a progress bar shown in console as well as a progress percentage and a Batch indicator. (Details on what each of these words mean bellow)
 
