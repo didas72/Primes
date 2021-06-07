@@ -1,5 +1,5 @@
 # Primes
-This is a project that I have been working on with a friend of mine for a few months.
+This is a project that I have been working on with PeakRead for a few months.
 Here make programs to find and store prime numbers for later processing.
 
 As of when this README was written, no specific processing will be applied to the data and the project is just running for fun and practice.
@@ -47,4 +47,22 @@ The second method works in a similar way but it ignores numbers that are already
 4. Starting from the first one, check if the number is dividable by all the primes in the 'knownPrimes' array. If we run out of known primes, simply use the first method starting with the first odd number after the last number in the array.
 For this method to work, the given array must be ordered from lowest to highest and hold ALL the primes from 5 (or 2 or 3) to the last value in the array. If this array contains non-prime numbers the method will still work, it will just be slower.
 
-### Storing primes
+### Storing primes and distributing work
+
+In order to be able to distribute work between treads and different machines and to store primes in an organised and compact way we created `PrimeJob`s.
+Primejobs are structures in memory that hold all the data required to find primes. In the latest version (v1.2.0) the data contained in this structure is:
+* File version
+* File compression
+* Batch
+* First number to check
+* Amount of numbers to check
+* Amount of numbers already checked
+* Primes found so far
+
+With these values the programs are able to pause jobs, group them into 'batches', and run them independently from other computers.
+
+This stucture can also be written to disk with minimal modification on older versions and no modificaion at all on v1.2.0.
+
+In v1.2.0 compression was finally introduced. Before the files themselves had no compression and the primes found would be stored as raw UInt64s but after a few weeks of leaving the programs working the total file size was reaching 100GB. This is when we decided to implement compression in the file structure itself.
+
+There algorithms two compression algorithms implemented at the moment, both very similar. The first one, Optimized Numerical Sequence Storage or ONSS, was written by PeakRead and uses reference values and offsets to store primes. The second one, Numerical Chain Compression (NNC) by me, works by having a starting value and storing the difference between said value and the coming ones. Both algorithms are inspired in existing algorithms, we just optimised them for our purpose.
