@@ -39,7 +39,7 @@ bool IsPrime(const unsigned long long& number)
 	if ((number % 2) == 0)
 		return false;
 
-	ulong current = 3, sqrt = UlongSqrtHigh(number);
+	ulong current = 5, sqrt = UlongSqrtHigh(number);
 
 	while (current <= sqrt)
 	{
@@ -64,7 +64,7 @@ bool IsPrime(const unsigned long long& number, const unsigned long long* knownPr
 		return false;
 
 	unsigned int i = 0;
-	ulong current = 3, sqrt = UlongSqrtHigh(number);
+	ulong current = 5, sqrt = UlongSqrtHigh(number);
 
 	while (current <= sqrt)
 	{
