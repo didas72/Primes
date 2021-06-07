@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "ShortTypeNames.h"
+
 void Printf(std::string msg)
 {
 	std::cout << msg << std::endl;

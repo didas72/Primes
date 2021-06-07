@@ -2,4 +2,6 @@
 
 #include <iostream>
 
-unsigned long long GetUlongInput();
+#include "ShortTypeNames.h"
+
+ulong GetUlongInput();

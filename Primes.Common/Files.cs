@@ -301,7 +301,7 @@ namespace Primes.Common.Files
         /// <summary>
         /// Enum used to represent the status of a given <see cref="PrimeJob"/>.
         /// </summary>
-        public enum Status
+        public enum Status : byte
         {
             /// <summary>
             /// The given <see cref="PrimeJob"/> has not been started.

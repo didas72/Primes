@@ -153,13 +153,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ConsoleIO.cpp" />
-    <ClCompile Include="PrimesCommon.cpp" />
+    <ClCompile Include="Primes.Common.Files.PrimeJob.cpp" />
+    <ClCompile Include="Primes.Common.cpp" />
     <ClCompile Include="PrimesCpp.cpp" />
+    <ClCompile Include="Primes.Exec.Worker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConsoleIO.h" />
-    <ClInclude Include="PrimesCommon.h" />
+    <ClInclude Include="Primes.Common.Files.PrimeJob.h" />
+    <ClInclude Include="Primes.Common.h" />
     <ClInclude Include="PrimesCpp.h" />
+    <ClInclude Include="ShortTypeNames.h" />
+    <ClInclude Include="Primes.Exec.Worker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
