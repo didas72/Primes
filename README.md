@@ -2,16 +2,37 @@
 This is a project that I have been working on with PeakRead for a few months.
 Here make programs to find and store prime numbers for later processing.
 
-As of when this README was written, no specific processing will be applied to the data and the project is just running for fun and practice.
-Hopefully someone will be able to learn from it.
-
 If you have any suggestions or ideas for the project, feel free to let us know!
 
-(Anything bellow this is W.I.P.)
+## The project
+
+Even though this project is not developed by just me I will only talk for myself.
+
+### Motivation
+
+Some time after building my PC I got into overclocking and testing my rig's performance. After trying programs like Prime95 I was very curious to learn how they worked so I decided to do some research on the topic. Most sources stated that primality testing was commonly used for these programs I decided to give it a shot. I wrote a terrible method to check if a number was prime or not. I played around with it a little and did some speed tests but I had nothing to compare it's performance against, so I asked PeakRead if he had anything for me to compare to. He had already played around with this before so he had a few methods that I tested too. I then realised that my approach was TERRIBLE and we decided to take his method and optimise it as much as we could. A few improvements were made and at that point we thought: "Can we turn this into anything useful?" And so the project started.
+
+### How it progressed
+
+Before this repository was even created we wrote a few programs to do the same as the current ones do. These programs all worked with UInt32 values, were single-threaded and had no ability to be run in multiple machines at once. This meant that not only was the process a lot slower but also that we would hit the 32 bit capacity limit quickly. We hit that limit a few weeks after the best version of the program was completed and we decided to take it further. With a few failed attempts at writting a 64-bit, multi-threading capable version things were not looking promising. One day we eventually got to Primes(.exe) v1.0.0 and some time later this repo was created.
+
+### Current goal
+
+The current goal of the project is divided into a few milestones:
+* Running some of the computations in the GPU (probably using OpenCL)
+* Having automatically generated and distributed `PrimeJob`s
+* Checking all numbers up to the maximum value using UInt64 (2^64 - 1)
+* Doing some data analysis with the huge amount of data we will have then
+
+### Data analysis
+
+At some point we plan to take all the data we're collecting to do some research with it, we just don't know what we will do yet.
+
+
 
 ## How it works
 
-### The projects
+### The code projects
 
 Currently there are 5 projects inside this solution:
 * Primes(.exe)
@@ -28,7 +49,7 @@ Job Management is yet another C# project, this one is just a simple console prog
 
 Primes.Common is a C# library that holds definitions for `PrimeJob`, `KnownPrimesResourceFile`, `Mathf`, `Utils` and other general utilities. All these components are available to other C# projects so new features will automatically be implemented in all programs.
 
-PrimesCpp is the latest project. It is a C++ based Console program that will work very similarly to Primes(.exe), just written in C++. The purpose of this project is to learn C++ and to attempt to achieve higher performance and cross-platform capabilites than it's .NET counterpart.
+PrimesCpp is the latest project. It is a C++ based Console program that will work very similarly to Primes(.exe), just written in C++. The purpose of this project is to learn C++ and to attempt to achieve higher performance and cross-platform capabilites than it's .NET counterpart. It is also an objective to at some point use this project with OpenCL to achieve the best speeds.
 
 ### Finding primes
 
@@ -45,6 +66,7 @@ The second method works in a similar way but it ignores numbers that are already
 2. If the number is multiple of 2 or 3 it is prime.
 3. If the number is even it is not prime.
 4. Starting from the first one, check if the number is dividable by all the primes in the 'knownPrimes' array. If we run out of known primes, simply use the first method starting with the first odd number after the last number in the array.
+
 For this method to work, the given array must be ordered from lowest to highest and hold ALL the primes from 5 (or 2 or 3) to the last value in the array. If this array contains non-prime numbers the method will still work, it will just be slower.
 
 ### Storing primes and distributing work
@@ -59,10 +81,10 @@ Primejobs are structures in memory that hold all the data required to find prime
 * Amount of numbers already checked
 * Primes found so far
 
-With these values the programs are able to pause jobs, group them into 'batches', and run them independently from other computers.
+With these values the programs are able to pause jobs, run them independently from other computers and group them into 'batches'. Batches are just a way to ensure we never have too many PrimeJob files in one directorym the programs place them in separate folders for easier access.
 
 This stucture can also be written to disk with minimal modification on older versions and no modificaion at all on v1.2.0.
 
 In v1.2.0 compression was finally introduced. Before the files themselves had no compression and the primes found would be stored as raw UInt64s but after a few weeks of leaving the programs working the total file size was reaching 100GB. This is when we decided to implement compression in the file structure itself.
 
-There algorithms two compression algorithms implemented at the moment, both very similar. The first one, Optimized Numerical Sequence Storage or ONSS, was written by PeakRead and uses reference values and offsets to store primes. The second one, Numerical Chain Compression (NNC) by me, works by having a starting value and storing the difference between said value and the coming ones. Both algorithms are inspired in existing algorithms, we just optimised them for our purpose.
+There algorithms two compression algorithms implemented at the moment, both very similar. The first one, Optimized Numerical Sequence Storage or ONSS, was written by PeakRead and uses reference values and offsets to store primes. The second one, Numerical Chain Compression (NNC) by me, works by having a starting value and storing the difference between said value and the coming ones. Both of our algorithms are inspired in existing algorithms, we just optimised them for our purpose.
