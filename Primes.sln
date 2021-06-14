@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesSVC", "PrimesSVC\Prim
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrimesCpp", "PrimesCpp\PrimesCpp.vcxproj", "{35210A2D-8B0F-40DF-9601-BFCB0B12A4DB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesUI", "PrimesUI\PrimesUI.csproj", "{8F37414C-7455-4BB5-B2D5-916697476513}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +79,18 @@ Global
 		{35210A2D-8B0F-40DF-9601-BFCB0B12A4DB}.Release|x64.Build.0 = Release|x64
 		{35210A2D-8B0F-40DF-9601-BFCB0B12A4DB}.Release|x86.ActiveCfg = Release|Win32
 		{35210A2D-8B0F-40DF-9601-BFCB0B12A4DB}.Release|x86.Build.0 = Release|Win32
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Debug|x64.Build.0 = Debug|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Debug|x86.Build.0 = Debug|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Release|x64.ActiveCfg = Release|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Release|x64.Build.0 = Release|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Release|x86.ActiveCfg = Release|Any CPU
+		{8F37414C-7455-4BB5-B2D5-916697476513}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
