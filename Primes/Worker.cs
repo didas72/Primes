@@ -10,12 +10,12 @@ namespace Primes.Exec
 {
     public class Worker
     {
-        public Thread Thread { get; private set; }
+        public Thread WThread { get; private set; }
         public float Progress { get; private set; }
         public uint CurrentBatch { get; private set; } = 0;
         public bool IsWorking { get {
-                if (Thread == null) return false;
-                else return Thread.IsAlive;
+                if (WThread == null) return false;
+                else return WThread.IsAlive;
             }  }
         private volatile bool doWork = false;
         private readonly string dumpPath;
@@ -36,8 +36,8 @@ namespace Primes.Exec
         {
             doWork = true;
             
-            Thread = new Thread(() => DoWork(job));
-            Thread.Start();
+            WThread = new Thread(() => DoWork(job));
+            WThread.Start();
         }
         public void StopWork()
         {
@@ -71,7 +71,7 @@ namespace Primes.Exec
 
                     TimeSpan elapsed = DateTime.Now - startingTime;
 
-                    Program.LogEvent(Program.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WorkerThread#{workerId:D2}", true);
+                    Program.LogEvent(Program.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WorkerWThread#{workerId:D2}", true);
 
                     ConsoleUI.RegisterJobSeconds(workerId, elapsed.TotalSeconds);
 
@@ -102,7 +102,7 @@ namespace Primes.Exec
 
                     if (!doWork)
                     {
-                        Program.LogEvent(Program.EventType.Info, $"Pausing job {job.Start} of batch {job.Batch}. Saving.", $"WorkerThread#{workerId:D2}", true);
+                        Program.LogEvent(Program.EventType.Info, $"Pausing job {job.Start} of batch {job.Batch}. Saving.", $"WorkerWThread#{workerId:D2}", true);
 
                         break;
                     }
@@ -127,7 +127,7 @@ namespace Primes.Exec
                 }
                 catch (Exception e)
                 {
-                    Program.LogEvent(Program.EventType.Error, $"Failed to serialize prime job {jobPath}. {e.Message}", $"WorkerThread#{workerId:D2}", true);
+                    Program.LogEvent(Program.EventType.Error, $"Failed to serialize prime job {jobPath}. {e.Message}", $"WorkerWThread#{workerId:D2}", true);
                 }
             }
             else
@@ -140,7 +140,7 @@ namespace Primes.Exec
                 }
                 catch (Exception e)
                 {
-                    Program.LogEvent(Program.EventType.Error, $"Failed to serialize prime job {jobPath}. {e.Message}", $"WorkerThread#{workerId:D2}", true);
+                    Program.LogEvent(Program.EventType.Error, $"Failed to serialize prime job {jobPath}. {e.Message}", $"WorkerWThread#{workerId:D2}", true);
                 }
             }
 

@@ -126,8 +126,8 @@ namespace Primes.Common
         {
             List<string> files = new List<string>();
 
-            foreach (string s in Directory.GetFiles(directory))
-                files.AddRange(Directory.GetFiles(s, searchPattern));
+            foreach (string f in Directory.GetFiles(directory))
+                files.Add(f);
 
             foreach (string d in Directory.GetDirectories(directory))
                 files.AddRange(GetSubFiles(d, searchPattern));

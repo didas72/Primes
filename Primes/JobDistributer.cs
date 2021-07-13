@@ -87,11 +87,16 @@ namespace Primes.Exec
                         break;
                     }
                 }
+
+                Thread.Sleep(50);
             }
 
             WaitForAllWorkers();
             Program.Exit(true);
         }
+
+
+
         private void StopAllWorkers()
         {
             Program.LogEvent(Program.EventType.Info, "Stopping Workers.", "MainThread", true);
