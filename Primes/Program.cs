@@ -49,25 +49,14 @@ namespace Primes.Exec
 
             if (!resourcesLoaded)
             {
-                string str;
-
-                do
-                {
-                    LogEvent(EventType.Warning, "Not all resources files were found. This will make prime search significantly slower. Would you like to (P)roceed or (E)xit?", "MainThread", true);
-                    ConsoleKeyInfo info = Console.ReadKey(true);
-                    str = info.KeyChar.ToString().ToLowerInvariant();
-                }
-                while (str != "p" && str != "e");
-
-                if (str == "e")
-                    Exit(false);
+                LogEvent(EventType.Warning, "Not all resources files were found. This will make prime search significantly slower.", "MainThread", true);
             }
 
             StartWork();
 
             ConsoleUI.StartUI();
 
-            while(doWait)
+            while (doWait)
             {
                 if (Console.KeyAvailable)
                 {
@@ -238,7 +227,7 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                LogEvent(EventType.Warning, $"Failed to load knwon primes resource file: {e.Message}", "MainThread", false);
+                LogEvent(EventType.Warning, $"Failed to load knwon primes resource file: {e.Message}; {e.StackTrace}", "MainThread", false);
 
                 resourcesLoaded = false;
             }

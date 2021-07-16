@@ -17,6 +17,10 @@ namespace Primes.Common.Files
         /// </summary>
         public Version FileVersion { get; }
         /// <summary>
+        /// The file compression flags.
+        /// </summary>
+        public Comp FileCompression { get; }
+        /// <summary>
         /// The highest number checked when creating the file.
         /// </summary>
         public ulong HighestCheckedInFile { get; set; }
@@ -53,6 +57,16 @@ namespace Primes.Common.Files
         {
             FileVersion = version; HighestCheckedInFile = highestCheckedInFile; Primes = primes;
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="KnownPrimesResourceFile"/> of the specified version, containing the given primes and keeping the 'highestCheckedInFile' parameter.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="compression">The file compression method.</param>
+        /// <param name="primes">The primes to be stored.</param>
+        public KnownPrimesResourceFile(Version version, Comp compression, ulong[] primes)
+        {
+            FileVersion = version; FileCompression = compression; Primes = primes;
+        }
 
 
 
@@ -84,11 +98,15 @@ namespace Primes.Common.Files
             }
             else if (ver.IsLatest())
             {
-                file = KnownPrimesResourceFileSerializer.Deserializev1_1_0(bytes);
+                file = KnownPrimesResourceFileSerializer.Deserializev1_2_0(bytes);
             }
             else
             {
-                if (ver.IsEqual(new Version(1, 0, 0)))
+                if (ver.IsEqual(new Version(1, 1, 0)))
+                {
+                    file = KnownPrimesResourceFileSerializer.Deserializev1_1_0(bytes);
+                }
+                else if (ver.IsEqual(new Version(1, 0, 0)))
                 {
                     file = KnownPrimesResourceFileSerializer.Deserializev1_0_0(bytes);
                 }
@@ -118,13 +136,19 @@ namespace Primes.Common.Files
             }
             else if (file.FileVersion.IsLatest())
             {
-                byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_1_0(ref file);
+                byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_2_0(ref file);
 
                 File.WriteAllBytes(path, bytes);
             }
             else
             {
-                if (file.FileVersion.IsEqual(new Version(1, 0, 0)))
+                if (file.FileVersion.IsEqual(new Version(1, 1, 0)))
+                {
+                    byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_1_0(ref file);
+
+                    File.WriteAllBytes(path, bytes);
+                }
+                else if (file.FileVersion.IsEqual(new Version(1, 0, 0)))
                 {
                     byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_0_0(ref file);
 
@@ -186,11 +210,11 @@ namespace Primes.Common.Files
             /// <summary>
             /// Default latest instance.
             /// </summary>
-            public static Version Latest { get; } = new Version(1, 1, 0);
+            public static Version Latest { get; } = new Version(1, 2, 0);
             /// <summary>
             /// Array containing all compatible versions.
             /// </summary>
-            public static Version[] Compatible { get; } = new Version[] { new Version(1, 0, 0), new Version(1, 1, 0) };
+            public static Version[] Compatible { get; } = new Version[] { new Version(1, 0, 0), new Version(1, 1, 0), new Version(1, 2, 0) };
 
 
 
@@ -270,6 +294,81 @@ namespace Primes.Common.Files
             {
                 return Compatible.Contains(this);
             }
+        }
+
+
+
+        /// <summary>
+        /// Struct that represents a file compression status.
+        /// </summary>
+        public readonly struct Comp
+        {
+            private readonly byte flags;
+
+
+
+            /// <summary>
+            /// Default value.
+            /// </summary>
+            public static Comp Default { get; } = new Comp(true, false);
+
+
+
+            /// <summary>
+            /// Flag for the use of Numerical Chain Compression
+            /// </summary>
+            public bool NCC { get => (flags & 0b00000010) != 0; }//NNS stands for Numerical Chain Compression
+            /// <summary>
+            /// Flag for the use of Optimized Number Sequence Storage
+            /// </summary>
+            public bool ONSS { get => (flags & 0b00000001) != 0; } //aka PeakRead Compression, ONSS stands for Optimized Number Sequence Storage
+
+
+
+            /// <summary>
+            /// Initializes a new instance of <see cref="Comp"/> with the given IsCompressed and PeakReadCompression flags.
+            /// </summary>
+            /// <param name="NCC">Wether Numerical Chain Compression was used. <see cref="NCC"/></param>
+            /// <param name="ONSS">Wether Optimized Number Sequence Storage was used. <see cref="ONSS"/></param>
+            public Comp(bool NCC, bool ONSS)
+            {
+                flags = 0;
+                flags = NCC ? (byte)(flags | 0b00000010) : flags;
+                flags = ONSS ? (byte)(flags | 0b00000001) : flags;
+            }
+            /// <summary>
+            /// Initializes a new instance of <see cref="Comp"/> from a give byte containing the needed flags.
+            /// </summary>
+            /// <param name="source">Byte containing flags.</param>
+            public Comp(byte source)
+            {
+                flags = source;
+            }
+
+
+
+            /// <summary>
+            /// Checks wether or not any compression was used.
+            /// </summary>
+            /// <returns>True if compression was used, false otherwise.</returns>
+            public bool IsCompressed() => NCC || ONSS;
+            /// <summary>
+            /// Checks wether or not the given <see cref="Comp"/> represents the use of any compression.
+            /// </summary>
+            /// <param name="comp">The value to check.</param>
+            /// <returns>True if compression was used, false otherwise.</returns>
+            public static bool IsCompressed(Comp comp) => comp.IsCompressed();
+            /// <summary>
+            /// Serializes the current <see cref="Comp"/> object.
+            /// </summary>
+            /// <returns><see cref="byte"/> containing the compression flags.</returns>
+            public byte GetByte() => flags;
+            /// <summary>
+            /// Serializes the given <see cref="Comp"/> object.
+            /// </summary>
+            /// <param name="comp">The value to serialize.</param>
+            /// <returns><see cref="byte"/> containing the compression flags.</returns>
+            public static byte GetByte(Comp comp) => comp.GetByte();
         }
 
 

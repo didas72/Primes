@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Diagnostics;
-
+using System.Collections.Generic;
 
 
 using Primes;
@@ -17,20 +17,144 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
-            Stopwatch w = new Stopwatch();
+            /*List<byte> bs = new List<byte>();
+            ulong[] uls = new ulong[] { 1, 3, 5, 67555 };
+            Compression.NCC.StreamCompress(ref bs, ref uls);
+            foreach (byte b in bs) Console.WriteLine(b.ToString("X2"));
+            Console.WriteLine("End");
+            ulong[] uls2 = new ulong[] { 67566, 67576 };
+            Compression.NCC.StreamCompress(ref bs, ref uls2);
+            foreach (byte b in bs) Console.WriteLine(b.ToString("X2"));
+            Console.WriteLine("End");*/
 
-            w.Start();
+            /*DoAll();
+            Console.WriteLine("Testing");
+            DoTest();*/
+            
 
-            for (ulong i = 1; i < 100001; i++)
-            {
-                UlongSqrtHighSPDTEST(i * 163 - 3);
-            }
-
-            w.Stop();
-
-            Console.WriteLine(w.ElapsedMilliseconds);
+            Console.WriteLine("//Done");
+            Console.ReadLine();
         }
 
+        public static void DoAll()
+        {
+            FileStream stream = File.Open("E:\\Documents\\primes\\working\\knownPrimes.rsrc", FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+            string[] jobs = Utils.SortFiles(Directory.GetFiles("E:\\Documents\\primes\\working", "*.primejob"));
+
+            ulong last = 0;
+            int count = 0, countf = 0;
+
+
+
+            //add header
+            stream.Write(new byte[] { 1, 2, 0, new KnownPrimesResourceFile.Comp(true, false).GetByte(), 0, 0, 0, 0 }, 0, 8);
+            stream.Flush();
+
+
+
+            foreach (string s in jobs)
+            {
+                //Console.WriteLine(s);
+
+                int max = int.MaxValue;
+
+                PrimeJob job = PrimeJob.Deserialize(s);
+
+                countf += job.Primes.Count;
+
+                for (int i = 0; i < job.Primes.Count; i++)
+                {
+                    if (job.Primes[i] > 4294967295)
+                    {
+                        max = i - 1;
+                        countf -= job.Primes.Count - max;
+                        break;
+                    }
+                    else count++;
+                }
+
+                ulong[] append = job.Primes.GetRange(0, Math.Min(job.Primes.Count, max)).ToArray();
+
+                Compression.NCC.StreamCompress(stream, ref append, ref last);
+            }
+
+
+            Console.WriteLine(last);
+            Console.WriteLine("Saved");
+            Console.WriteLine(count);
+            Console.WriteLine(countf);
+            stream.Seek(4, SeekOrigin.Begin);
+            stream.Write(BitConverter.GetBytes(count), 0, 4);
+
+            stream.Flush();
+            stream.Close();
+            stream.Dispose();
+        }
+
+        public static void DoTest()
+        {
+            bool brk1 = false, brk2 = false; int ff = 0;
+
+            FileStream stream = File.OpenRead("E:\\Documents\\primes\\working\\knownPrimes.rsrc");
+            Console.WriteLine("Stream set");
+
+            byte[] buffer = new byte[8];
+            stream.Read(buffer, 0, 8);
+
+            ulong[] nums = new ulong[BitConverter.ToInt32(buffer, 4)];
+
+            byte[] val = new byte[8];
+
+            stream.Read(val, 0, 8);
+            stream.Seek(8, SeekOrigin.Begin);
+
+            foreach (byte b in val) Console.WriteLine(b);
+
+            Console.WriteLine(BitConverter.ToUInt64(val, 0));
+            
+
+
+            Console.WriteLine("Uncompressing");
+            Compression.NCC.StreamUncompress(stream, ref nums);
+
+            Console.WriteLine("Test values");
+            PrimeJob f = PrimeJob.Deserialize("E:\\Documents\\primes\\working\\0.primejob");
+            PrimeJob s = PrimeJob.Deserialize("E:\\Documents\\primes\\working\\10000000.primejob");
+
+            Console.WriteLine("Test 1");
+            for (int i = 0; i < f.Primes.Count; i++)
+            {
+                if (nums[i] != f.Primes[i])
+                {
+                    brk1 = true;
+                    break;
+                }
+            }
+
+            Console.WriteLine("Test 2");
+            for (int i = 0; i < s.Primes.Count; i++)
+            {
+                if (nums[f.Primes.Count + i] != s.Primes[i])
+                {
+                    brk2 = true; ff = f.Primes.Count + i;
+                    break;
+                }
+            }
+
+            Console.WriteLine($"1 {brk1} 2 {brk2}");
+
+            for (int i = 664579; i < 664579 + 200; i++)
+            {
+                Console.WriteLine($"{s.Primes[i - 664579]} => {nums[i]}");
+            }
+
+            if (ff != 0)
+                Console.WriteLine($"FF @{ff} is {s.Primes[ff - f.Primes.Count]} => {nums[ff]}");
+
+            Console.WriteLine($"Size in memory is {nums.Length * 8}B or {(nums.Length * 8f) / 1024f}kB or {(nums.Length * 8f) / 1048576f}MB");
+        }
+
+        /*
         public static ulong UlongSqrtHighSPDTEST(ulong number)
         {
             if (number < 3)
@@ -141,5 +265,6 @@ namespace JobManagement
             Process p = Process.Start(i);
             p.WaitForExit();
         }
+        */
     }
 }

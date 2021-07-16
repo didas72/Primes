@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Primes.Common.Files
 {
@@ -115,6 +116,8 @@ namespace Primes.Common.Files
         /// </summary>
         public static class NCC
         {
+            private const int BlockSize = 65536;
+
             /// <summary>
             /// Compresses an <see cref="ulong"/> array using NCC.
             /// </summary>
@@ -154,9 +157,6 @@ namespace Primes.Common.Files
 
                 return bytes.ToArray();
             }
-
-
-
             /// <summary>
             /// Uncompresses an <see cref="ulong"/> array using NCCS.
             /// </summary>
@@ -205,6 +205,131 @@ namespace Primes.Common.Files
                 }
 
                 return ulongs.ToArray();
+            }
+
+
+
+            /// <summary>
+            /// Writes an array of compressed ulongs to a stream.
+            /// </summary>
+            /// <param name="stream">The stream to write to.</param>
+            /// <param name="append">The array to compress.</param>
+            /// <param name="last">The last value compressed to the stream. Will update once compression is complete.</param>
+            /// <remarks>Useful when dealing with large data sets.</remarks>
+            public static void StreamCompress(Stream stream, ref ulong[] append, ref ulong last)
+            {
+                int header = 0;
+                ulong delta;
+                List<byte> block = new List<byte>();
+
+                if (last == 0)
+                {
+                    block.AddRange(BitConverter.GetBytes(append[header++]));
+                    last = append[0];
+                }
+
+                while (header < append.Length)
+                {
+                    delta = append[header] - last;
+
+                    if (delta > (ulong)0xFFFF)
+                    {
+                        block.AddRange(new byte[] { 0, 0 });
+                        block.AddRange(BitConverter.GetBytes(append[header]));
+                    }
+                    else
+                    {
+                        block.AddRange(BitConverter.GetBytes((ushort)delta));
+                    }
+
+                    last = append[header];
+                    header++;
+
+                    if (block.Count > BlockSize)
+                    {
+                        stream.Write(block.ToArray(), 0, block.Count);
+                        stream.Flush();
+                        block.Clear();
+                    }
+                }
+
+                stream.Write(block.ToArray(), 0, block.Count);
+                block.Clear();
+                stream.Flush();
+            }
+            /// <summary>
+            /// Reads an array of compressed ulongs from a stream.
+            /// </summary>
+            /// <param name="stream">The stream to read from.</param>
+            /// <param name="uncompress">The uncompressed ulong array. (Must be set before calling).</param>
+            /// <remarks>Useful when dealing with large data sets.</remarks>
+            public static void StreamUncompress(Stream stream, ref ulong[] uncompress)
+            {
+                ushort delta;
+                byte[] block = new byte[BlockSize];
+                ulong value, last = 0;
+                int unHeader = 0, blockHeader = 0;
+                bool pendingBlockRead = true;
+
+
+            loadBlock:
+                LoadBlock(ref stream, ref block, ref pendingBlockRead, 0);
+
+                blockHeader = 0;
+
+                if (last == 0)
+                {
+                    uncompress[unHeader] = BitConverter.ToUInt64(block, blockHeader);
+                    blockHeader += 8;
+                    last = uncompress[unHeader++];
+                }
+
+                while (blockHeader < block.Length - 1)
+                {
+                    delta = BitConverter.ToUInt16(block, blockHeader);
+                    blockHeader += 2;
+
+                    if (delta == 0)
+                    {
+                        if (blockHeader >= block.Length)
+                        {
+                            if (!pendingBlockRead)
+                                throw new Exception("Out of blocks.");
+
+                            LoadBlock(ref stream, ref block, ref pendingBlockRead, block.Length - blockHeader);
+                            blockHeader -= BlockSize;
+                        }
+
+                        value = BitConverter.ToUInt64(block, blockHeader);
+                        blockHeader += 8;
+
+                        uncompress[unHeader++] = value;
+                        last = value;
+                    }
+                    else
+                    {
+                        value = last + delta;
+
+                        uncompress[unHeader++] = value;
+                        last = value;
+                    }
+                }
+
+                if (pendingBlockRead)
+                    goto loadBlock;
+            }
+
+
+
+            private static void LoadBlock(ref Stream stream, ref byte[] block, ref bool pendingBlockRead, int preserve)
+            {
+                int size = preserve + (int)Math.Min(BlockSize, stream.RemainingBytes());
+
+                block = new byte[size];
+                stream.Read(block, preserve, (int)Math.Min(BlockSize, stream.RemainingBytes()));
+
+                if (stream.RemainingBytes() == 0)
+                    pendingBlockRead = false;
             }
         }
 

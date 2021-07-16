@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Primes.Common
 {
@@ -62,6 +63,15 @@ namespace Primes.Common
             Array.Copy(array, ret, amount);
 
             return ret;
+        }
+        /// <summary>
+        /// Gets the number of remaining bytes in the stream;
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <returns></returns>
+        public static long RemainingBytes(this Stream stream)
+        {
+            return stream.Length - stream.Position;
         }
     }
 }

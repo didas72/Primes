@@ -290,15 +290,21 @@ namespace Primes.Common.Serializers
     {
         //Version Definitions
         /*  knownPrimes.rsrc v1.0.0
-         *  3 bytes     Version     version (1 byte major, 1 byte minor, 1 byte patch)
-         *  4 bytes     int         primesInFile
-         *  xxx         ulong[]     primes
+         *  0   3 bytes     Version     version (1 byte major, 1 byte minor, 1 byte patch)
+         *  3   4 bytes     int         primesInFile
+         *  7   xxx         ulong[]     primes
          */
         /*  knownPrimes.rsrc v1.1.0
-         *  3 bytes     Version     version (1 byte major, 1 byte minor, 1 byte patch)
-         *  8 bytes     ulong       highestCheckedInFile (highest number till which we checked to make this file, used to later append more primes to the file)
-         *  4 bytes     int         primesInFile
-         *  xxx         ulong[]     primes
+         *  0   3 bytes     Version     version (1 byte major, 1 byte minor, 1 byte patch)
+         *  3   8 bytes     ulong       highestCheckedInFile (highest number till which we checked to make this file, used to later append more primes to the file)
+         *  11  4 bytes     int         primesInFile
+         *  15  xxx         ulong[]     primes
+         */
+        /* knownPrimes.rsrc v1.2.0
+         *  0   3 bytes     Version     version (1 byte major, 1 byte minor, 1 byte patch)
+         *  3   1 byte      Comp        compression header (0b000000, 1 bit NNC, 1 bit ONSS)
+         *  4   4 bytes     int         primeCount
+         *  8   xxx         ulong[]     (compressed) primes
          */
 
 
@@ -331,6 +337,30 @@ namespace Primes.Common.Serializers
             Buffer.BlockCopy(bytes, 15, primes, 0, primesInFile * 8);
 
             return new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 1, 0), highestCheckedInFile, primes);
+        }
+        /// <summary>
+        /// Deserializes a <see cref="KnownPrimesResourceFile"/> of version 1.2.0 from a byte array.
+        /// </summary>
+        /// <param name="bytes">Byte array contaning the serialized <see cref="KnownPrimesResourceFile"/>.</param>
+        /// <returns></returns>
+        public static KnownPrimesResourceFile Deserializev1_2_0(byte[] bytes)
+        {
+            KnownPrimesResourceFile.Comp comp = new KnownPrimesResourceFile.Comp(bytes[4]);
+
+            ulong[] primes;
+            byte[] primeBytes = new byte[bytes.Length - 4];
+
+            primes = new ulong[BitConverter.ToInt32(bytes, 4)];
+            Array.Copy(bytes, 8, primeBytes, 0, primeBytes.Length);
+
+            if (comp.NCC)
+                primes = Compression.NCC.Uncompress(primeBytes);
+            else if (comp.ONSS)
+                primes = Compression.ONSS.Uncompress(primeBytes);
+            else
+                primes = GetRawPrimes(primeBytes);
+
+            return new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 2, 0), comp, primes);
         }
 
 
@@ -369,6 +399,37 @@ namespace Primes.Common.Serializers
             Buffer.BlockCopy(file.Primes, 0, bytes, 15, file.Primes.Length * 8);
 
             return bytes;
+        }
+        /// <summary>
+        /// Serializes a <see cref="KnownPrimesResourceFile"/> of version 1.2.0 to a byte array.
+        /// </summary>
+        /// <param name="file"><see cref="KnownPrimesResourceFile"/> to serialize.</param>
+        /// <returns></returns>
+        public static byte[] Serializev1_2_0(ref KnownPrimesResourceFile file)
+        {
+            byte[] bytes = new byte[8 + file.Primes.Length * 8];
+
+            bytes[0] = file.FileVersion.major; bytes[1] = file.FileVersion.minor; bytes[2] = file.FileVersion.patch;
+            bytes[3] = file.FileCompression.GetByte();
+
+            Array.Copy(BitConverter.GetBytes(file.Primes.Length), 0, bytes, 4, 4);
+            Buffer.BlockCopy(file.Primes, 0, bytes, 8, file.Primes.Length * 8);
+
+            return bytes;
+        }
+
+
+
+        private static ulong[] GetRawPrimes(byte[] bytes)
+        {
+            if (bytes.Length % 8 != 0)
+                throw new ArgumentException("Byte array must have a length that is dividable by 8.");
+
+            ulong[] ulongs = new ulong[bytes.Length / 8];
+
+            Buffer.BlockCopy(bytes, 0, ulongs, 0, ulongs.Length);
+
+            return ulongs;
         }
     }
 }
