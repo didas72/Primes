@@ -216,7 +216,7 @@ namespace Primes.Common.Files
             /// <param name="append">The array to compress.</param>
             /// <param name="last">The last value compressed to the stream. Will update once compression is complete.</param>
             /// <remarks>Useful when dealing with large data sets.</remarks>
-            public static void StreamCompress(Stream stream, ref ulong[] append, ref ulong last)
+            public static void StreamCompress(Stream stream, ulong[] append, ref ulong last)
             {
                 int header = 0;
                 ulong delta;
@@ -263,12 +263,12 @@ namespace Primes.Common.Files
             /// <param name="stream">The stream to read from.</param>
             /// <param name="uncompress">The uncompressed ulong array. (Must be set before calling).</param>
             /// <remarks>Useful when dealing with large data sets.</remarks>
-            public static void StreamUncompress(Stream stream, ref ulong[] uncompress)
+            public static void StreamUncompress(Stream stream, ulong[] uncompress)
             {
                 ushort delta;
                 byte[] block = new byte[BlockSize];
                 ulong value, last = 0;
-                int unHeader = 0, blockHeader = 0;
+                int unHeader = 0, blockHeader;
                 bool pendingBlockRead = true;
 
 

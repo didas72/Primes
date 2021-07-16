@@ -3,7 +3,6 @@ using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
 
-
 using Primes;
 using Primes.Common;
 using Primes.Common.Files;
@@ -27,9 +26,9 @@ namespace JobManagement
             foreach (byte b in bs) Console.WriteLine(b.ToString("X2"));
             Console.WriteLine("End");*/
 
-            /*DoAll();
+            //DoAll();
             Console.WriteLine("Testing");
-            DoTest();*/
+            DoTest();
             
 
             Console.WriteLine("//Done");
@@ -75,7 +74,7 @@ namespace JobManagement
 
                 ulong[] append = job.Primes.GetRange(0, Math.Min(job.Primes.Count, max)).ToArray();
 
-                Compression.NCC.StreamCompress(stream, ref append, ref last);
+                Compression.NCC.StreamCompress(stream, append, ref last);
             }
 
 
@@ -93,10 +92,9 @@ namespace JobManagement
 
         public static void DoTest()
         {
-            bool brk1 = false, brk2 = false; int ff = 0;
+            bool brk2 = false;
 
             FileStream stream = File.OpenRead("E:\\Documents\\primes\\working\\knownPrimes.rsrc");
-            Console.WriteLine("Stream set");
 
             byte[] buffer = new byte[8];
             stream.Read(buffer, 0, 8);
@@ -107,49 +105,26 @@ namespace JobManagement
 
             stream.Read(val, 0, 8);
             stream.Seek(8, SeekOrigin.Begin);
-
-            foreach (byte b in val) Console.WriteLine(b);
-
-            Console.WriteLine(BitConverter.ToUInt64(val, 0));
             
 
 
             Console.WriteLine("Uncompressing");
-            Compression.NCC.StreamUncompress(stream, ref nums);
 
-            Console.WriteLine("Test values");
-            PrimeJob f = PrimeJob.Deserialize("E:\\Documents\\primes\\working\\0.primejob");
-            PrimeJob s = PrimeJob.Deserialize("E:\\Documents\\primes\\working\\10000000.primejob");
+            Stopwatch time = new Stopwatch();
+            time.Start();
+            Compression.NCC.StreamUncompress(stream, nums);
+            time.Stop();
 
-            Console.WriteLine("Test 1");
-            for (int i = 0; i < f.Primes.Count; i++)
-            {
-                if (nums[i] != f.Primes[i])
-                {
-                    brk1 = true;
-                    break;
-                }
-            }
+            Console.WriteLine($"Elapsed {time.ElapsedMilliseconds}ms");
 
-            Console.WriteLine("Test 2");
-            for (int i = 0; i < s.Primes.Count; i++)
-            {
-                if (nums[f.Primes.Count + i] != s.Primes[i])
-                {
-                    brk2 = true; ff = f.Primes.Count + i;
-                    break;
-                }
-            }
+            PrimeJob s = PrimeJob.Deserialize("E:\\Documents\\primes\\working\\4290000000.primejob");
 
-            Console.WriteLine($"1 {brk1} 2 {brk2}");
 
-            for (int i = 664579; i < 664579 + 200; i++)
-            {
-                Console.WriteLine($"{s.Primes[i - 664579]} => {nums[i]}");
-            }
 
-            if (ff != 0)
-                Console.WriteLine($"FF @{ff} is {s.Primes[ff - f.Primes.Count]} => {nums[ff]}");
+            if (nums[nums.Length - 1] != s.Primes[s.Primes.Count - 1])
+                brk2 = false;
+
+            Console.WriteLine($"Last is intact: {brk2}");
 
             Console.WriteLine($"Size in memory is {nums.Length * 8}B or {(nums.Length * 8f) / 1024f}kB or {(nums.Length * 8f) / 1048576f}MB");
         }

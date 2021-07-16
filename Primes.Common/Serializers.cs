@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 using Primes.Common.Files;
 
@@ -350,7 +351,6 @@ namespace Primes.Common.Serializers
             ulong[] primes;
             byte[] primeBytes = new byte[bytes.Length - 4];
 
-            primes = new ulong[BitConverter.ToInt32(bytes, 4)];
             Array.Copy(bytes, 8, primeBytes, 0, primeBytes.Length);
 
             if (comp.NCC)
@@ -361,6 +361,43 @@ namespace Primes.Common.Serializers
                 primes = GetRawPrimes(primeBytes);
 
             return new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 2, 0), comp, primes);
+        }
+        /// <summary>
+        /// Deserializes a <see cref="KnownPrimesResourceFile"/> of version 1.2.0 from a stream.
+        /// </summary>
+        /// <param name="stream">Stream containing the <see cref="KnownPrimesResourceFile"/>.</param>
+        /// <returns></returns>
+        /// <remarks>Useful for handling large files.</remarks>
+        public static KnownPrimesResourceFile Deserializev1_2_0(Stream stream)
+        {
+            byte[] buffer = new byte[5];
+
+            stream.Seek(3, SeekOrigin.Begin);
+            stream.Read(buffer, 0, 5);
+
+            KnownPrimesResourceFile.Comp comp = new KnownPrimesResourceFile.Comp(buffer[0]);
+            KnownPrimesResourceFile file = new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 2, 0), comp, new ulong[BitConverter.ToInt32(buffer, 0)]);
+
+            if (comp.NCC)
+            {
+                Compression.NCC.StreamUncompress(stream, file.Primes);
+            }
+            else if (comp.ONSS)
+            {
+                byte[] primeBytes = new byte[stream.Length - 5];
+                stream.Read(primeBytes, 0, primeBytes.Length);
+
+                file.Primes = Compression.ONSS.Uncompress(primeBytes);
+            }
+            else
+            {
+                byte[] primeBytes = new byte[stream.Length - 5];
+                stream.Read(primeBytes, 0, primeBytes.Length);
+
+                file.Primes = GetRawPrimes(primeBytes);
+            }
+
+            return file;
         }
 
 

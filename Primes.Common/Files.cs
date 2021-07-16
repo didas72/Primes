@@ -88,26 +88,31 @@ namespace Primes.Common.Files
         {
             KnownPrimesResourceFile file = new KnownPrimesResourceFile(Version.Zero, new ulong[] { 0 });
 
-            byte[] bytes = File.ReadAllBytes(path);
+            FileStream stream = File.OpenRead(path);
 
-            Version ver = new Version(bytes[0], bytes[1], bytes[2]);
+            byte[] verB = new byte[3];
+            stream.Read(verB, 0, 3);
+            
+            Version ver = new Version(verB[0], verB[1], verB[2]);
 
             if (!ver.IsCompatible())
             {
                 throw new IncompatibleVersionException($"Attempted to deserialize known primes resource of version {ver} but no serialization method was implemented for such version.");
             }
-            else if (ver.IsLatest())
-            {
-                file = KnownPrimesResourceFileSerializer.Deserializev1_2_0(bytes);
-            }
             else
             {
-                if (ver.IsEqual(new Version(1, 1, 0)))
+                if (ver.IsEqual(new Version(1, 2, 0)))
                 {
+                    file = KnownPrimesResourceFileSerializer.Deserializev1_2_0(stream);
+                }
+                else if (ver.IsEqual(new Version(1, 1, 0)))
+                {
+                    byte[] bytes = File.ReadAllBytes(path);
                     file = KnownPrimesResourceFileSerializer.Deserializev1_1_0(bytes);
                 }
                 else if (ver.IsEqual(new Version(1, 0, 0)))
                 {
+                    byte[] bytes = File.ReadAllBytes(path);
                     file = KnownPrimesResourceFileSerializer.Deserializev1_0_0(bytes);
                 }
             }
@@ -587,13 +592,13 @@ namespace Primes.Common.Files
             {
                 throw new IncompatibleVersionException($"Attempted to deserialize job of version {ver} but no serialization method was implemented for such version.");
             }
-            else if (ver.IsLatest())
-            {
-                job = PrimeJobSerializer.Deserializev1_2_0(ref bytes);
-            }
             else
             {
-                if (ver.IsEqual(new Version(1, 1, 0)))
+                if (ver.IsEqual(new Version(1, 2, 0)))
+                {
+                    job = PrimeJobSerializer.Deserializev1_2_0(ref bytes);
+                }
+                else if (ver.IsEqual(new Version(1, 1, 0)))
                 {
                     job = PrimeJobSerializer.Deserializev1_1_0(ref bytes);
                 }
