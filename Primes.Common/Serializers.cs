@@ -104,7 +104,7 @@ namespace Primes.Common.Serializers
             else
                 primes = GetRawPrimes(primesBytes);
 
-            return new PrimeJob(new PrimeJob.Version(1, 2, 0), batch, start, count, progress, ref primes);
+            return new PrimeJob(new PrimeJob.Version(1, 2, 0), comp, batch, start, count, progress, ref primes);
         }
 
 
@@ -238,7 +238,6 @@ namespace Primes.Common.Serializers
             bytes.AddRange(BitConverter.GetBytes(job.Start));
             bytes.AddRange(BitConverter.GetBytes(job.Count));
             bytes.AddRange(BitConverter.GetBytes(job.Progress));
-            bytes.AddRange(BitConverter.GetBytes(job.Primes.Count));
 
             byte[] primeBytes;
 
@@ -442,10 +441,14 @@ namespace Primes.Common.Serializers
         /// <returns></returns>
         public static byte[] Serializev1_2_0(ref KnownPrimesResourceFile file)
         {
+            throw new NotImplementedException("Compression is not implemented.");
+
             byte[] bytes = new byte[8 + file.Primes.Length * 8];
 
             bytes[0] = file.FileVersion.major; bytes[1] = file.FileVersion.minor; bytes[2] = file.FileVersion.patch;
             bytes[3] = file.FileCompression.GetByte();
+
+            //compression??
 
             Array.Copy(BitConverter.GetBytes(file.Primes.Length), 0, bytes, 4, 4);
             Buffer.BlockCopy(file.Primes, 0, bytes, 8, file.Primes.Length * 8);

@@ -3,6 +3,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Threading;
+using System.Linq;
 
 using Primes;
 using Primes.Common;
@@ -32,11 +33,89 @@ namespace JobManagement
             /*DoAll();
             Console.WriteLine("Testing");
             DoTest();*/
+            
 
-            //Uncompress7z(Path.Combine(basePath, "0source", 1.ToString() + ".7z"), Path.Combine(basePath, "1unpacked", 1.ToString()));
+            Console.WriteLine("//Done");
+            Console.ReadLine();
+        }
 
-            //return;
 
+        public static void PatchFiles()
+        {
+            Thread[] threads = new Thread[12];
+
+            Queue<string> pending = new Queue<string>(Directory.GetDirectories("E:\\Documents\\primes\\working\\1unpacked"));
+
+            while (pending.Count != 0)
+            {
+                for (int i = 0; i < threads.Length; i++)
+                {
+                    if (threads[i] == null || !threads[i].IsAlive)
+                    {
+                        string name = Path.GetFileNameWithoutExtension(pending.Dequeue());
+
+                        threads[i] = new Thread(() => PatchJobBatch(name));
+                        threads[i].Start();
+
+                        Console.WriteLine($"Thread {i} started with batch {name}");
+
+                        break;
+                    }
+                }
+
+                Thread.Sleep(200);
+            }
+        }
+        public static void PatchJobBatch(string name)
+        {
+            string unpackedPath = Path.Combine(basePath, "1unpacked", name);
+            string cleanedPath = Path.Combine(basePath, "2cleaned", name);
+            string packedPath = Path.Combine(basePath, "3packed", name);
+
+
+            Directory.CreateDirectory(Path.Combine(basePath, "2cleaned", name));
+
+
+            foreach (string p in Directory.GetFiles(unpackedPath, "*.primejob"))
+            {
+                PatchJobFile(name, Path.GetFileNameWithoutExtension(p));
+            }
+
+
+            Compress7z(cleanedPath, packedPath);
+        }
+        public static void PatchJobFile(string batchName, string jobName)
+        {
+            byte[] srcBytes = File.ReadAllBytes(Path.Combine(basePath, "1unpacked", batchName, jobName + ".primejob"));
+            byte[] fBytes = new byte[32];
+            byte[] rawPrimes = new byte[srcBytes.Length - 35];
+            ulong[] primes = new ulong[rawPrimes.Length / 8];
+
+
+
+            fBytes[0] = 1; fBytes[1] = 2; fBytes[2] = 0;                            //set version
+            Array.Copy(srcBytes, 3, fBytes, 4, 4);                                  //copy batch into correct place
+            fBytes[3] = 0b00000010;                                                 //set compression
+            Array.Copy(srcBytes, 7, fBytes, 8, 24);                                 //copy start, count and progress
+
+
+
+            Array.Copy(srcBytes, 35, rawPrimes, 0, srcBytes.Length - 35);           //copy primes for compression
+            Buffer.BlockCopy(rawPrimes, 0, primes, 0, rawPrimes.Length);            //compress
+
+
+            List<byte> bytes = fBytes.ToList();
+            bytes.AddRange(Compression.NCC.Compress(primes));                       //add primes
+
+
+
+            File.WriteAllBytes(Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"), bytes.ToArray());
+        }
+
+
+
+        public static void UpdateFiles()
+        {
             Thread[] threads = new Thread[6];
 
             Queue<string> pending = new Queue<string>(Directory.GetFiles("E:\\Documents\\primes\\working\\0source", "*.7z"));
@@ -60,12 +139,7 @@ namespace JobManagement
 
                 Thread.Sleep(200);
             }
-            
-
-            Console.WriteLine("//Done");
-            Console.ReadLine();
         }
-
         public static void UpdateJobBatch(string name)
         {
             string unpackedPath = Path.Combine(basePath, "1unpacked");

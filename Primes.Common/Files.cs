@@ -139,15 +139,14 @@ namespace Primes.Common.Files
             {
                 throw new IncompatibleVersionException($"Attempted to serialize known primes resource of version {file.FileVersion} but no serialization method was implemented for such version.");
             }
-            else if (file.FileVersion.IsLatest())
             {
-                byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_2_0(ref file);
+                if (file.FileVersion.IsEqual(new Version(1, 2, 0)))
+                {
+                    byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_2_0(ref file);
 
-                File.WriteAllBytes(path, bytes);
-            }
-            else
-            {
-                if (file.FileVersion.IsEqual(new Version(1, 1, 0)))
+                    File.WriteAllBytes(path, bytes);
+                }
+                else if (file.FileVersion.IsEqual(new Version(1, 1, 0)))
                 {
                     byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_1_0(ref file);
 
@@ -562,6 +561,20 @@ namespace Primes.Common.Files
         {
             FileVersion = version; FileCompression = compression; Batch = batch; Start = start; Count = count; Progress = progress; Primes = primes;
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, compression, start, count, batch and primes.
+        /// </summary>
+        /// <param name="version">The file structure version.</param>
+        /// <param name="compression">The file compression method.</param>
+        /// <param name="batch">The batch to group this file with.</param>
+        /// <param name="start">The first number to be checked.</param>
+        /// <param name="count">The amount of numbers to be checked.</param>
+        /// <param name="progress">The amount of numbers that have already been checked.</param>
+        /// <param name="primes">The prime numbers found in this job.</param>
+        public PrimeJob(Version version, Comp compression, uint batch, ulong start, ulong count, ulong progress, ref ulong[] primes)
+        {
+            FileVersion = version; FileCompression = compression; Batch = batch; Start = start; Count = count; Progress = progress; Primes = primes.ToList();
+        }
 
 
 
@@ -674,15 +687,15 @@ namespace Primes.Common.Files
             {
                 throw new IncompatibleVersionException($"Attempted to deserialize job of version {job.FileVersion} but no serialization method was implemented for such version.");
             }
-            else if (job.FileVersion.IsLatest())
-            {
-                byte[] bytes = PrimeJobSerializer.Serializev1_2_0(ref job);
-
-                File.WriteAllBytes(path, bytes);
-            }
             else 
             {
-                if (job.FileVersion.Equals(new Version(1, 1, 0)))
+                if (job.FileVersion.Equals(new Version(1, 2, 0)))
+                {
+                    byte[] bytes = PrimeJobSerializer.Serializev1_2_0(ref job);
+
+                    File.WriteAllBytes(path, bytes);
+                }
+                else if (job.FileVersion.Equals(new Version(1, 1, 0)))
                 {
                     byte[] bytes = PrimeJobSerializer.Serializev1_1_0(ref job);
 
