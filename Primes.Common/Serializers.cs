@@ -348,19 +348,19 @@ namespace Primes.Common.Serializers
         {
             KnownPrimesResourceFile.Comp comp = new KnownPrimesResourceFile.Comp(bytes[4]);
 
-            ulong[] primes;
             byte[] primeBytes = new byte[bytes.Length - 4];
+            KnownPrimesResourceFile file = new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 2, 0), comp, new ulong[BitConverter.ToInt32(bytes, 4)]);
 
             Array.Copy(bytes, 8, primeBytes, 0, primeBytes.Length);
 
             if (comp.NCC)
-                primes = Compression.NCC.Uncompress(primeBytes);
+                file.Primes = Compression.NCC.Uncompress(primeBytes);
             else if (comp.ONSS)
-                primes = Compression.ONSS.Uncompress(primeBytes);
+                file.Primes = Compression.ONSS.Uncompress(primeBytes);
             else
-                primes = GetRawPrimes(primeBytes);
+                file.Primes = GetRawPrimes(primeBytes);
 
-            return new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 2, 0), comp, primes);
+            return file;
         }
         /// <summary>
         /// Deserializes a <see cref="KnownPrimesResourceFile"/> of version 1.2.0 from a stream.
@@ -379,9 +379,7 @@ namespace Primes.Common.Serializers
             KnownPrimesResourceFile file = new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 2, 0), comp, new ulong[BitConverter.ToInt32(buffer, 0)]);
 
             if (comp.NCC)
-            {
                 Compression.NCC.StreamUncompress(stream, file.Primes);
-            }
             else if (comp.ONSS)
             {
                 byte[] primeBytes = new byte[stream.Length - 5];

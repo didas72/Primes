@@ -2,6 +2,7 @@
 using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Threading;
 
 using Primes;
 using Primes.Common;
@@ -11,6 +12,8 @@ namespace JobManagement
 {
     class Program
     {
+        public const string basePath = "E:\\Documents\\primes\\working\\";
+
         static void Main()
         {
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
@@ -26,16 +29,78 @@ namespace JobManagement
             foreach (byte b in bs) Console.WriteLine(b.ToString("X2"));
             Console.WriteLine("End");*/
 
-            //DoAll();
+            /*DoAll();
             Console.WriteLine("Testing");
-            DoTest();
+            DoTest();*/
+
+            //Uncompress7z(Path.Combine(basePath, "0source", 1.ToString() + ".7z"), Path.Combine(basePath, "1unpacked", 1.ToString()));
+
+            //return;
+
+            Thread[] threads = new Thread[6];
+
+            Queue<string> pending = new Queue<string>(Directory.GetFiles("E:\\Documents\\primes\\working\\0source", "*.7z"));
+
+            while (pending.Count != 0)
+            {
+                for (int i = 0; i < threads.Length; i++)
+                {
+                    if (threads[i] == null || !threads[i].IsAlive)
+                    {
+                        string name = Path.GetFileNameWithoutExtension(pending.Dequeue());
+
+                        threads[i] = new Thread(() => UpdateJobBatch(name));
+                        threads[i].Start();
+
+                        Console.WriteLine($"Thread {i} started with batch {name}");
+
+                        break;
+                    }
+                }
+
+                Thread.Sleep(200);
+            }
             
 
             Console.WriteLine("//Done");
             Console.ReadLine();
         }
 
-        public static void DoAll()
+        public static void UpdateJobBatch(string name)
+        {
+            string unpackedPath = Path.Combine(basePath, "1unpacked");
+            string packedPath = Path.Combine(basePath, "3packed", name);
+
+            Uncompress7z(Path.Combine(basePath, "0source", name +  ".7z"), unpackedPath);
+            Directory.CreateDirectory(Path.Combine(basePath, "2cleaned", name));
+
+            foreach (string p in Directory.GetFiles(Path.Combine(unpackedPath, name), "*.primejob"))
+            {
+                UpdateJobFile(name, Path.GetFileNameWithoutExtension(p));
+            }
+
+            Compress7z(Path.Combine(basePath, "2cleaned", name), packedPath);
+        }
+        public static void UpdateJobFile(string batchName, string jobName)
+        {
+            PrimeJob job = PrimeJob.Deserialize(Path.Combine(basePath, "1unpacked", batchName, jobName + ".primejob"));
+
+            PrimeJob.CheckJob(ref job, true, out string log);
+
+            if (log.Length != 0)
+            {
+                Directory.CreateDirectory(Path.Combine(basePath, "logs", batchName));
+                File.WriteAllText(Path.Combine(basePath, "logs", batchName, jobName + ".log.txt"), log);
+            }
+
+            PrimeJob cleaned = new PrimeJob(new PrimeJob.Version(1, 2, 0), new PrimeJob.Comp(true, false), job.Batch, job.Start, job.Count, job.Progress, job.Primes);
+
+            PrimeJob.Serialize(ref cleaned, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
+        }
+
+
+
+        /*public static void DoAll()
         {
             FileStream stream = File.Open("E:\\Documents\\primes\\working\\knownPrimes.rsrc", FileMode.Create, FileAccess.ReadWrite, FileShare.None);
             string[] jobs = Utils.SortFiles(Directory.GetFiles("E:\\Documents\\primes\\working", "*.primejob"));
@@ -128,6 +193,7 @@ namespace JobManagement
 
             Console.WriteLine($"Size in memory is {nums.Length * 8}B or {(nums.Length * 8f) / 1024f}kB or {(nums.Length * 8f) / 1048576f}MB");
         }
+        */
 
         /*
         public static ulong UlongSqrtHighSPDTEST(ulong number)
@@ -212,7 +278,8 @@ namespace JobManagement
 
             Console.ReadLine();
         }
-		
+        */
+
         public static void Compress7z(string sourceDir, string outDir)
         {
             ProcessStartInfo i = new ProcessStartInfo
@@ -221,9 +288,8 @@ namespace JobManagement
                 Arguments = $"a {outDir} {sourceDir}",
                 WindowStyle = ProcessWindowStyle.Hidden
             };
-            Console.WriteLine($"a {outDir} {sourceDir}");
 
-            
+
             Process p = Process.Start(i);
             p.WaitForExit();
         }
@@ -240,6 +306,5 @@ namespace JobManagement
             Process p = Process.Start(i);
             p.WaitForExit();
         }
-        */
     }
 }
