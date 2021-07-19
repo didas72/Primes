@@ -33,7 +33,11 @@ namespace JobManagement
             /*DoAll();
             Console.WriteLine("Testing");
             DoTest();*/
-            
+
+            //PatchFiles();
+            Console.WriteLine("30");
+            PatchJobBatch("30");
+
 
             Console.WriteLine("//Done");
             Console.ReadLine();
@@ -84,7 +88,7 @@ namespace JobManagement
 
             Compress7z(cleanedPath, packedPath);
         }
-        public static void PatchJobFile(string batchName, string jobName)
+        public static void PatchJobFileF(string batchName, string jobName)
         {
             byte[] srcBytes = File.ReadAllBytes(Path.Combine(basePath, "1unpacked", batchName, jobName + ".primejob"));
             byte[] fBytes = new byte[32];
@@ -110,6 +114,27 @@ namespace JobManagement
 
 
             File.WriteAllBytes(Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"), bytes.ToArray());
+
+            PrimeJob job = PrimeJob.Deserialize(Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
+            PrimeJob.CheckJob(ref job, true, out _);
+            PrimeJob.Serialize(ref job, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
+        }
+        public static void PatchJobFile(string batchName, string jobName)
+        {
+            byte[] srcBytes = File.ReadAllBytes(Path.Combine(basePath, "1unpacked", batchName, jobName + ".primejob"));
+
+            PrimeJob.Version ver = PrimeJob.Version.Latest;
+            PrimeJob.Comp comp = PrimeJob.Comp.Default;
+            uint batch = BitConverter.ToUInt32(srcBytes, 3);
+            ulong start = BitConverter.ToUInt64(srcBytes, 7);
+            ulong count = BitConverter.ToUInt64(srcBytes, 15);
+            ulong progress = BitConverter.ToUInt64(srcBytes, 23);
+
+            ulong[] primes = new ulong[(srcBytes.Length - 35) / 8];
+            Buffer.BlockCopy(srcBytes, 35, primes, 0, primes.Length * 8);
+
+            PrimeJob job = new PrimeJob(ver, comp, batch, start, count, progress, ref primes);
+            PrimeJob.Serialize(ref job, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
         }
 
 
