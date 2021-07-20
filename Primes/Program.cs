@@ -10,7 +10,7 @@ namespace Primes.Exec
 {
     public class Program
     {
-        public static string homePath, resourcesPath, jobsPath, completePath;
+        public static string homePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop), resourcesPath, jobsPath, completePath;
         public static bool resourcesLoaded = false;
 
         private static volatile bool doWait = true;

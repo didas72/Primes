@@ -67,7 +67,7 @@ namespace Primes.Exec
             {
                 if (current >= job.Start + job.Count)
                 {
-                    Progress = job.Count;
+                    job.Progress = job.Count;
 
                     break;
                 }
@@ -96,7 +96,7 @@ namespace Primes.Exec
 
                     if (!doWork)
                     {
-                        Program.LogEvent(Program.EventType.Info, $"Pausing job {job.Start} of batch {job.Batch}. Saving.", $"WorkerWThread#{workerId:D2}", true);
+                        Program.LogEvent(Program.EventType.Info, $"Pausing job {job.Start} of batch {job.Batch}. Saving.", $"WThread#{workerId:D2}", true);
 
                         break;
                     }
@@ -111,9 +111,9 @@ namespace Primes.Exec
 
 
 
-            if (Progress != job.Count)
+            if (job.Progress != job.Count)
             {
-                Progress = current - job.Start;
+                job.Progress = current - job.Start;
 
                 try
                 {
@@ -121,7 +121,7 @@ namespace Primes.Exec
                 }
                 catch (Exception e)
                 {
-                    Program.LogEvent(Program.EventType.Error, $"Failed to serialize prime job {jobPath}. {e.Message}", $"WorkerWThread#{workerId:D2}", true);
+                    Program.LogEvent(Program.EventType.Error, $"Failed to serialize prime job {jobPath}. {e.Message}", $"WThread#{workerId:D2}", true);
                 }
             }
             else
@@ -134,7 +134,7 @@ namespace Primes.Exec
                 }
                 catch (Exception e)
                 {
-                    Program.LogEvent(Program.EventType.Error, $"Failed to serialize prime job {jobPath}. {e.Message}", $"WorkerWThread#{workerId:D2}", true);
+                    Program.LogEvent(Program.EventType.Error, $"Failed to serialize prime job {jobPath}. {e.Message}", $"WThread#{workerId:D2}", true);
                 }
             }
 
@@ -142,7 +142,7 @@ namespace Primes.Exec
 
             TimeSpan elapsed = DateTime.Now - startingTime;
 
-            Program.LogEvent(Program.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WorkerWThread#{workerId:D2}", true);
+            Program.LogEvent(Program.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WThread#{workerId:D2}", true);
 
             ConsoleUI.RegisterJobSeconds(workerId, elapsed.TotalSeconds);
 

@@ -458,13 +458,6 @@ namespace Primes.Common.Files
 
 
         /// <summary>
-        /// Default empty instance.
-        /// </summary>
-        public static PrimeJob Empty { get; } = new PrimeJob(Version.Zero, 0, 0, 0, new List<ulong>());
-
-
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="PrimeJob"/> with the specified version, start and count. Primes defaults to empty, Progress defaults to 0 and Batch defaults to 0.
         /// </summary>
         /// <param name="version">The file structure version.</param>

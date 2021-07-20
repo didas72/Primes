@@ -74,7 +74,7 @@ namespace Primes.Exec
 
                 TimeSpan elapsed = DateTime.Now - start;
 
-                Thread.Sleep(Math.Max(1, frameTime - elapsed.Milliseconds));
+                Thread.Sleep(Math.Max(1, Math.Min(frameTime - elapsed.Milliseconds, frameTime)));
             }
         }
 
