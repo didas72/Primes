@@ -375,7 +375,7 @@ namespace Primes.Common.Serializers
             stream.Read(buffer, 0, 5);
 
             KnownPrimesResourceFile.Comp comp = new KnownPrimesResourceFile.Comp(buffer[0]);
-            KnownPrimesResourceFile file = new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 2, 0), comp, new ulong[BitConverter.ToInt32(buffer, 0)]);
+            KnownPrimesResourceFile file = new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 2, 0), comp, new ulong[BitConverter.ToInt32(buffer, 1)]);
 
             if (comp.NCC)
                 Compression.NCC.StreamUncompress(stream, file.Primes);

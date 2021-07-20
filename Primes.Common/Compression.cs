@@ -125,12 +125,12 @@ namespace Primes.Common.Files
             /// <returns>Byte array with the compressed ulongs</returns>
             public static byte[] Compress(ulong[] ulongs)
             {
-                if (ulongs.Length < 2)
-                    throw new ArgumentException();
-
                 List<byte> bytes = new List<byte>();
 
                 //first is always raw
+
+                if (ulongs.Length == 0)
+                    goto end;
 
                 bytes.AddRange(BitConverter.GetBytes(ulongs[0]));
 
@@ -155,6 +155,7 @@ namespace Primes.Common.Files
                     header++;
                 }
 
+                end:
                 return bytes.ToArray();
             }
             /// <summary>
@@ -164,8 +165,8 @@ namespace Primes.Common.Files
             /// <returns>Ulong array with the uncompressed values.</returns>
             public static ulong[] Uncompress(byte[] bytes)
             {
-                if (bytes.Length < 8)
-                    throw new ArgumentException();
+                if (bytes.Length == 0)
+                    return new ulong[0];
 
                 List<ulong> ulongs = new List<ulong>();
 
@@ -265,6 +266,9 @@ namespace Primes.Common.Files
             /// <remarks>Useful when dealing with large data sets.</remarks>
             public static void StreamUncompress(Stream stream, ulong[] uncompress)
             {
+                if (stream.RemainingBytes() == 0)
+                    return;
+
                 ushort delta;
                 byte[] block = new byte[BlockSize];
                 ulong value, last = 0;

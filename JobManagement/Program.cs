@@ -20,24 +20,6 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
-            /*List<byte> bs = new List<byte>();
-            ulong[] uls = new ulong[] { 1, 3, 5, 67555 };
-            Compression.NCC.StreamCompress(ref bs, ref uls);
-            foreach (byte b in bs) Console.WriteLine(b.ToString("X2"));
-            Console.WriteLine("End");
-            ulong[] uls2 = new ulong[] { 67566, 67576 };
-            Compression.NCC.StreamCompress(ref bs, ref uls2);
-            foreach (byte b in bs) Console.WriteLine(b.ToString("X2"));
-            Console.WriteLine("End");*/
-
-            /*DoAll();
-            Console.WriteLine("Testing");
-            DoTest();*/
-
-            //PatchFiles();
-            Console.WriteLine("30");
-            PatchJobBatch("30");
-
 
             Console.WriteLine("//Done");
             Console.ReadLine();
@@ -195,6 +177,30 @@ namespace JobManagement
             PrimeJob cleaned = new PrimeJob(new PrimeJob.Version(1, 2, 0), new PrimeJob.Comp(true, false), job.Batch, job.Start, job.Count, job.Progress, job.Primes);
 
             PrimeJob.Serialize(ref cleaned, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
+        }
+
+
+
+        public static void UpdateEmptyBatch(string name)
+        {
+            string unpackedPath = Path.Combine(basePath, "1unpacked");
+            string packedPath = Path.Combine(basePath, "3packed", name);
+
+            Directory.CreateDirectory(Path.Combine(basePath, "2cleaned", name));
+
+            foreach (string p in Directory.GetFiles(Path.Combine(unpackedPath, name), "*.primejob"))
+            {
+                UpdateEmptyJob(name, Path.GetFileNameWithoutExtension(p));
+            }
+
+            Compress7z(Path.Combine(basePath, "2cleaned", name), packedPath);
+        }
+        public static void UpdateEmptyJob(string batchName, string jobName)
+        {
+            PrimeJob old = PrimeJob.Deserialize(Path.Combine(basePath, "1unpacked", batchName, jobName + ".primejob"));
+            PrimeJob newf = new PrimeJob(PrimeJob.Version.Latest, PrimeJob.Comp.Default, old.Batch, old.Start, old.Count, 0, new List<ulong>());
+
+            PrimeJob.Serialize(ref newf, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
         }
 
 
