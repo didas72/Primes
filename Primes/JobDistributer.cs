@@ -26,7 +26,7 @@ namespace Primes.Exec
             Workers = new Worker[workerCount];
 
             for (int i = 0; i < workerCount; i++)
-                Workers[i] = new Worker(dumpPath, jobPath, i);
+                Workers[i] = new Worker(dumpPath, jobPath, i) { primeBufferSize = Properties.Settings.Default.PrimeBufferSize };
         }
 
 

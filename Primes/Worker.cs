@@ -21,7 +21,7 @@ namespace Primes.Exec
         private readonly string dumpPath;
         private readonly string jobPath;
         private readonly int workerId;
-        private const int primeBufferSize = 500;
+        public uint primeBufferSize = 500;
 
 
 
@@ -68,12 +68,6 @@ namespace Primes.Exec
                 if (current >= job.Start + job.Count)
                 {
                     Progress = job.Count;
-
-                    TimeSpan elapsed = DateTime.Now - startingTime;
-
-                    Program.LogEvent(Program.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WorkerWThread#{workerId:D2}", true);
-
-                    ConsoleUI.RegisterJobSeconds(workerId, elapsed.TotalSeconds);
 
                     break;
                 }
@@ -143,6 +137,14 @@ namespace Primes.Exec
                     Program.LogEvent(Program.EventType.Error, $"Failed to serialize prime job {jobPath}. {e.Message}", $"WorkerWThread#{workerId:D2}", true);
                 }
             }
+
+
+
+            TimeSpan elapsed = DateTime.Now - startingTime;
+
+            Program.LogEvent(Program.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WorkerWThread#{workerId:D2}", true);
+
+            ConsoleUI.RegisterJobSeconds(workerId, elapsed.TotalSeconds);
 
 
 

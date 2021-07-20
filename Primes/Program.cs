@@ -105,12 +105,12 @@ namespace Primes.Exec
         {
             for (int i = 0; i < args.Length; i++)
             {
-                if (args[i].StartsWith("/?"))
+                if (args[i] == "/?")
                 {
                     Print("Arguments:");
                     Print("'-t T' - Number of threads to use, T being the desired value. T must be a integer, positive and non zero value.");
                     Print("'-p P' - Path of the directory to be used by this program, P being the desired path. P must be the FULL path to an existing directory.");
-                    //Print("'-u U' - Percentage of the CPU time dedicated to this program to be used. U must be an integer between 1 and 100.");
+                    Print("'-b B' - Size (*8 bytes per thread) of the buffer that holds primes before adding to PrimeJobs. Lightly boosts performance but requires some extra memory.");
                     return false;
                 }
 
@@ -140,6 +140,28 @@ namespace Primes.Exec
                 }
 
                 if (args[i] == "-p")
+                {
+                    if (args.Length >= i)
+                    {
+                        if (Directory.Exists(args[i + 1]))
+                        {
+                            Properties.Settings.Default.homePath = args[i + 1];
+                            Properties.Settings.Default.Save();
+                        }
+                        else
+                        {
+                            Print($"Argument {args[i + 1]} is not a valid path.");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        Print("Argument '-p' must be followed by a valid path.");
+                        return false;
+                    }
+                }
+
+                if (args[i] == "-b")
                 {
                     if (args.Length >= i)
                     {

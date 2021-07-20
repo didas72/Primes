@@ -46,5 +46,17 @@ namespace Primes.Exec.Properties {
                 this["homePath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("500")]
+        public uint PrimeBufferSize {
+            get {
+                return ((uint)(this["PrimeBufferSize"]));
+            }
+            set {
+                this["PrimeBufferSize"] = value;
+            }
+        }
     }
 }
