@@ -14,6 +14,7 @@ namespace JobManagement
     class Program
     {
         public const string basePath = "E:\\Documents\\primes\\working\\";
+        public const ulong perJob = 10000000;
 
         static void Main()
         {
@@ -21,8 +22,36 @@ namespace JobManagement
             //Please ignore this project.
 
 
+
             Console.WriteLine("//Done");
             Console.ReadLine();
+        }
+
+
+        public static void GenerateBatches(uint start, uint count)
+        {
+            for (uint b = start; b < start + count; b++)
+            {
+                GenerateBatch((ulong)b * (perJob * 1000));
+            }
+        }
+        public static void GenerateBatch(ulong start)
+        {
+            uint batch = (uint)(start / (perJob * 1000) + 1);
+
+            Directory.CreateDirectory(Path.Combine(basePath, "gen", batch.ToString()));
+
+            PrimeJob job;
+
+            for (ulong i = 0; i < 1000; i++)
+            {
+                ulong s = start + (i * perJob);
+
+                job = new PrimeJob(PrimeJob.Version.Latest, PrimeJob.Comp.Default, batch, s, perJob);
+                PrimeJob.Serialize(ref job, Path.Combine(basePath, "gen", batch.ToString(), $"{job.Start}.primejob"));
+            }
+
+            Compress7z(Path.Combine(basePath, "gen", batch.ToString()), Path.Combine(basePath, "packed", $"{batch}.7z"));
         }
 
 
