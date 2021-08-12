@@ -34,22 +34,28 @@ At some point we plan to take all the data we're collecting to do some research 
 
 ### The code projects
 
-Currently there are 5 projects inside this solution:
-* Primes(.exe) (Somewhat broken)
-* PrimesSVC (W.I.P)
+Currently there are a few projects inside this solution:
+* Primes(.exe)
 * Job Management
 * Primes.Common
-* PrimesCpp (W.I.P)
+* PrimesSVC (Hidden)
+* PrimesCpp (Hidden)
+* PrimesCompute (Hidden)
+* PrimesShader (Hidden)
 
 Primes(.exe) was the first project created. It is a C# console application that runs on .NET Framework 4.7.2 and has minimal UI. It runs several `Worker`s in parallel, each doing `PrimeJob`s on it's own and saving them to disk. Each worker has a progress bar shown in console as well as a progress percentage and a Batch indicator. (Details on what each of these words mean bellow)
-
-PrimesSVC is a W.I.P. Windows service. Like Primes(.exe), it is a C# .NET Framework 4.7.2 project but instead of being a console window it runs in the background doing it's thing. It's work is also based on `PrimeJob`s and it dynamcally adjusts the number of workers based on how much free CPU time there is.
 
 Job Management is yet another C# project, this one is just a simple console program used to test different aspects of programs when needed. Code in it is temporary and experimental.
 
 Primes.Common is a C# library that holds definitions for `PrimeJob`, `KnownPrimesResourceFile`, `Mathf`, `Utils` and other general utilities. All these components are available to other C# projects so new features will automatically be implemented in all programs.
 
-PrimesCpp is the latest project. It is a C++ based Console program that will work very similarly to Primes(.exe), just written in C++. The purpose of this project is to learn C++ and to attempt to achieve higher performance and cross-platform capabilites than it's .NET counterpart. It is also an objective to at some point use this project with OpenCL to achieve the best speeds.
+Then we have the side projects:
+
+PrimesSVC is a W.I.P. Windows service. Like Primes(.exe), it is a C# .NET Framework 4.7.2 project but instead of being a console window it runs in the background doing it's thing. It's work is also based on `PrimeJob`s and it dynamcally adjusts the number of workers based on how much free CPU time there is.
+
+PrimesCpp is a C++ based Console program that will work very similarly to Primes(.exe), just written in C++. The purpose of this project is to learn C++ and to attempt to achieve higher performance and cross-platform capabilites than it's .NET counterpart. It is also an objective to at some point use this project with OpenCL to achieve the best speeds.
+
+PrimesCompute and PrimesShader are two C# projects that run on ComputeSharp and Silk.NET respectively. They are intended to use GPU power but are far from usable and are more a way for me to play with these libraries than to actually implement primes right now.
 
 ### Finding primes
 
@@ -80,6 +86,8 @@ Primejobs are structures in memory that hold all the data required to find prime
 * Amount of numbers to check
 * Amount of numbers already checked
 * Primes found so far
+
+This layout is also written in Primes.Common\Serializers.cs, inside the PrimeJobSerializer class.
 
 With these values the programs are able to pause jobs, run them independently from other computers and group them into 'batches'. Batches are just a way to ensure we never have too many PrimeJob files in one directorym the programs place them in separate folders for easier access.
 

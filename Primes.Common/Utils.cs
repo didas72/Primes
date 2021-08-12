@@ -18,6 +18,7 @@ namespace Primes.Common
         /// Gets a <see cref="Queue{T}"/> with paths of all doable jobs in a directory and it's subdirectories.
         /// </summary>
         /// <param name="path">The full path of the directory to be checked.</param>
+        /// <param name="maxCount">The maximum number of jobs to add to the queue.</param>
         /// <returns><see cref="Queue{T}"/> with paths of all incomplete jobs in the given directory.</returns>
         /// <exception cref="IOException"></exception>
         /// <exception cref="UnauthorizedAccessException"></exception>
@@ -25,7 +26,7 @@ namespace Primes.Common
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="PathTooLongException"></exception>
         /// <exception cref="DirectoryNotFoundException"></exception>
-        public static Queue<string> GetDoableJobs(string path)
+        public static Queue<string> GetDoableJobs(string path, uint maxCount)
         {
             string[] files = GetSubFiles(path, "*.primejob");
 
@@ -36,7 +37,11 @@ namespace Primes.Common
                 PrimeJob.Status ret = PrimeJob.PeekStatusFromFile(files[i]);
 
                 if (ret == PrimeJob.Status.Not_started || ret == PrimeJob.Status.Started)
+                {
                     doableJobs.Enqueue(files[i]);
+
+                    if (doableJobs.Count >= maxCount) break;
+                }
             }
 
             return doableJobs;
@@ -77,13 +82,7 @@ namespace Primes.Common
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="PathTooLongException"></exception>
         /// <exception cref="DirectoryNotFoundException"></exception>
-        public static bool HasDoableJobs(string path)
-        {
-            if (GetSubFiles(path, "*.primejob").Length != 0)
-                return true;
-
-            return false;
-        }
+        public static bool HasDoableJobs(string path) => GetDoableJob(path, out string _);
 
 
 
@@ -179,10 +178,10 @@ namespace Primes.Common
         /// <param name="values">The values to be enqueued.</param>
         public static void EnqueueRange<T>(ref Queue<T> queue, T[] values)
         {
-            List<T> f = new List<T>();
+            T[] f = new T[queue.Count + values.Length];
 
-            f.AddRange(queue.ToArray());
-            f.AddRange(values);
+            queue.CopyTo(f, 0);
+            Array.Copy(values, 0, f, queue.Count, values.Length);
 
             queue = new Queue<T>(f);
         }

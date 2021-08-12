@@ -11,5 +11,11 @@
     <Setting Name="PrimeBufferSize" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">500</Value>
     </Setting>
+    <Setting Name="MaxJobQueue" Type="System.UInt32" Scope="User">
+      <Value Profile="(Default)">200</Value>
+    </Setting>
+    <Setting Name="FrameTimeMilis" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">2000</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

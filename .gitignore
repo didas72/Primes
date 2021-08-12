@@ -3,3 +3,7 @@
 **/obj
 **/Intermediate
 **/v16
+PrimesShader
+PrimesCompute
+PrimesCpp
+PrimesSVC

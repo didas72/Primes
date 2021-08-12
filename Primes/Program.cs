@@ -111,10 +111,13 @@ namespace Primes.Exec
                     Print("'-t T' - Number of threads to use, T being the desired value. T must be a integer, positive and non zero value.");
                     Print("'-p P' - Path of the directory to be used by this program, P being the desired path. P must be the FULL path to an existing directory.");
                     Print("'-b B' - Size (*8 bytes per thread) of the buffer that holds primes before adding to PrimeJobs. Lightly boosts performance but requires some extra memory.");
+                    Print("'-q Q' - Maximum number of jobs paths queued for execution. Lower values result in slightly lower RAM usages and faster start-up times but more frequent scans for jobs.");
+                    Print("'-f F' - Time, in milliseconds, between frames. Lower values will result in possibly faster refresh rates on the console but will slow prime calculations down slightly.");
+                    Print("NOTE: Paths passed as arguments can only include spaces if encolsed in double quotes. Example: \"C:\\Documents\\primes\\\"");
                     return false;
                 }
 
-                if (args[i] == "-t")
+                else if (args[i] == "-t")
                 {
                     if (args.Length >= i)
                     {
@@ -139,7 +142,7 @@ namespace Primes.Exec
                     }
                 }
 
-                if (args[i] == "-p")
+                else if (args[i] == "-p")
                 {
                     if (args.Length >= i)
                     {
@@ -161,24 +164,53 @@ namespace Primes.Exec
                     }
                 }
 
-                if (args[i] == "-b")
+                else if (args[i] == "-b")
                 {
                     if (args.Length >= i)
                     {
-                        if (Directory.Exists(args[i + 1]))
+                        if (uint.TryParse(args[i + 1], out uint bArg))
                         {
-                            Properties.Settings.Default.homePath = args[i + 1];
+                            Properties.Settings.Default.PrimeBufferSize = bArg;
                             Properties.Settings.Default.Save();
-                        }
-                        else
-                        {
-                            Print($"Argument {args[i + 1]} is not a valid path.");
-                            return false;
                         }
                     }
                     else
                     {
-                        Print("Argument '-p' must be followed by a valid path.");
+                        Print("Argument '-b' must be followed by a integer, positive and non zero value.");
+                        return false;
+                    }
+                }
+
+                else if (args[i] == "-q")
+                {
+                    if (args.Length >= i)
+                    {
+                        if (uint.TryParse(args[i + 1], out uint qArg))
+                        {
+                            Properties.Settings.Default.MaxJobQueue = qArg;
+                            Properties.Settings.Default.Save();
+                        }
+                    }
+                    else
+                    {
+                        Print("Argument '-q' must be followed by a integer, positive and non zero value.");
+                        return false;
+                    }
+                }
+
+                else if (args[i] == "-f")
+                {
+                    if (args.Length >= i)
+                    {
+                        if (int.TryParse(args[i + 1], out int fArg))
+                        {
+                            Properties.Settings.Default.FrameTimeMilis = fArg;
+                            Properties.Settings.Default.Save();
+                        }
+                    }
+                    else
+                    {
+                        Print("Argument '-f' must be followed by a integer, positive and non zero value.");
                         return false;
                     }
                 }

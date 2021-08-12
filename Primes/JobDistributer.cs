@@ -51,7 +51,7 @@ namespace Primes.Exec
         {
             Program.LogEvent(Program.EventType.Info, "Loading jobs.", "DistributingThread", true);
 
-            Queue<string> jobFiles = Utils.GetDoableJobs(jobPath);
+            Queue<string> jobFiles = Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue);
 
             Program.LogEvent(Program.EventType.Info, "Jobs loaded.", "DistributingThread", true);
             Program.LogEvent(Program.EventType.Info, "Work started.", "DistributingThread", true);
@@ -80,11 +80,16 @@ namespace Primes.Exec
                     }
                     else if (jobFiles.Count <= 0)
                     {
-                        Program.LogEvent(Program.EventType.Info, "Finished distributing all jobs.", "JobDistributingThread", true);
+                        jobFiles = Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue);
 
-                        distribute = false;
+                        if (jobFiles.Count <= 0)
+                        {
+                            Program.LogEvent(Program.EventType.Info, "Finished distributing all jobs.", "JobDistributingThread", true);
 
-                        break;
+                            distribute = false;
+
+                            break;
+                        }
                     }
                 }
 

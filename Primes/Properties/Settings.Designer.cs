@@ -58,5 +58,29 @@ namespace Primes.Exec.Properties {
                 this["PrimeBufferSize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("200")]
+        public uint MaxJobQueue {
+            get {
+                return ((uint)(this["MaxJobQueue"]));
+            }
+            set {
+                this["MaxJobQueue"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2000")]
+        public int FrameTimeMilis {
+            get {
+                return ((int)(this["FrameTimeMilis"]));
+            }
+            set {
+                this["FrameTimeMilis"] = value;
+            }
+        }
     }
 }

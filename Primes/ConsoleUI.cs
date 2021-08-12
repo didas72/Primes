@@ -27,7 +27,7 @@ namespace Primes.Exec
 
         private const string percentageFormat = "000.0";
 
-        public static int frameTime = 2000;
+        public static int frameTime = Mathf.Clamp(Properties.Settings.Default.FrameTimeMilis, 200, 60000);
 
 
 
@@ -175,10 +175,10 @@ namespace Primes.Exec
 
         private static void CalculateGraphicMetrics()
         {
-            progressBarWidth = (ushort)(Console.WindowWidth - 27); //2 for [] to enclose bar; 3 for worker number (#XX); 1 ' '; 6 for percentage (XXX.X%); 1 ' '; 10 for batch (Batch: XXX); 4 ' ' for looks and to fit ETR
+            progressBarWidth = (ushort)Mathf.Clamp((Console.WindowWidth - 27), 0, 200); //2 for [] to enclose bar; 3 for worker number (#XX); 1 ' '; 6 for percentage (XXX.X%); 1 ' '; 10 for batch (Batch: XXX); 4 ' ' for looks and to fit ETR
             progressBarMultiplier = progressBarWidth / 100f;
 
-            maxLogLines = (ushort)(Console.WindowHeight - Properties.Settings.Default.Threads - 5); //1 for title (Primes.exe by Didas72 and PeakRead); 1 for batch progress; 2 for divider + 'Logs:'; 1 for last line (always empty)
+            maxLogLines = (ushort)Mathf.Clamp(Console.WindowHeight - Properties.Settings.Default.Threads - 5, 0, 50); //1 for title (Primes.exe by Didas72 and PeakRead); 1 for batch progress; 2 for divider + 'Logs:'; 1 for last line (always empty)
         }
 
 
