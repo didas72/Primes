@@ -125,7 +125,7 @@ namespace Primes.Common
         {
             List<string> files = new List<string>();
 
-            foreach (string f in Directory.GetFiles(directory))
+            foreach (string f in Directory.GetFiles(directory, searchPattern))
                 files.Add(f);
 
             foreach (string d in Directory.GetDirectories(directory))
