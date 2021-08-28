@@ -21,6 +21,31 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
+            ulong val = ulong.MaxValue;
+
+            KnownPrimesResourceFile file = KnownPrimesResourceFile.Deserialize("E:\\Documents\\primes\\resources\\knownPrimes.rsrc");
+            ulong[] primes = new ulong[file.Primes.Length - 1];
+            Array.Copy(file.Primes, 0, primes, 0, primes.Length);
+            file = null;
+
+            for (int i = 0; i < primes.Length; i++)
+            {
+                if (primes[i] == 0)
+                {
+                    Console.WriteLine($"{i} of {primes.Length}");
+                    Console.WriteLine($"{primes[i-1]} {primes[i]}");
+
+                    while (true);
+                }
+            }
+
+            while (!Mathf.IsPrime(val, ref primes))
+            {
+                Console.WriteLine($"{val} is not prime.");
+                val -= 2;
+            }
+
+            Console.WriteLine($"{val} is prime.");
 
             Console.WriteLine("//Done");
             Console.ReadLine();
@@ -47,7 +72,7 @@ namespace JobManagement
                 ulong s = start + (i * perJob);
 
                 job = new PrimeJob(PrimeJob.Version.Latest, PrimeJob.Comp.Default, batch, s, perJob);
-                PrimeJob.Serialize(ref job, Path.Combine(basePath, "gen", batch.ToString(), $"{job.Start}.primejob"));
+                PrimeJob.Serialize(job, Path.Combine(basePath, "gen", batch.ToString(), $"{job.Start}.primejob"));
             }
 
             Compress7z(Path.Combine(basePath, "gen", batch.ToString()), Path.Combine(basePath, "packed", $"{batch}.7z"));
@@ -126,8 +151,8 @@ namespace JobManagement
             File.WriteAllBytes(Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"), bytes.ToArray());
 
             PrimeJob job = PrimeJob.Deserialize(Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
-            PrimeJob.CheckJob(ref job, true, out _);
-            PrimeJob.Serialize(ref job, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
+            PrimeJob.CheckJob(job, true, out _);
+            PrimeJob.Serialize(job, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
         }
         public static void PatchJobFile(string batchName, string jobName)
         {
@@ -144,7 +169,7 @@ namespace JobManagement
             Buffer.BlockCopy(srcBytes, 35, primes, 0, primes.Length * 8);
 
             PrimeJob job = new PrimeJob(ver, comp, batch, start, count, progress, ref primes);
-            PrimeJob.Serialize(ref job, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
+            PrimeJob.Serialize(job, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
         }
 
 
@@ -194,7 +219,7 @@ namespace JobManagement
         {
             PrimeJob job = PrimeJob.Deserialize(Path.Combine(basePath, "1unpacked", batchName, jobName + ".primejob"));
 
-            PrimeJob.CheckJob(ref job, true, out string log);
+            PrimeJob.CheckJob(job, true, out string log);
 
             if (log.Length != 0)
             {
@@ -204,7 +229,7 @@ namespace JobManagement
 
             PrimeJob cleaned = new PrimeJob(new PrimeJob.Version(1, 2, 0), new PrimeJob.Comp(true, false), job.Batch, job.Start, job.Count, job.Progress, job.Primes);
 
-            PrimeJob.Serialize(ref cleaned, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
+            PrimeJob.Serialize(cleaned, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
         }
 
 
@@ -228,7 +253,7 @@ namespace JobManagement
             PrimeJob old = PrimeJob.Deserialize(Path.Combine(basePath, "1unpacked", batchName, jobName + ".primejob"));
             PrimeJob newf = new PrimeJob(PrimeJob.Version.Latest, PrimeJob.Comp.Default, old.Batch, old.Start, old.Count, 0, new List<ulong>());
 
-            PrimeJob.Serialize(ref newf, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
+            PrimeJob.Serialize(newf, Path.Combine(basePath, "2cleaned", batchName, jobName + ".primejob"));
         }
 
 
@@ -384,7 +409,7 @@ namespace JobManagement
 
                     PrimeJob job = PrimeJob.Deserialize(j);
 
-                    if (!PrimeJob.CheckJob(ref job, true, out string msg))
+                    if (!PrimeJob.CheckJob(job, true, out string msg))
                     {
                         failed++;
                         Console.WriteLine(msg);

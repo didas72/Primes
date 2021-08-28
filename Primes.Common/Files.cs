@@ -785,7 +785,7 @@ namespace Primes.Common.Files
         /// <param name="message">A string containing the check log.</param>
         /// <returns>A boolean representing if or not the job passed all tests.</returns>
         /// <remarks>This method will check for: parity (except for number 2), order, duplicated values and value in range.</remarks>
-        public static bool CheckJob(ref PrimeJob job, bool cleanDuplicates, out string message)
+        public static bool CheckJob(PrimeJob job, bool cleanDuplicates, out string message)
         {
             message = string.Empty;
 
@@ -858,7 +858,7 @@ namespace Primes.Common.Files
             {
                 PrimeJob job = Deserialize(jobPaths[i]);
 
-                if (CheckJob(ref job, false, out string _))
+                if (CheckJob(job, false, out string _))
                     good++;
                 else
                     bad++;
@@ -880,7 +880,7 @@ namespace Primes.Common.Files
             {
                 PrimeJob job = Deserialize(jobPaths[i]);
 
-                if (CheckJob(ref job, true, out string _))
+                if (CheckJob(job, true, out string _))
                     good++;
                 else
                 {

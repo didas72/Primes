@@ -88,7 +88,7 @@ namespace Primes.Common
 			if (number < 2)
 				return number;
 
-			ulong max = number, min = 1, c, c2;
+			ulong max = 4294967295, min = 0, c, c2;
 
 			while (true)
 			{
