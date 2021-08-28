@@ -4,13 +4,15 @@ namespace Primes.Exec
 {
     class SafeExit
     {
-
         [DllImport("Kernel32")]
-        public static extern bool SetConsoleCtrlHandler(SetConsoleCtrlEventHandler handler, bool add);
+        private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
 
-        public delegate bool SetConsoleCtrlEventHandler(CtrlType sig);
+        private delegate bool EventHandler(CtrlType sig);
+        static EventHandler _handler;
 
-        public enum CtrlType
+
+
+        enum CtrlType
         {
             CTRL_C_EVENT = 0,
             CTRL_BREAK_EVENT = 1,
@@ -19,14 +21,19 @@ namespace Primes.Exec
             CTRL_SHUTDOWN_EVENT = 6
         }
 
+
+
         public static void Setup()
         {
-            SetConsoleCtrlHandler(Handler, true);
+            _handler += new EventHandler(Handler);
+            SetConsoleCtrlHandler(_handler, true);
         }
 
-        public static bool Handler(CtrlType signal)
+
+
+        private static bool Handler(CtrlType sig)
         {
-            switch (signal)
+            switch (sig)
             {
                 case CtrlType.CTRL_BREAK_EVENT:
                 case CtrlType.CTRL_C_EVENT:

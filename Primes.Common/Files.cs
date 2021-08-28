@@ -133,7 +133,7 @@ namespace Primes.Common.Files
         /// <exception cref="FileNotFoundException"></exception>
         /// <exception cref="NotSupportedException"></exception>
         /// <exception cref="System.Security.SecurityException"></exception>
-        public static void Serialize(ref KnownPrimesResourceFile file, string path)
+        public static void Serialize(KnownPrimesResourceFile file, string path)
         {
             if (!file.FileVersion.IsCompatible())
             {
@@ -142,19 +142,19 @@ namespace Primes.Common.Files
             {
                 if (file.FileVersion.IsEqual(new Version(1, 2, 0)))
                 {
-                    byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_2_0(ref file);
+                    byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_2_0(file);
 
                     File.WriteAllBytes(path, bytes);
                 }
                 else if (file.FileVersion.IsEqual(new Version(1, 1, 0)))
                 {
-                    byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_1_0(ref file);
+                    byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_1_0(file);
 
                     File.WriteAllBytes(path, bytes);
                 }
                 else if (file.FileVersion.IsEqual(new Version(1, 0, 0)))
                 {
-                    byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_0_0(ref file);
+                    byte[] bytes = KnownPrimesResourceFileSerializer.Serializev1_0_0(file);
 
                     File.WriteAllBytes(path, bytes);
                 }
@@ -674,7 +674,7 @@ namespace Primes.Common.Files
         /// <exception cref="FileNotFoundException"></exception>
         /// <exception cref="NotSupportedException"></exception>
         /// <exception cref="System.Security.SecurityException"></exception>
-        public static void Serialize(ref PrimeJob job, string path)
+        public static void Serialize(PrimeJob job, string path)
         {
             if (!job.FileVersion.IsCompatible())
             {
@@ -684,19 +684,19 @@ namespace Primes.Common.Files
             {
                 if (job.FileVersion.Equals(new Version(1, 2, 0)))
                 {
-                    byte[] bytes = PrimeJobSerializer.Serializev1_2_0(ref job);
+                    byte[] bytes = PrimeJobSerializer.Serializev1_2_0(job);
 
                     File.WriteAllBytes(path, bytes);
                 }
                 else if (job.FileVersion.Equals(new Version(1, 1, 0)))
                 {
-                    byte[] bytes = PrimeJobSerializer.Serializev1_1_0(ref job);
+                    byte[] bytes = PrimeJobSerializer.Serializev1_1_0(job);
 
                     File.WriteAllBytes(path, bytes);
                 }
                 else if (job.FileVersion.Equals(new Version(1, 0, 0)))
                 {
-                    byte[] bytes = PrimeJobSerializer.Serializev1_0_0(ref job);
+                    byte[] bytes = PrimeJobSerializer.Serializev1_0_0(job);
 
                     File.WriteAllBytes(path, bytes);
                 }
@@ -887,7 +887,7 @@ namespace Primes.Common.Files
                     bad++;
                 }
 
-                PrimeJob.Serialize(ref job, jobPaths[i]);
+                PrimeJob.Serialize(job, jobPaths[i]);
             }
         }
 

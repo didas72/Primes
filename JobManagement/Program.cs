@@ -22,9 +22,6 @@ namespace JobManagement
             //Please ignore this project.
 
 
-            Console.WriteLine(PrimeJob.Deserialize("E:\\Documents\\primes\\jobs\\1203110000000.primejob").Primes.Last());
-
-
             Console.WriteLine("//Done");
             Console.ReadLine();
         }

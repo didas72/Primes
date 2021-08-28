@@ -49,54 +49,70 @@ namespace Primes.Exec
 
         private void DistributingLoop()
         {
-            Program.LogEvent(Program.EventType.Info, "Loading jobs.", "DistributingThread", true);
-
-            Queue<string> jobFiles = Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue);
-
-            Program.LogEvent(Program.EventType.Info, "Jobs loaded.", "DistributingThread", true);
-            Program.LogEvent(Program.EventType.Info, "Work started.", "DistributingThread", true);
-
-            while (distribute)
+            try
             {
-                for (int i = 0; i < Workers.Length; i++)
+                Log.LogEvent(Log.EventType.Info, "Loading jobs.", "DistributingThread", true);
+
+                Queue<string> jobFiles = Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue);
+
+                Log.LogEvent(Log.EventType.Info, "Jobs loaded.", "DistributingThread", true);
+                Log.LogEvent(Log.EventType.Info, "Work started.", "DistributingThread", true);
+
+                while (distribute)
                 {
-                    if (!Workers[i].IsWorking && jobFiles.Count > 0)
+                    for (int i = 0; i < Workers.Length; i++)
                     {
-                        string path = jobFiles.Dequeue();
-
-                        try
+                        if (!Workers[i].IsWorking && jobFiles.Count > 0)
                         {
-                            PrimeJob job = PrimeJob.Deserialize(path);
+                            string path = jobFiles.Dequeue();
 
-                            File.Delete(path);
+                            try
+                            {
+                                PrimeJob job = PrimeJob.Deserialize(path);
 
-                            Workers[i].StartWork(job);
+                                File.Delete(path);
+
+                                Workers[i].StartWork(job);
+                            }
+                            catch (Exception e)
+                            {
+                                Log.LogEvent(Log.EventType.Warning, $"Failed to deserialize job from file '{path}' for computing. Skipping. {e.Message}", "DistributingThread", true);
+                                continue;
+                            }
                         }
-                        catch (Exception e)
+                        else if (jobFiles.Count <= 0)
                         {
-                            Program.LogEvent(Program.EventType.Warning, $"Failed to deserialize job from file '{path}' for computing. Skipping. {e.Message}", "DistributingThread", true);
-                            continue;
+                            jobFiles = Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue);
+
+                            if (jobFiles.Count <= 0)
+                            {
+                                Log.LogEvent(Log.EventType.Info, "Finished distributing all jobs.", "JobDistributingThread", true);
+
+                                distribute = false;
+
+                                break;
+                            }
                         }
                     }
-                    else if (jobFiles.Count <= 0)
-                    {
-                        jobFiles = Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue);
 
-                        if (jobFiles.Count <= 0)
-                        {
-                            Program.LogEvent(Program.EventType.Info, "Finished distributing all jobs.", "JobDistributingThread", true);
-
-                            distribute = false;
-
-                            break;
-                        }
-                    }
+                    Thread.Sleep(50);
                 }
 
-                Thread.Sleep(50);
+                WaitForAllWorkers();
             }
+            catch (Exception e)
+            {
+                Log.LogEvent(Log.EventType.Error, $"JobDistributer crashed: {e.Message}.", "JobDistributer", false);
+                Log.LogEvent(Log.EventType.Error, "JobDistributer crashed.", "JobDistributer", true, false);
 
-            WaitForAllWorkers();
+                try
+                {
+                    StopAllWorkers();
+                    WaitForAllWorkers();
+                }
+                catch { }
+            }
+            
             Program.Exit(true);
         }
 
@@ -104,7 +120,7 @@ namespace Primes.Exec
 
         private void StopAllWorkers()
         {
-            Program.LogEvent(Program.EventType.Info, "Stopping Workers.", "MainThread", true);
+            Log.LogEvent(Log.EventType.Info, "Stopping Workers.", "MainThread", true);
 
             for (int i = 0; i < Workers.Length; i++)
             {

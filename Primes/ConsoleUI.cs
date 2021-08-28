@@ -11,6 +11,8 @@ namespace Primes.Exec
 {
     public static class ConsoleUI
     {
+        public static bool UIEnabled { get => doUI; }
+
         private static ushort progressBarWidth = 0;
         private static float progressBarMultiplier = 0f;
 
@@ -33,14 +35,24 @@ namespace Primes.Exec
 
         public static void StartUI()
         {
-            doUI = true;
+            try
+            {
+                doUI = true;
 
-            lastJobSeconds = new ushort[Properties.Settings.Default.Threads];
+                lastJobSeconds = new ushort[Properties.Settings.Default.Threads];
 
-            CalculateGraphicMetrics();
+                CalculateGraphicMetrics();
 
-            UIThread = new Thread(UIWork);
-            UIThread.Start();
+                UIThread = new Thread(UIWork);
+                UIThread.Start();
+            }
+            catch (Exception e)
+            {
+                doUI = false;
+
+                Log.LogEvent(Log.EventType.Error, $"Failed to start ConsoleUI: {e.Message}.", "ConsoleUI", false);
+                Log.LogEvent(Log.EventType.Warning, $"ConsoleUI failed to start, display mode changed to log only. Previous logs will not be displayed. Check log file for older logs.", "ConsoleUI", true, false);
+            }
         }
         public static void StopUI()
         {
@@ -51,30 +63,40 @@ namespace Primes.Exec
 
         private static void UIWork()
         {
-            while (doUI)
+            try
             {
-                DateTime start = DateTime.Now;
-
-                string ui = "Primes.exe by Didas72 and PeakRead\n";
-
-                if (lastWidth != Console.WindowWidth || lastHeight != Console.WindowHeight)
+                while (doUI)
                 {
-                    lastWidth = Console.WindowWidth;
-                    lastHeight = Console.WindowHeight;
+                    DateTime start = DateTime.Now;
 
-                    CalculateGraphicMetrics();
+                    string ui = "Primes.exe by Didas72 and PeakRead\n";
+
+                    if (lastWidth != Console.WindowWidth || lastHeight != Console.WindowHeight)
+                    {
+                        lastWidth = Console.WindowWidth;
+                        lastHeight = Console.WindowHeight;
+
+                        CalculateGraphicMetrics();
+                    }
+
+                    DrawIndividualProgress(ref ui);
+                    DrawGlobalProgress(ref ui);
+                    DrawLog(ref ui);
+
+                    Console.Clear();
+                    Console.Write(ui);
+
+                    TimeSpan elapsed = DateTime.Now - start;
+
+                    Thread.Sleep(Math.Max(1, Math.Min(frameTime - elapsed.Milliseconds, frameTime)));
                 }
+            }
+            catch (Exception e)
+            {
+                doUI = false;
 
-                DrawIndividualProgress(ref ui);
-                DrawGlobalProgress(ref ui);
-                DrawLog(ref ui);
-
-                Console.Clear();
-                Console.Write(ui);
-
-                TimeSpan elapsed = DateTime.Now - start;
-
-                Thread.Sleep(Math.Max(1, Math.Min(frameTime - elapsed.Milliseconds, frameTime)));
+                Log.LogEvent(Log.EventType.Error, $"ConsoleUI crashed: {e.Message}.", "ConsoleUI", false);
+                Log.LogEvent(Log.EventType.Warning, "ConsoleUI crashed, display mode changed to log only. Previous logs will not be displayed. Check log file for older logs.", "ConsoleUI", true, false);
             }
         }
 
@@ -96,7 +118,7 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Program.LogEvent(Program.EventType.Error, $"Error when drawing individual progress: {e.Message}", "ConsoleUI", false);
+                Log.LogEvent(Log.EventType.Error, $"Error when drawing individual progress: {e.Message}", "ConsoleUI", false);
             }
         }
         private static void DrawGlobalProgress(ref string ui)
@@ -122,11 +144,13 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Program.LogEvent(Program.EventType.Error, $"Failed to determine batch progress: {e.Message}", "ConsoleUI", false);
+                Log.LogEvent(Log.EventType.Error, $"Failed to determine batch progress: {e.Message}", "ConsoleUI", false);
             }
         }
         private static void DrawLog(ref string ui)
         {
+
+
             try
             {
                 ui += $"{"=".Loop(Console.BufferWidth)}Logs:\n";
@@ -141,7 +165,7 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Program.LogEvent(Program.EventType.Error, $"Error when drawing log: {e.Message}", "ConsoleUI", false);
+                Log.LogEvent(Log.EventType.Error, $"Error when drawing log: {e.Message}", "ConsoleUI", false);
             }
         }
 

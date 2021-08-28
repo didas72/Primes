@@ -189,7 +189,7 @@ namespace Primes.Common.Serializers
         /// </summary>
         /// <param name="job"><see cref="PrimeJob"/> to serialize.</param>
         /// <returns></returns>
-        public static byte[] Serializev1_0_0(ref PrimeJob job)
+        public static byte[] Serializev1_0_0(PrimeJob job)
         {
             byte[] bytes = new byte[31 + job.Primes.Count * 8];
 
@@ -209,7 +209,7 @@ namespace Primes.Common.Serializers
         /// </summary>
         /// <param name="job"><see cref="PrimeJob"/> to serialize.</param>
         /// <returns></returns>
-        public static byte[] Serializev1_1_0(ref PrimeJob job)
+        public static byte[] Serializev1_1_0(PrimeJob job)
         {
             byte[] bytes = new byte[35 + job.Primes.Count * 8];
 
@@ -230,7 +230,7 @@ namespace Primes.Common.Serializers
         /// </summary>
         /// <param name="job"><see cref="PrimeJob"/> to serialize.</param>
         /// <returns></returns>
-        public static byte[] Serializev1_2_0(ref PrimeJob job)
+        public static byte[] Serializev1_2_0(PrimeJob job)
         {
             List<byte> bytes = new List<byte>(new byte[] { job.FileVersion.major, job.FileVersion.minor, job.FileVersion.patch, job.FileCompression.GetByte() }); //missing size for compressed primes
 
@@ -404,7 +404,7 @@ namespace Primes.Common.Serializers
         /// </summary>
         /// <param name="file"><see cref="KnownPrimesResourceFile"/> to serialize.</param>
         /// <returns></returns>
-        public static byte[] Serializev1_0_0(ref KnownPrimesResourceFile file)
+        public static byte[] Serializev1_0_0(KnownPrimesResourceFile file)
         {
             byte[] bytes = new byte[7 + file.Primes.Length * 8];
 
@@ -421,7 +421,7 @@ namespace Primes.Common.Serializers
         /// </summary>
         /// <param name="file"><see cref="KnownPrimesResourceFile"/> to serialize.</param>
         /// <returns></returns>
-        public static byte[] Serializev1_1_0(ref KnownPrimesResourceFile file)
+        public static byte[] Serializev1_1_0(KnownPrimesResourceFile file)
         {
             byte[] bytes = new byte[15 + file.Primes.Length * 8];
 
@@ -439,7 +439,7 @@ namespace Primes.Common.Serializers
         /// </summary>
         /// <param name="file"><see cref="KnownPrimesResourceFile"/> to serialize.</param>
         /// <returns></returns>
-        public static byte[] Serializev1_2_0(ref KnownPrimesResourceFile file)
+        public static byte[] Serializev1_2_0(KnownPrimesResourceFile file)
         {
             throw new NotImplementedException("Compression is not implemented.");
 

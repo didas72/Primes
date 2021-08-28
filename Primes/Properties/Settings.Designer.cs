@@ -82,5 +82,17 @@ namespace Primes.Exec.Properties {
                 this["FrameTimeMilis"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UseUI {
+            get {
+                return ((bool)(this["UseUI"]));
+            }
+            set {
+                this["UseUI"] = value;
+            }
+        }
     }
 }

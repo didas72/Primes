@@ -28,7 +28,7 @@ namespace Primes.Common
         /// <exception cref="DirectoryNotFoundException"></exception>
         public static Queue<string> GetDoableJobs(string path, uint maxCount)
         {
-            string[] files = GetSubFiles(path, "*.primejob");
+            string[] files = GetSubFilesSorted(path, "*.primejob");
 
             Queue<string> doableJobs = new Queue<string>();
 
@@ -56,7 +56,7 @@ namespace Primes.Common
         {
             jobPath = string.Empty;
 
-            string[] files = GetSubFiles(path, "*.primejob");
+            string[] files = GetSubFilesSorted(path, "*.primejob");
 
             for (int i = 0; i < files.Length; i++)
             {
@@ -99,15 +99,7 @@ namespace Primes.Common
         /// <exception cref="DirectoryNotFoundException"></exception>
         public static string[] GetSubFiles(string directory)
         {
-            List<string> files = new List<string>();
-
-            foreach (string s in Directory.GetFiles(directory))
-                files.AddRange(Directory.GetFiles(s));
-
-            foreach (string d in Directory.GetDirectories(directory))
-                files.AddRange(GetSubFiles(d));
-
-            return files.ToArray();
+            return GetSubFiles(directory, string.Empty);
         }
         /// <summary>
         /// Gets all files in the given directory and it's subdirectories that match the given search pattern.
@@ -125,10 +117,35 @@ namespace Primes.Common
         {
             List<string> files = new List<string>();
 
-            foreach (string f in Directory.GetFiles(directory, searchPattern))
-                files.Add(f);
+            files.AddRange(Directory.GetFiles(directory, searchPattern));
 
             foreach (string d in Directory.GetDirectories(directory))
+                files.AddRange(GetSubFiles(d, searchPattern));
+
+            return files.ToArray();
+        }
+        /// <summary>
+        /// Gets all files in the given directory and it's subdirectories that match the given search pattern, sorted by containing directory name.
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <param name="searchPattern"></param>
+        /// <returns>Array containing the full paths of every file found.</returns>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        public static string[] GetSubFilesSorted(string directory, string searchPattern)
+        {
+            List<string> files = new List<string>();
+
+            files.AddRange(Directory.GetFiles(directory, searchPattern));
+
+            string[] dirs = Directory.GetDirectories(directory);
+            dirs = SortDirs(dirs);
+
+            foreach (string d in dirs)
                 files.AddRange(GetSubFiles(d, searchPattern));
 
             return files.ToArray();
@@ -163,6 +180,40 @@ namespace Primes.Common
 
                 sorted.Add(files[lowest]);
                 files.Remove(lowest);
+            }
+
+            return sorted.ToArray();
+        }
+        /// <summary>
+        /// Sorts directory paths by their numeric values. Values must be ulong compatible.
+        /// </summary>
+        /// <param name="dirnames">The paths to sort by directory name.</param>
+        /// <returns>Sorted paths array.</returns>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="FormatException"></exception>
+        /// <exception cref="OverflowException"></exception>
+        public static string[] SortDirs(string[] dirnames)
+        {
+            Dictionary<ulong, string> dirs = new Dictionary<ulong, string>();
+            List<string> sorted = new List<string>();
+
+            for (int i = 0; i < dirnames.Length; i++)
+            {
+                dirs.Add(ulong.Parse(Path.GetFileName(dirnames[i])), dirnames[i]);
+            }
+
+            while (dirs.Count > 0)
+            {
+                ulong lowest = ulong.MaxValue;
+
+                foreach (KeyValuePair<ulong, string> pair in dirs)
+                {
+                    if (pair.Key < lowest)
+                        lowest = pair.Key;
+                }
+
+                sorted.Add(dirs[lowest]);
+                dirs.Remove(lowest);
             }
 
             return sorted.ToArray();
