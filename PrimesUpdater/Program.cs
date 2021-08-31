@@ -27,11 +27,6 @@ namespace Primes.Updater
             int updateSelfRet = UpdateSelf();
             Console.WriteLine($"Update self return: {updateSelfRet}");
 
-            if (updateSelfRet == 0)
-            {
-
-            }
-
             Console.WriteLine("//DONE");
             Console.ReadLine();
         }
@@ -196,8 +191,10 @@ exit";
                 FileName = "update.bat"
             };
 
-            Process updater = new Process();
-            updater.StartInfo = startInfo;
+            Process updater = new Process
+            {
+                StartInfo = startInfo
+            };
             updater.Start();
 
             Environment.Exit(0);
@@ -259,6 +256,18 @@ exit";
             public override string ToString()
             {
                 return $"v{major}.{minor}.{patch}";
+            }
+            public string ToString(Product product)
+            {
+                switch(product)
+                {
+                    case Product.Primes_Updater:
+                        return $"u{major}.{minor}.{patch}";
+
+                    case Product.Primes_Exec:
+                    default:
+                        return $"v{major}.{minor}.{patch}";
+                }
             }
         }
     }
