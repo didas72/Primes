@@ -12,7 +12,7 @@ namespace Primes.Updater.Net
 
             try
             {
-                client.DownloadFile("https://github.com/didas72/Primes/releases/download/v1.4.0/Primes.v1.4.0.NET.Framework.4.7.2.7z", "E:/Downloads/tmp_Primes.7z");
+                client.DownloadFile(url, path);
             }
             catch
             {

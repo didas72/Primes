@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Reflection;
 
 using Primes;
 using Primes.Common;
@@ -235,6 +235,17 @@ namespace Primes.Common
             Array.Copy(values, 0, f, queue.Count, values.Length);
 
             queue = new Queue<T>(f);
+        }
+
+
+
+        /// <summary>
+        /// Gets the path of the currently running .exe.
+        /// </summary>
+        /// <returns></returns>
+        public static string GetExecutablePath()
+        {
+            return Assembly.GetEntryAssembly().Location;
         }
     }
 }

@@ -2,9 +2,9 @@
 <versions>
   <stable>
     <primes.updater>
-      <major>0</major>
-      <minor>0</minor>
-      <patch>0</patch>
+      <major>99</major>
+      <minor>99</minor>
+      <patch>99</patch>
     </primes.updater>
     <primes.exec>
       <major>1</major>
