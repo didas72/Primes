@@ -54,6 +54,7 @@ Start time {now.Hour}:{now.Minute}:{now.Second}
             Console.ForegroundColor = ConsoleColor.White;
         }
         public static void LogEvent(string msg, string sender) => LogEvent(EventType.Info, msg, sender, true, true);
+        public static void LogEvent(EventType eventType, string msg, string sender) => LogEvent(eventType, msg, sender, true, true);
         public static void LogEvent(EventType eventType, string msg, string sender, bool writeToScreen) => LogEvent(eventType, msg, sender, writeToScreen, true);
         public static void LogEvent(EventType eventType, string msg, string sender, bool writeToScreen, bool writeToFile)
         {

@@ -170,7 +170,12 @@ namespace Primes.Exec
             try
             {
                 Directory.CreateDirectory(Path.Combine(dumpPath, $"{job.Batch}"));
-                PrimeJob.Serialize(job, Path.Combine(dumpPath, $"{job.Batch}\\{job.Start}.primejob"));
+                string filePath = Path.Combine(dumpPath, $"{job.Batch}\\{job.Start}.primejob");
+
+                if (File.Exists(filePath))
+                    Log.LogEvent(Log.EventType.Warning, $"Completed job {job.Start}.primejob already exists. Overwritting.", $"Worker#{workerId:D2}");
+
+                PrimeJob.Serialize(job, filePath);
             }
             catch (Exception e)
             {
