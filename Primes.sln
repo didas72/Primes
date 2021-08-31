@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesShader", "PrimesShade
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesCompute", "PrimesCompute\PrimesCompute.csproj", "{312ADC77-A721-4B08-92B4-433324D50AAF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesUpdater", "PrimesUpdater\PrimesUpdater.csproj", "{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -119,6 +121,18 @@ Global
 		{312ADC77-A721-4B08-92B4-433324D50AAF}.Release|x64.Build.0 = Release|Any CPU
 		{312ADC77-A721-4B08-92B4-433324D50AAF}.Release|x86.ActiveCfg = Release|Any CPU
 		{312ADC77-A721-4B08-92B4-433324D50AAF}.Release|x86.Build.0 = Release|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Debug|x64.Build.0 = Debug|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Debug|x86.Build.0 = Debug|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Release|x64.ActiveCfg = Release|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Release|x64.Build.0 = Release|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Release|x86.ActiveCfg = Release|Any CPU
+		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

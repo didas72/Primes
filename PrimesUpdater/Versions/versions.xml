@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<versions>
+  <stable>
+    <primes.updater>
+      <major>0</major>
+      <minor>0</minor>
+      <patch>0</patch>
+    </primes.updater>
+    <primes.exec>
+      <major>1</major>
+      <minor>4</minor>
+      <patch>0</patch>
+    </primes.exec>
+  </stable>
+</versions>

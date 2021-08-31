@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-using Primes.Common.Files;
-
-namespace Primes.Common.Serializers
+namespace Primes.Common.Files
 {
     /// <summary>
     /// Class that contains several <see cref="PrimeJob"/> serialization related methods.
