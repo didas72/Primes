@@ -247,5 +247,25 @@ namespace Primes.Common
         {
             return Assembly.GetEntryAssembly().Location;
         }
+
+
+
+        /// <summary>
+        /// Deletes a directory and all it's contents
+        /// </summary>
+        /// <param name="path"></param>
+        public static void DeleteDirectory(string path)
+        {
+            DirectoryInfo di = new DirectoryInfo(path);
+
+            foreach (FileInfo file in di.GetFiles())
+            {
+                file.Delete();
+            }
+            foreach (DirectoryInfo dir in di.GetDirectories())
+            {
+                dir.Delete(true);
+            }
+        }
     }
 }

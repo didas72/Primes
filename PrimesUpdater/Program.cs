@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Xml;
-using System.Xml.Linq;
+using System.Threading;
 
 using Primes;
 using Primes.Common;
@@ -24,8 +24,11 @@ namespace Primes.Updater
         {
             InitDirs();
 
-            int updateSelfRet = UpdateSelf();
-            Console.WriteLine($"Update self return: {updateSelfRet}");
+            if (args.Length == 0)
+            {
+                int updateSelfRet = UpdateSelf();
+                Console.WriteLine($"Update self return: {updateSelfRet}");
+            }
 
             Console.WriteLine("//DONE");
             Console.ReadLine();
@@ -41,6 +44,7 @@ namespace Primes.Updater
             Directory.CreateDirectory(tmpDir);
 
             tmpDir = Path.Combine(tmpDir, "tmp");
+            Utils.DeleteDirectory(tmpDir);
             Directory.CreateDirectory(tmpDir);
 
             Console.WriteLine("Directories set up.");
@@ -81,13 +85,19 @@ namespace Primes.Updater
 
             if (!Networking.TryDownloadFile(latestUrl, updatePath)) return 3; //3 = failed to download update
 
+            Console.WriteLine("Latest version downloaded.");
+
             if (!SevenZip.TryDecompress7z(updatePath, decompressPath)) return 4; //4 = failed to decompress
+
+            Console.WriteLine("Version extracted.");
 
             string cmdCode = BuildUpdateCMD(decompressPath, installPath, "PrimesUpdater.exe");
             Console.WriteLine($"Update CMD code: {cmdCode}");
 
 
 
+            Console.WriteLine("Restarting to update in 3 seconds...");
+            Thread.Sleep(3000);
             LaunchSelfUpdateCMD(cmdCode);
 
             
@@ -99,7 +109,7 @@ namespace Primes.Updater
 
         public static bool GetLatestReleaseURL(Product product, Version version, out string url)
         {
-            url = $"{releaseLinkBase}{version}/{GetProductURLCode(product)}{version}{NET472Ending}";
+            url = $"{releaseLinkBase}{version.ToString(product)}/{GetProductURLCode(product)}{version.ToString(product)}{NET472Ending}";
 
             return true;
         }
@@ -174,12 +184,14 @@ namespace Primes.Updater
 
         public static string BuildUpdateCMD(string uncompressPath, string installPath, string execToStart)
         {
-            return $@"ping -n 3 127.0.0.1>nul
-rm -r '{installPath}'
-xcopy '{uncompressPath}\*' '{Path.GetDirectoryName(installPath)}'
-start '{installPath}\{execToStart}'
-ping -n 3 127.0.0.1>nul
-exit";
+            return  $"ping -n 3 127.0.0.1>nul\n" +
+                    $"taskkill -f -im 7za.exe\n" +
+                    $"del /f /q /s \"{installPath}\\*.*\"\n" +
+                    $"xcopy \"{uncompressPath}\\*.*\" \"{installPath}\"\n" +
+                    $"start \"PrimesUpdater.exe\" \"{installPath}\\{execToStart}\" -r\n" +
+                    $"ping -n 5 127.0.0.1>nul\n" +
+                    $"taskkill -f -im 7za.exe\n" +
+                    $"exit";
         }
         private static void LaunchSelfUpdateCMD(string cmdCode)
         {
@@ -188,7 +200,7 @@ exit";
 
             ProcessStartInfo startInfo = new ProcessStartInfo()
             {
-                FileName = "update.bat"
+                FileName = programPath
             };
 
             Process updater = new Process
