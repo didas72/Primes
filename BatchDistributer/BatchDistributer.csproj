@@ -55,6 +55,10 @@
     <Compile Include="Files\Worker.cs" />
     <Compile Include="Files\WorkerTable.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="Net\Client.cs" />
+    <Compile Include="Net\ClientReceiver.cs" />
+    <Compile Include="Net\ClientWaitQueue.cs" />
+    <Compile Include="Net\Server.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

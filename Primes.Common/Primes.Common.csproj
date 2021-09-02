@@ -47,6 +47,17 @@
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Files\Files.cs" />
     <Compile Include="Mathf.cs" />
+    <Compile Include="Net\Messages\Message.cs" />
+    <Compile Include="Net\Messages\Message_ClientBatchSend.cs" />
+    <Compile Include="Net\Messages\Message_ClientRequest.cs" />
+    <Compile Include="Net\Messages\Message_ClientWorkerId.cs" />
+    <Compile Include="Net\Messages\Message_ServerBatchNotAvailable.cs" />
+    <Compile Include="Net\Messages\Message_ServerBatchReturnListening.cs" />
+    <Compile Include="Net\Messages\Message_ServerBatchSend.cs" />
+    <Compile Include="Net\Messages\Message_ServerCloseConnection.cs" />
+    <Compile Include="Net\Messages\Message_ServerRequestWorkerId.cs" />
+    <Compile Include="Net\Messages\Message_ServerStateRequest.cs" />
+    <Compile Include="Net\Messages\Message_ServerWelcomeWait.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Files\Serializers.cs" />
     <Compile Include="Utils.cs" />

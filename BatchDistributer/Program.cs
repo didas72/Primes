@@ -4,14 +4,23 @@ using System.IO;
 using System.Threading;
 
 using Primes.BatchDistributer.Files;
+using Primes.BatchDistributer.Net;
 
 namespace Primes.BatchDistributer
 {
-    class Program
+    static class Program
     {
+        public static ClientReceiver clientReceiver;
+        public static ClientWaitQueue clientWaitQueue;
+
+        public static WorkerTable workerTable;
+        public static BatchTable batchTable;
+
+
+
         private static void Main(string[] args)
         {
-            if (!Init())
+            if (!Init(30000))
             {
                 Log.LogEvent("Failed to init!", "MainThread");
             }
@@ -21,11 +30,15 @@ namespace Primes.BatchDistributer
 
 
 
-        private static bool Init()
+        private static bool Init(int port)
         {
             InitDirectories();
 
             InitLog();
+
+            InitDB();
+
+            InitNet(port);
 
             return true;
         }
@@ -65,6 +78,30 @@ namespace Primes.BatchDistributer
         private static bool InitLog()
         {
             Log.InitLog(Path.Combine(Paths.homePath, "log.txt"));
+
+            return true;
+        }
+        private static void InitDB()
+        {
+            string workerTablePath = Path.Combine(Paths.dbPath, "WorkerTable.tbl");
+
+            if (File.Exists(workerTablePath))
+                workerTable = WorkerTable.Deserialize(File.ReadAllBytes(workerTablePath));
+            else
+                workerTable = new WorkerTable();
+
+            string batchTablePath = Path.Combine(Paths.dbPath, "BatchTable.tbl");
+
+            if (File.Exists(batchTablePath))
+                batchTable = BatchTable.Deserialize(File.ReadAllBytes(batchTablePath));
+            else
+                batchTable = new BatchTable();
+        }
+        private static bool InitNet(int port)
+        {
+            clientReceiver = new ClientReceiver(port);
+
+            clientWaitQueue = new ClientWaitQueue();
 
             return true;
         }

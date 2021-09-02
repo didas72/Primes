@@ -441,7 +441,7 @@ namespace Primes.Common.Files
         {
             throw new NotImplementedException("Compression is not implemented.");
 
-            byte[] bytes = new byte[8 + file.Primes.Length * 8];
+            /*byte[] bytes = new byte[8 + file.Primes.Length * 8];
 
             bytes[0] = file.FileVersion.major; bytes[1] = file.FileVersion.minor; bytes[2] = file.FileVersion.patch;
             bytes[3] = file.FileCompression.GetByte();
@@ -451,7 +451,7 @@ namespace Primes.Common.Files
             Array.Copy(BitConverter.GetBytes(file.Primes.Length), 0, bytes, 4, 4);
             Buffer.BlockCopy(file.Primes, 0, bytes, 8, file.Primes.Length * 8);
 
-            return bytes;
+            return bytes;*/
         }
 
 
