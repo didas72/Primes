@@ -6,8 +6,14 @@ namespace Primes.BatchDistributer.Files
     {
         private readonly long stamp;
 
+
+
         public TimeStamp(DateTime time) => stamp = time.ToUniversalTime().ToBinary();
         public TimeStamp(long stamp) => this.stamp = stamp;
+
+
+
+        public static TimeStamp Now() => new TimeStamp(DateTime.Now);
 
 
 
@@ -16,12 +22,10 @@ namespace Primes.BatchDistributer.Files
 
 
         public byte[] Serialize() => BitConverter.GetBytes(stamp);
-        public static TimeStamp Deserialize(byte[] buffer)
+        public static TimeStamp Deserialize(byte[] buffer) => Deserialize(buffer, 0);
+        public static TimeStamp Deserialize(byte[] buffer, int startIndex)
         {
-            if (buffer.Length != 8)
-                throw new ArgumentException("Buffer size must be 8 bytes.");
-
-            return new TimeStamp(BitConverter.ToInt64(buffer, 0));
+            return new TimeStamp(BitConverter.ToInt64(buffer, startIndex));
         }
     }
 }
