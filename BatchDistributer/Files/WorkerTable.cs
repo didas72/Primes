@@ -48,7 +48,7 @@ namespace Primes.BatchDistributer.Files
         }
         public bool RemoveEntry(int index)
         {
-            if (index > 0 && index < entries.Count)
+            if (index >= 0 && index < entries.Count)
             {
                 entries.RemoveAt(index);
                 return true;
@@ -146,6 +146,16 @@ namespace Primes.BatchDistributer.Files
         public bool RegisterContactTime(string workerId)
         {
             if (FindWorkerWithId(workerId, out int index))
+            {
+                entries[index].RegisterContactTime();
+                return true;
+            }
+            else
+                return false;
+        }
+        public bool RegisterContactTime(int index)
+        {
+            if (index >= 0 && index < entries.Count)
             {
                 entries[index].RegisterContactTime();
                 return true;

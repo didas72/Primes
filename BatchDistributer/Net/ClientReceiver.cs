@@ -66,7 +66,6 @@ namespace Primes.BatchDistributer.Net
 
             listener.Stop();
         }
-
         private void InitialAccept(Client client)
         {
             client.SendMessage(new Message_ServerWelcomeWait());

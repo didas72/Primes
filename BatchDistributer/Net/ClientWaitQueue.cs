@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Sockets;
+﻿using System.Collections.Generic;
 
 namespace Primes.BatchDistributer.Net
 {
     public class ClientWaitQueue
     {
-        private Queue<Client> clientQueue;
+        private readonly Queue<Client> clientQueue;
 
 
 

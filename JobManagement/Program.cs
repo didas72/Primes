@@ -21,31 +21,7 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
-            ulong val = ulong.MaxValue;
-
-            KnownPrimesResourceFile file = KnownPrimesResourceFile.Deserialize("E:\\Documents\\primes\\resources\\knownPrimes.rsrc");
-            ulong[] primes = new ulong[file.Primes.Length - 1];
-            Array.Copy(file.Primes, 0, primes, 0, primes.Length);
-            file = null;
-
-            for (int i = 0; i < primes.Length; i++)
-            {
-                if (primes[i] == 0)
-                {
-                    Console.WriteLine($"{i} of {primes.Length}");
-                    Console.WriteLine($"{primes[i-1]} {primes[i]}");
-
-                    while (true);
-                }
-            }
-
-            while (!Mathf.IsPrime(val, ref primes))
-            {
-                Console.WriteLine($"{val} is not prime.");
-                val -= 2;
-            }
-
-            Console.WriteLine($"{val} is prime.");
+            Compress7z("E:\\Documents\\primes\\log.txt", "E:\\Documents\\primes\\log.7z");
 
             Console.WriteLine("//Done");
             Console.ReadLine();

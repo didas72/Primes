@@ -71,6 +71,23 @@ namespace Primes.BatchDistributer.Files
 
             return index != -1;
         }
+        public int[] FindLowestFreeBatches(int max, out uint[] batchNumbers)
+        {
+            List<uint> batchNumbersL = new List<uint>();
+            List<int> indexesL = new List<int>();
+
+            while (batchNumbersL.Count < max)
+            {
+                if (!FindLowestFreeBatch(out uint batchNum, out int index))
+                    break;
+
+                batchNumbersL.Add(batchNum);
+                indexesL.Add(index);
+            }
+
+            batchNumbers = batchNumbersL.ToArray();
+            return indexesL.ToArray();
+        }
         public int[] FindBatchesAssignedToWorker(string workerId, out uint[] batchNumbers)
         {
             List<int> indexes = new List<int>();
@@ -87,6 +104,39 @@ namespace Primes.BatchDistributer.Files
 
             batchNumbers = batchNumbersL.ToArray();
             return indexes.ToArray();
+        }
+
+
+
+        public bool AssignBatch(string workerId, int index)
+        {
+            if (index >= 0 && index < entries.Count)
+            {
+                entries[index].AssignedWorkerId = workerId;
+                entries[index].Status = BatchEntry.BatchStatus.Sent_Waiting;
+
+                return true;
+            }
+            else
+                return false;
+        }
+        public bool AssignBatches(string workerId, int[] indexes)
+        {
+            for (int i = 0; i < indexes.Length; i++)
+            {
+                if (indexes[i] < 0 && indexes[i] >= entries.Count)
+                {
+                    return false;
+                }
+            }
+
+            for (int i = 0; i < indexes.Length; i++)
+            {
+                entries[indexes[i]].AssignedWorkerId = workerId;
+                entries[indexes[i]].Status = BatchEntry.BatchStatus.Sent_Waiting;
+            }
+
+            return true;
         }
 
 

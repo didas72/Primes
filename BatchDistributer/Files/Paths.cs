@@ -8,6 +8,6 @@ namespace Primes.BatchDistributer.Files
 {
     public static class Paths
     {
-        public static string homePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop), pendingPath, archivedPath, cachePath, dbPath;
+        public static string homePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop), pendingPath, archivedPath, cachePath, dbPath, sentPath;
     }
 }

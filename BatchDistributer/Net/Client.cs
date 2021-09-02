@@ -21,7 +21,7 @@ namespace Primes.BatchDistributer.Net
 
 
 
-        public delegate void MessageReceived(byte[] message);
+        public delegate void MessageReceived(IMessage message);
 
 
 
@@ -50,6 +50,8 @@ namespace Primes.BatchDistributer.Net
 
         public bool SendMessage(IMessage message)
         {
+            Log.LogEvent($"Sending message of type {message.MessageType}.", "Client");
+
             try
             {
                 byte[] bytes = message.Serialize();
@@ -72,6 +74,7 @@ namespace Primes.BatchDistributer.Net
         }
         public void Disconnect()
         {
+            StopListening();
             netStream.Dispose();
             socket.Close();
         }
@@ -100,7 +103,11 @@ namespace Primes.BatchDistributer.Net
                             netStream.Read(buffer, head, Math.Min(len, socket.ReceiveBufferSize));
                         }
 
-                        messageReceived.BeginInvoke(buffer, null, this);
+                        IMessage message = Message.Deserialize(buffer);
+
+                        Log.LogEvent($"Received message of type {message.MessageType}.", "Client");
+
+                        messageReceived.BeginInvoke(message, null, this);
                     }
                 }
                 catch { }

@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 
+using Primes.Common;
+using Primes.Common.Files;
+using Primes.Common.Net;
 using Primes.BatchDistributer.Files;
 using Primes.BatchDistributer.Net;
 
@@ -16,13 +19,17 @@ namespace Primes.BatchDistributer
         public static WorkerTable workerTable;
         public static BatchTable batchTable;
 
+        private static volatile bool exiting = false;
+
 
 
         private static void Main(string[] args)
         {
             if (!Init(30000))
             {
-                Log.LogEvent("Failed to init!", "MainThread");
+                Log.LogEvent(Log.EventType.Error, "Failed to init!", "MainThread");
+
+                Exit();
             }
 
             ParseArguments(args);
@@ -36,9 +43,18 @@ namespace Primes.BatchDistributer
 
             InitLog();
 
-            InitDB();
+            if (!InitDB())
+            {
+                Log.LogEvent(Log.EventType.Fatal, "Failed to init database.", "MainThread");
+                return false;
+            }
 
-            InitNet(port);
+            if (!InitNet(port))
+            {
+                Log.LogEvent(Log.EventType.Fatal, "Failed to init networking.", "MainThread");
+                return false;
+            }
+                
 
             return true;
         }
@@ -52,6 +68,8 @@ namespace Primes.BatchDistributer
              * | \-<archived batches>
              * |-cache
              * | \-<cached batches>
+             * |-sent
+             * | \-<sent batches>
              * |-db
              * | |-BatchTable.tbl
              * | \-WorkerTable.tbl
@@ -70,6 +88,9 @@ namespace Primes.BatchDistributer
             Paths.cachePath = Path.Combine(Paths.homePath, "cache");
             Directory.CreateDirectory(Paths.cachePath);
 
+            Paths.sentPath = Path.Combine(Paths.homePath, "sent"));
+            Directory.CreateDirectory(Paths.sentPath);
+
             Paths.dbPath = Path.Combine(Paths.homePath, "db");
             Directory.CreateDirectory(Paths.dbPath);
 
@@ -81,27 +102,43 @@ namespace Primes.BatchDistributer
 
             return true;
         }
-        private static void InitDB()
+        private static bool InitDB()
         {
-            string workerTablePath = Path.Combine(Paths.dbPath, "WorkerTable.tbl");
+            try
+            {
+                string workerTablePath = Path.Combine(Paths.dbPath, "WorkerTable.tbl");
 
-            if (File.Exists(workerTablePath))
-                workerTable = WorkerTable.Deserialize(File.ReadAllBytes(workerTablePath));
-            else
-                workerTable = new WorkerTable();
+                if (File.Exists(workerTablePath))
+                    workerTable = WorkerTable.Deserialize(File.ReadAllBytes(workerTablePath));
+                else
+                    workerTable = new WorkerTable();
 
-            string batchTablePath = Path.Combine(Paths.dbPath, "BatchTable.tbl");
+                string batchTablePath = Path.Combine(Paths.dbPath, "BatchTable.tbl");
 
-            if (File.Exists(batchTablePath))
-                batchTable = BatchTable.Deserialize(File.ReadAllBytes(batchTablePath));
-            else
-                batchTable = new BatchTable();
+                if (File.Exists(batchTablePath))
+                    batchTable = BatchTable.Deserialize(File.ReadAllBytes(batchTablePath));
+                else
+                    batchTable = new BatchTable();
+            }
+            catch
+            {
+                return false;
+            }
+
+            return true;
         }
         private static bool InitNet(int port)
         {
-            clientReceiver = new ClientReceiver(port);
+            try
+            {
+                clientReceiver = new ClientReceiver(port);
 
-            clientWaitQueue = new ClientWaitQueue();
+                clientWaitQueue = new ClientWaitQueue();
+            }
+            catch
+            {
+                return false;
+            }
 
             return true;
         }
@@ -123,6 +160,21 @@ namespace Primes.BatchDistributer
             }
 
             return true;
+        }
+
+
+
+        public static void Exit()
+        {
+            if (exiting)
+            {
+                Thread.Sleep(1000);
+                return;
+            }
+
+            exiting = true;
+
+            Environment.Exit(0);
         }
     }
 }
