@@ -75,9 +75,21 @@ namespace Primes.Common
         {
             return stream.Length - stream.Position;
         }
-
+        /// <summary>
+        /// Gets an array containing the values present in the given Dictionary.
+        /// </summary>
+        /// <typeparam name="K"></typeparam>
+        /// <typeparam name="V"></typeparam>
+        /// <param name="dictionary">Dictionary from which to take the values.</param>
+        /// <returns></returns>
         public static V[] GetValues<K, V>(this Dictionary<K, V> dictionary) => dictionary.Values.ToArray();
-
+        /// <summary>
+        /// Gets an array containing the keys present in the given Dictionary.
+        /// </summary>
+        /// <typeparam name="K"></typeparam>
+        /// <typeparam name="V"></typeparam>
+        /// <param name="dictionary">Dictionary from which to take the keys.</param>
+        /// <returns></returns>
         public static K[] GetKeys<K, V>(this Dictionary<K, V> dictionary) => dictionary.Keys.ToArray();
     }
 }

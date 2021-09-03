@@ -2,22 +2,49 @@
 
 namespace Primes.Common.Net.Messages
 {
+    /// <summary>
+    /// Interface to hold minimum Methods and Properties a Message type class should implement.
+    /// </summary>
     public interface IMessage
     {
+        /// <summary>
+        /// The type of message represented by the class.
+        /// </summary>
         Message.Type MessageType { get; }
+        /// <summary>
+        /// Serializes the given message to a byte array.
+        /// </summary>
+        /// <returns></returns>
         byte[] Serialize();
     }
 
+
+
+    /// <summary>
+    /// Represents a base definition for the Message type classes as well as the generalised Deserialize method and the definition for message types.
+    /// </summary>
     public abstract class Message : IMessage
     {
+        /// <summary>
+        /// The type of message represented by the class. 
+        /// </summary>
         public Type MessageType { get; protected set; }
 
 
 
+        /// <summary>
+        /// Empty declaration of the function that serializes the given message to a byte array.
+        /// </summary>
+        /// <returns></returns>
         public abstract byte[] Serialize();
 
 
 
+        /// <summary>
+        /// Deserializes an IMessage from a byte array.
+        /// </summary>
+        /// <param name="bytes">The byte array containing the message to deserialize.</param>
+        /// <returns></returns>
         public static Message Deserialize(byte[] bytes)
         {
             switch ((Type)bytes[0])
@@ -65,33 +92,75 @@ namespace Primes.Common.Net.Messages
 
 
 
+        /// <summary>
+        /// Enum holding the valid types of message.
+        /// </summary>
         public enum Type : byte
         {
+            /// <summary>
+            /// Default value to prevent the reading of invalid data.
+            /// </summary>
             None = 0,
+            /// <summary>
+            /// First message exchanged in a conversation. Informs client to wait while the server handles other clients' requests.
+            /// </summary>
             Server_Welcome_Wait,
+            /// <summary>
+            /// Server requests the client's workerId which may be used to decide on batch distribution.
+            /// </summary>
             Server_Request_WorkerId,
+            /// <summary>
+            /// Client returns either a valid workerId or an empty one if no id is assigned to it.
+            /// </summary>
             Client_WorkerId,
-            Server_State_Request, //holds workerId, new one if needed
+            /// <summary>
+            /// Server asks client to state it's request to later serve it. Includes the workerId to be assigned to the client, regardless of the one it may already hold.
+            /// </summary>
+            Server_State_Request,
+            /// <summary>
+            /// Client states it's request.
+            /// </summary>
             Client_Request,
 
-            //if client request asks for batch
+            /// <summary>
+            /// Server's answer to a client request of type 'new batch'.
+            /// </summary>
             Server_Batch_Send,
+            /// <summary>
+            /// Client confirms receiving of new batches, informing server it is free to update it's database.
+            /// </summary>
             Client_Batch_Received,
-            //if no batch available
+            /// <summary>
+            /// Server may reply that it will not be serving any new batches, optionally providing a reason.
+            /// </summary>
             Server_Batch_Not_Available,
 
-            //if client request asks to return batch
+            /// <summary>
+            /// Server's answer to a client request of type 'return batch'. Informs client it is free to return the completed batch.
+            /// </summary>
             Server_Batch_Return_Listening,
+            /// <summary>
+            /// Client sends the completed batch.
+            /// </summary>
             Client_Batch_Send,
+            /// <summary>
+            /// Server confirms receiving of the completed batch, informing the client it is free to remove it from it's system.
+            /// </summary>
             Server_Batch_Received,
 
-            //server closing connection
+            /// <summary>
+            /// Server informs client the connection will be closed.
+            /// </summary>
             Server_Close_Connection,
 
-            //server failed to read message
+            /// <summary>
+            /// Server may inform the client it received the batch but it is either corrupt, incomplete, rejected or invalid.
+            /// </summary>
             Server_Failed_Transfer,
 
-            //client failed to read message
+            /// <summary>
+            /// Client may inform the server it receive the batches but they are either corrupted or incomplete.
+            /// </summary>
             Client_Failed_Transfer,
         }
     }
