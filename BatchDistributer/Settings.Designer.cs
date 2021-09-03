@@ -34,5 +34,29 @@ namespace Primes.BatchDistributer {
                 this["maxBatchesPerWorker"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1500")]
+        public int maxWaitMillis {
+            get {
+                return ((int)(this["maxWaitMillis"]));
+            }
+            set {
+                this["maxWaitMillis"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        public int maxConsecutiveCrashes {
+            get {
+                return ((int)(this["maxConsecutiveCrashes"]));
+            }
+            set {
+                this["maxConsecutiveCrashes"] = value;
+            }
+        }
     }
 }

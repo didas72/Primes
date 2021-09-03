@@ -52,6 +52,12 @@ namespace Primes.Common.Net.Messages
                 case Type.Server_Close_Connection:
                     return Message_ServerCloseConnection.InternalDeserialize(bytes);
 
+                case Type.Server_Failed_Transfer:
+                    return Message_ServerFailedTransfer.InternalDeserialize(bytes);
+
+                case Type.Client_Failed_Transfer:
+                    return Message_ClientFailedTransfer.InternalDeserialize(bytes);
+
                 default:
                     throw new Exception("Invalid message type.");
             }
@@ -70,15 +76,23 @@ namespace Primes.Common.Net.Messages
 
             //if client request asks for batch
             Server_Batch_Send,
+            Client_Batch_Received,
             //if no batch available
             Server_Batch_Not_Available,
 
             //if client request asks to return batch
             Server_Batch_Return_Listening,
             Client_Batch_Send,
+            Server_Batch_Received,
 
             //server closing connection
-            Server_Close_Connection
+            Server_Close_Connection,
+
+            //server failed to read message
+            Server_Failed_Transfer,
+
+            //client failed to read message
+            Client_Failed_Transfer,
         }
     }
 }

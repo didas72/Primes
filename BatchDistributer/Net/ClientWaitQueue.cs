@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Primes.BatchDistributer.Net
 {
@@ -20,6 +21,25 @@ namespace Primes.BatchDistributer.Net
             lock(clientQueue)
             {
                 clientQueue.Enqueue(client);
+            }
+        }
+        public void DisconnectAll()
+        {
+            Log.LogEvent("Disconnecting all queued clients.", "ClientWaitQueue");
+
+            lock (clientQueue)
+            {
+                while (clientQueue.Count != 0)
+                {
+                    try
+                    {
+                        clientQueue.Dequeue().Disconnect();
+                    }
+                    catch (Exception e)
+                    {
+                        Log.LogEvent(Log.EventType.Error, $"Failed to disconnect queued client: {e.Message}", "ClientWaitQueue");
+                    }
+                }
             }
         }
         public bool TryGetNextClient(out Client client)

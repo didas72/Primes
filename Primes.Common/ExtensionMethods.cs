@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Primes.Common
 {
@@ -73,5 +75,9 @@ namespace Primes.Common
         {
             return stream.Length - stream.Position;
         }
+
+        public static V[] GetValues<K, V>(this Dictionary<K, V> dictionary) => dictionary.Values.ToArray();
+
+        public static K[] GetKeys<K, V>(this Dictionary<K, V> dictionary) => dictionary.Keys.ToArray();
     }
 }

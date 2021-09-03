@@ -28,14 +28,22 @@ namespace Primes.BatchDistributer.Net
 
         public void StartListener()
         {
+            Log.LogEvent("Starting ClientReceiver...", "ClientReceiver");
+
             doListen = true;
             receiverThread = new Thread(ListeningLoop);
             receiverThread.Start();
+
+            Log.LogEvent("ClientReceiver started.", "ClientReceiver");
         }
         public void StopListener()
         {
+            Log.LogEvent("Stopping ClientReceiver...", "ClientReceiver");
+
             doListen = false;
             receiverThread.Join();
+
+            Log.LogEvent("ClientReceiver stopped.", "ClientReceiver");
         }
 
 
@@ -57,11 +65,16 @@ namespace Primes.BatchDistributer.Net
                         InitialAccept(client);
 
                         Program.clientWaitQueue.EnqueueClient(client);
+
+                        Log.LogEvent($"Accepted client {client.socket.Client.RemoteEndPoint}.", "ClientReceiver");
                     }
 
                     Thread.Sleep(50);
                 }
-                catch { }
+                catch (Exception e)
+                {
+                    Log.LogEvent(Log.EventType.Error, $"Failed to accept client: {e.Message}.", "ClientReceiver");
+                }
             }
 
             listener.Stop();

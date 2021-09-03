@@ -60,6 +60,7 @@ namespace Primes.BatchDistributer.Files
         public enum BatchStatus : byte
         {
             None = 0,
+            Lost,
             Scheduled_Waiting,
             Received_Processing,
             Stored_Ready,

@@ -74,15 +74,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="XML\DatabaseSchema.xsc">
-      <DependentUpon>DatabaseSchema.xsd</DependentUpon>
-    </None>
-    <None Include="XML\DatabaseSchema.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="XML\DatabaseSchema.xss">
-      <DependentUpon>DatabaseSchema.xsd</DependentUpon>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Primes.Common\Primes.Common.csproj">

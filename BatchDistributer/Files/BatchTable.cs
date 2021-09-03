@@ -2,6 +2,8 @@
 using System.IO;
 using System.Collections.Generic;
 
+using Primes.Common;
+
 namespace Primes.BatchDistributer.Files
 {
     public class BatchTable
@@ -55,6 +57,21 @@ namespace Primes.BatchDistributer.Files
 
             return false;
         }
+        public Dictionary<uint, int> FindBatchesOfNumbers(uint[] batchNumbers)
+        {
+            Dictionary<uint, int> indexes = new Dictionary<uint, int>();
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                for (int j = 0; j < batchNumbers.Length; j++)
+                {
+                    if (entries[i].BatchNumber == batchNumbers[j])
+                        indexes.Add(batchNumbers[j], i);
+                }
+            }
+
+            return indexes;
+        }
         public bool FindLowestFreeBatch(out uint batchNumber, out int index)
         {
             batchNumber = uint.MaxValue;
@@ -88,6 +105,9 @@ namespace Primes.BatchDistributer.Files
             batchNumbers = batchNumbersL.ToArray();
             return indexesL.ToArray();
         }
+
+
+
         public int[] FindBatchesAssignedToWorker(string workerId, out uint[] batchNumbers)
         {
             List<int> indexes = new List<int>();
@@ -105,22 +125,82 @@ namespace Primes.BatchDistributer.Files
             batchNumbers = batchNumbersL.ToArray();
             return indexes.ToArray();
         }
-
-
-
-        public bool AssignBatch(string workerId, int index)
+        public bool IsBatchAssignedToWorker(string workerId, uint batchNumber, out bool isAssigned)
         {
+            isAssigned = false;
+
+            if (!FindBatchOfNumber(batchNumber, out int index))
+                return false;
+
+            return IsBatchAssignedToWorker(workerId, index, out isAssigned);
+        }
+        public bool IsBatchAssignedToWorker(string workerId, int index, out bool isAssigned)
+        {
+            isAssigned = false;
+
             if (index >= 0 && index < entries.Count)
             {
-                entries[index].AssignedWorkerId = workerId;
-                entries[index].Status = BatchEntry.BatchStatus.Sent_Waiting;
+                isAssigned = entries[index].AssignedWorkerId == workerId;
 
                 return true;
             }
             else
                 return false;
         }
-        public bool AssignBatches(string workerId, int[] indexes)
+        public bool AreBatchesAssignedToWorker(string workerId, uint[] batchNumbers, out bool isAssigned)
+        {
+            isAssigned = false;
+
+            Dictionary<uint, int> indexes = FindBatchesOfNumbers(batchNumbers);
+
+            if (indexes.Count != batchNumbers.Length)
+                return false;
+
+            return AreBatchesAssignedToWorker(workerId, indexes.GetValues(), out isAssigned);
+        }
+        public bool AreBatchesAssignedToWorker(string workerId, int[] indexes, out bool isAssigned)
+        {
+            isAssigned = false;
+
+            for (int i = 0; i < indexes.Length; i++)
+            {
+                if (indexes[i] < 0 && indexes[i] >= entries.Count)
+                {
+                    return false;
+                }
+            }
+
+            for (int i = 0; i < indexes.Length; i++)
+            {
+                if (entries[indexes[i]].AssignedWorkerId != workerId)
+                {
+                    isAssigned = false;
+                    return true;
+                }
+            }
+
+            isAssigned = true;
+            return true;
+        }
+        
+
+
+
+        public bool AssignBatch(string workerId, int index) => AssignBatch(workerId, BatchEntry.BatchStatus.Sent_Waiting, index);
+        public bool AssignBatches(string workerId, int[] indexes) => AssignBatches(workerId, BatchEntry.BatchStatus.Sent_Waiting, indexes);
+        public bool AssignBatch(string workerId, BatchEntry.BatchStatus status, int index)
+        {
+            if (index >= 0 && index < entries.Count)
+            {
+                entries[index].AssignedWorkerId = workerId;
+                entries[index].Status = status;
+
+                return true;
+            }
+            else
+                return false;
+        }
+        public bool AssignBatches(string workerId, BatchEntry.BatchStatus status, int[] indexes)
         {
             for (int i = 0; i < indexes.Length; i++)
             {
@@ -133,7 +213,7 @@ namespace Primes.BatchDistributer.Files
             for (int i = 0; i < indexes.Length; i++)
             {
                 entries[indexes[i]].AssignedWorkerId = workerId;
-                entries[indexes[i]].Status = BatchEntry.BatchStatus.Sent_Waiting;
+                entries[indexes[i]].Status = status;
             }
 
             return true;

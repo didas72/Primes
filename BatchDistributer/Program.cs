@@ -15,6 +15,7 @@ namespace Primes.BatchDistributer
     {
         public static ClientReceiver clientReceiver;
         public static ClientWaitQueue clientWaitQueue;
+        public static Server server;
 
         public static WorkerTable workerTable;
         public static BatchTable batchTable;
@@ -33,6 +34,13 @@ namespace Primes.BatchDistributer
             }
 
             ParseArguments(args);
+
+            if (!StartServing())
+                Exit();
+
+            WaitForExitOrCrash();
+
+            Exit();
         }
 
 
@@ -88,7 +96,7 @@ namespace Primes.BatchDistributer
             Paths.cachePath = Path.Combine(Paths.homePath, "cache");
             Directory.CreateDirectory(Paths.cachePath);
 
-            Paths.sentPath = Path.Combine(Paths.homePath, "sent"));
+            Paths.sentPath = Path.Combine(Paths.homePath, "sent");
             Directory.CreateDirectory(Paths.sentPath);
 
             Paths.dbPath = Path.Combine(Paths.homePath, "db");
@@ -98,6 +106,7 @@ namespace Primes.BatchDistributer
         }
         private static bool InitLog()
         {
+            Log.InitConsole();
             Log.InitLog(Path.Combine(Paths.homePath, "log.txt"));
 
             return true;
@@ -120,8 +129,9 @@ namespace Primes.BatchDistributer
                 else
                     batchTable = new BatchTable();
             }
-            catch
+            catch (Exception e)
             {
+                Log.LogEvent(Log.EventType.Error, $"Failed to init DB: {e.Message}.", "MainThread");
                 return false;
             }
 
@@ -132,8 +142,8 @@ namespace Primes.BatchDistributer
             try
             {
                 clientReceiver = new ClientReceiver(port);
-
                 clientWaitQueue = new ClientWaitQueue();
+                server = new Server();
             }
             catch
             {
@@ -142,9 +152,6 @@ namespace Primes.BatchDistributer
 
             return true;
         }
-
-
-
         private static bool ParseArguments(string[] args)
         {
             for (int i = 0; i < args.Length; i++)
@@ -164,7 +171,52 @@ namespace Primes.BatchDistributer
 
 
 
-        public static void Exit()
+        private static bool StartServing()
+        {
+            Log.LogEvent("Starting service...", "MainThread");
+
+            try
+            {
+                clientReceiver.StartListener();
+                server.Start();
+
+                Log.LogEvent("Service stated.", "MainThread");
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Log.LogEvent(Log.EventType.Fatal, $"Failed to start serving: {e.Message}.", "MainThread");
+
+                return false;
+            }
+        }
+        private static bool WaitForExitOrCrash()
+        {
+            Log.Print("Press enter to exit...");
+
+            while (true)
+            {
+                if (Console.KeyAvailable)
+                {
+                    ConsoleKey key = Console.ReadKey().Key;
+
+                    if (key == ConsoleKey.Enter)
+                        break;
+                }
+
+                if (!server.Running)
+                    break;
+
+                Thread.Sleep(100);
+            }
+
+            return true;
+        }
+
+
+
+        private static void Exit()
         {
             if (exiting)
             {
@@ -174,7 +226,95 @@ namespace Primes.BatchDistributer
 
             exiting = true;
 
+            Log.LogEvent("Preparing to exit...", "MainThread");
+
+            try
+            {
+                clientReceiver.StopListener();
+                server.Stop();
+            }
+            catch (Exception e)
+            {
+                Log.LogEvent(Log.EventType.Error, $"Failed to properly stop client receiver and server: {e.Message}.", "MainThread");
+            }
+
+            SaveDB();
+
+            Log.LogEvent("Exiting...", "MainThread");
+
             Environment.Exit(0);
+        }
+
+
+
+        private static void SaveDB()
+        {
+            byte[] workerTableBytes;
+            byte[] batchTableBytes;
+
+            lock (workerTable)
+            {
+                workerTableBytes = workerTable.Serialize();
+            }
+            
+            lock (batchTable)
+            {
+                batchTableBytes = batchTable.Serialize();
+            }
+
+            try//try saving to expected location
+            {
+                File.WriteAllBytes(Path.Combine(Paths.dbPath, "WorkerTable.tbl"), workerTableBytes);
+            }
+            catch (Exception e)
+            {
+                Log.LogEvent(Log.EventType.Error, $"Failed to store worker table to normal location: {e.Message}.", "SaveDB");
+
+                try//try dump to home directory
+                {
+                    File.WriteAllBytes(Path.Combine(Paths.homePath, "WorkerTable.tbl.dmp"), workerTableBytes);
+                }
+                catch (Exception e1)
+                {
+                    Log.LogEvent(Log.EventType.Error, $"Failed to dump worker table to home directory: {e1.Message}.", "SaveDB");
+
+                    try//try dump to desktop
+                    {
+                        File.WriteAllBytes(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "WorkerTable.tbl.dmp"), workerTableBytes);
+                    }
+                    catch (Exception e2)//rest in peace
+                    {
+                        Log.LogEvent(Log.EventType.Error, $"Failed to dump worker table to desktop: {e2.Message}. Data lost.", "SaveDB");
+                    }
+                }
+            }
+
+            try//try saving expected location
+            {
+                File.WriteAllBytes(Path.Combine(Paths.dbPath, "BatchTable.tbl"), batchTableBytes);
+            }
+            catch (Exception e)
+            {
+                Log.LogEvent(Log.EventType.Error, $"Failed to store batch table to normal location: {e.Message}.", "SaveDB");
+
+                try//try dump to home directory
+                {
+                    File.WriteAllBytes(Path.Combine(Paths.homePath, "BatchTable.tbl.dmp"), batchTableBytes);
+                }
+                catch (Exception e1)
+                {
+                    Log.LogEvent(Log.EventType.Error, $"Failed to dump batch table to home directory: {e1.Message}.", "SaveDB");
+
+                    try//try dump to desktop
+                    {
+                        File.WriteAllBytes(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "BatchTable.tbl.dmp"), batchTableBytes);
+                    }
+                    catch (Exception e2)//rest in peace
+                    {
+                        Log.LogEvent(Log.EventType.Error, $"Failed to dump batch table to desktop: {e2.Message}. Data lost.", "SaveDB");
+                    }
+                }
+            }
         }
     }
 }

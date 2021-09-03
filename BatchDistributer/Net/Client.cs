@@ -50,7 +50,7 @@ namespace Primes.BatchDistributer.Net
 
         public bool SendMessage(IMessage message)
         {
-            Log.LogEvent($"Sending message of type {message.MessageType}.", "Client");
+            Log.LogEvent($"Sending message of type {message.MessageType} to client {socket.Client.RemoteEndPoint}.", "Client");
 
             try
             {
@@ -65,8 +65,9 @@ namespace Primes.BatchDistributer.Net
                 else
                     return false;
             }
-            catch
+            catch (Exception e)
             {
+                Log.LogEvent(Log.EventType.Error, $"Failed to send message of type {message.MessageType} to client {socket.Client.RemoteEndPoint}: {e.Message}.", "Client");
                 return false;
             }
 
@@ -105,7 +106,7 @@ namespace Primes.BatchDistributer.Net
 
                         IMessage message = Message.Deserialize(buffer);
 
-                        Log.LogEvent($"Received message of type {message.MessageType}.", "Client");
+                        Log.LogEvent($"Received message of type {message.MessageType}.", "ClientReceiveThread");
 
                         messageReceived.BeginInvoke(message, null, this);
                     }
