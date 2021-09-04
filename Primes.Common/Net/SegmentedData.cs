@@ -1,17 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net.Sockets;
 
 namespace Primes.Common.Net
 {
+    /// <summary>
+    /// Class to enable safer tranfer of data over a NetworkStream.
+    /// </summary>
     public static class SegmentedData
     {
         private const int headerSize = 8;
 
 
 
+        /// <summary>
+        /// Sends a byte array in a safer way.
+        /// </summary>
+        /// <param name="data">The byte array containing the data to be sent.</param>
+        /// <param name="stream">The stream to send the data to.</param>
+        /// <param name="blockSize">The size of the blocks to be sent.</param>
         public static void SendToStream(byte[] data, NetworkStream stream, int blockSize)
         {
             if (data == null)
@@ -54,6 +61,12 @@ namespace Primes.Common.Net
             }
         }
 
+        /// <summary>
+        /// Reads a byte array received in blocks.
+        /// </summary>
+        /// <param name="stream">The stream to read from.</param>
+        /// <param name="blockSize">The expected size of the blocks to receive.</param>
+        /// <returns></returns>
         public static byte[] ReadFromStream(NetworkStream stream, int blockSize)
         {
             if (!stream.CanRead)
