@@ -4,10 +4,13 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Threading;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 
 using Primes;
 using Primes.Common;
 using Primes.Common.Files;
+using Primes.Common.Net;
 
 namespace JobManagement
 {
@@ -21,10 +24,120 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
-            Compress7z("E:\\Documents\\primes\\log.txt", "E:\\Documents\\primes\\log.7z");
+            bool goodPass = true;
+            bool allGoodPass = true;
 
-            Console.WriteLine("//Done");
+            Random rdm = new Random();
+
+            TcpListener listener = new TcpListener(IPAddress.Any, 30000);
+            listener.Start();
+            TcpClient client1 = new TcpClient("127.0.0.1", 30000), client2 = listener.AcceptTcpClient();
+
+            NetworkStream stream1 = client1.GetStream(), stream2 = client2.GetStream();
+
+            Console.WriteLine("Segmented (100)");
+
+            for (int k = 0; k < 100; k++)
+            {
+                Blue($"Iter {k + 1}");
+
+                byte[] data = new byte[Mathf.Clamp((ushort)rdm.Next(), 4, 65536)]; // 4 to 64k
+                rdm.NextBytes(data);
+
+                White($"Generated dataset of size {data.Length}");
+
+                SegmentedData.SendToStream(data, stream1, 8912);
+
+                White("Sent");
+
+                byte[] returnedData = SegmentedData.ReadFromStream(stream2, 8912);
+
+                White("Received, testing.");
+
+                if (returnedData.Length != data.Length)
+                {
+                    Red($"Diff sizes at iter {k}: {data.Length}=>{returnedData.Length}, diff {data.Length - returnedData.Length}, relDiff {((float)data.Length - returnedData.Length) / (float)data.Length}");
+                    goodPass = false;
+                    allGoodPass = false;
+                }
+                
+                if (goodPass)
+                    for (int i = 0; i < data.Length; i++)
+                    {
+                        if (data[i] != returnedData[i])
+                        {
+                            Red($"Diff data at index {i} at iter {k}");
+                            goodPass = false;
+                            allGoodPass = false;
+                            break;
+                        }
+                    }
+
+                if (goodPass)
+                    Green("Passed.");
+
+                goodPass = true;
+            }
+
+            if (allGoodPass)
+                Green("All passed.");
+
+
+
+
+            Console.WriteLine("Normal TCP (50)");
+
+            for (int k = 0; k < 50; k++)
+            {
+                byte[] data = new byte[314572800]; // 300M
+                rdm.NextBytes(data);
+
+                stream1.Write(data, 0, data.Length);
+                byte[] returnedData = new byte[data.Length];
+                Thread.Sleep(50);
+                stream2.Read(returnedData, 0, data.Length);
+
+                if (goodPass)
+                    for (int i = 0; i < data.Length; i++)
+                    {
+                        if (data[i] != returnedData[i])
+                        {
+                            Red($"Diff data at index {i} at iter {k}");
+                            goodPass = false;
+                            break;
+                        }
+                    }
+
+                if (goodPass)
+                    Green("Passed.");
+
+                goodPass = true;
+            }
+
+
+            Blue("//Done");
             Console.ReadLine();
+        }
+
+        public static void Red(string msg)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(msg);
+        }
+        public static void Green(string msg)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(msg);
+        }
+        public static void Blue(string msg)
+        {
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine(msg);
+        }
+        public static void White(string msg)
+        {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine(msg);
         }
 
 

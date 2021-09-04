@@ -162,6 +162,16 @@ namespace Primes.Common
 
 
 		/// <summary>
+		/// Calculates the rounded up quotient of an integer division.
+		/// </summary>
+		/// <param name="dividend"></param>
+		/// <param name="divisor"></param>
+		/// <returns></returns>
+		public static int DivideRoundUp(int dividend, int divisor) => dividend / divisor + ((dividend % divisor == 0) ? 0 : 1);
+
+
+
+		/// <summary>
 		/// Clamps a value between a minimum and a maximum.
 		/// </summary>
 		/// <param name="value">The number to be clamped.</param>

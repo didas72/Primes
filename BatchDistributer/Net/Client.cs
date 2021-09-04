@@ -61,7 +61,10 @@ namespace Primes.BatchDistributer.Net
                 Array.Copy(bytes, 0, buffer, 4, bytes.Length);
 
                 if (socket.Connected)
+                {
                     netStream.Write(buffer, 0, buffer.Length);
+                    netStream.Flush();
+                }
                 else
                     return false;
             }
