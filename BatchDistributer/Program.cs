@@ -22,6 +22,9 @@ namespace Primes.BatchDistributer
 
         private static volatile bool exiting = false;
 
+        private static System.Timers.Timer checkExpiredTimer;
+        private static System.Timers.Timer saveDBTimer;
+
 
 
         private static void Main(string[] args)
@@ -57,12 +60,13 @@ namespace Primes.BatchDistributer
                 return false;
             }
 
+            InitTimers();
+
             if (!InitNet(port))
             {
                 Log.LogEvent(Log.EventType.Fatal, "Failed to init networking.", "MainThread");
                 return false;
             }
-                
 
             return true;
         }
@@ -134,6 +138,24 @@ namespace Primes.BatchDistributer
                 Log.LogEvent(Log.EventType.Error, $"Failed to init DB: {e.Message}.", "MainThread");
                 return false;
             }
+
+            return true;
+        }
+        private static bool InitTimers()
+        {
+            checkExpiredTimer = new System.Timers.Timer();
+            checkExpiredTimer.Elapsed += CheckExpired;
+            checkExpiredTimer.AutoReset = true;
+            checkExpiredTimer.Interval = Settings.Default.timeBetweenExpiredChecks.TotalMilliseconds;
+
+            checkExpiredTimer.Start();
+
+            saveDBTimer = new System.Timers.Timer();
+            saveDBTimer.Elapsed += SaveDB;
+            saveDBTimer.AutoReset = true;
+            saveDBTimer.Interval = 300000;//every 5 mins
+
+            saveDBTimer.Start();
 
             return true;
         }
@@ -228,6 +250,9 @@ namespace Primes.BatchDistributer
 
             Log.LogEvent("Preparing to exit...", "MainThread");
 
+            checkExpiredTimer.Stop();
+            saveDBTimer.Stop();
+
             try
             {
                 clientReceiver.StopListener();
@@ -315,6 +340,23 @@ namespace Primes.BatchDistributer
                     }
                 }
             }
+        }
+        private static void SaveDB(object sender, EventArgs e) => SaveDB();
+        private static void CheckExpired(object sender, EventArgs e)
+        {
+            Log.LogEvent("Searching for expired batches.", "MainThread");
+
+            DateTime expire = DateTime.Now - Settings.Default.expireTime;
+            int[] indexes = batchTable.FindExpiredBatches(expire, out uint[] batchNumbers, out string[] workerIds);
+
+            for (int i = 0; i < indexes.Length; i++)
+            {
+                Log.LogEvent(Log.EventType.Warning, $"Expiring batch {batchNumbers[i]} from worker {workerIds[i]}.", "MainThread");
+
+                batchTable.AssignBatch("    ", BatchEntry.BatchStatus.Stored_Ready, indexes[i], BatchTable.TimeSetting.ResetBoth);
+            }
+
+            SaveDB();
         }
     }
 }

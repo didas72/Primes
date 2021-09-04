@@ -58,5 +58,29 @@ namespace Primes.BatchDistributer {
                 this["maxConsecutiveCrashes"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("01:00:00")]
+        public global::System.TimeSpan timeBetweenExpiredChecks {
+            get {
+                return ((global::System.TimeSpan)(this["timeBetweenExpiredChecks"]));
+            }
+            set {
+                this["timeBetweenExpiredChecks"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("168.00:00:00")]
+        public global::System.TimeSpan expireTime {
+            get {
+                return ((global::System.TimeSpan)(this["expireTime"]));
+            }
+            set {
+                this["expireTime"] = value;
+            }
+        }
     }
 }

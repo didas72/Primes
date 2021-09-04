@@ -33,40 +33,52 @@ namespace Primes.BatchDistributer.Files
 
         public void AddEntry(BatchEntry entry)
         {
-            entries.Add(entry);
+            lock(entries)
+            {
+                entries.Add(entry);
+            }
         }
         public void AddNewEntry(uint batchNumber, BatchEntry.BatchStatus status)
         {
-            entries.Add(new BatchEntry(batchNumber, status));
+            lock(entries)
+            {
+                entries.Add(new BatchEntry(batchNumber, status));
+            }
         }
 
 
 
         public bool FindBatchOfNumber(uint batchNumber, out int index)
         {
+            bool ret = false;
             index = -1;
 
-            for (int i = 0; i < entries.Count; i++)
+            lock (entries)
             {
-                if (entries[i].BatchNumber == batchNumber)
+                for (int i = 0; i < entries.Count; i++)
                 {
-                    index = i;
-                    return true;
+                    if (entries[i].BatchNumber == batchNumber)
+                    {
+                        index = i;
+                    }
                 }
             }
 
-            return false;
+            return ret;
         }
         public Dictionary<uint, int> FindBatchesOfNumbers(uint[] batchNumbers)
         {
             Dictionary<uint, int> indexes = new Dictionary<uint, int>();
 
-            for (int i = 0; i < entries.Count; i++)
+            lock (entries)
             {
-                for (int j = 0; j < batchNumbers.Length; j++)
+                for (int i = 0; i < entries.Count; i++)
                 {
-                    if (entries[i].BatchNumber == batchNumbers[j])
-                        indexes.Add(batchNumbers[j], i);
+                    for (int j = 0; j < batchNumbers.Length; j++)
+                    {
+                        if (entries[i].BatchNumber == batchNumbers[j])
+                            indexes.Add(batchNumbers[j], i);
+                    }
                 }
             }
 
@@ -77,12 +89,15 @@ namespace Primes.BatchDistributer.Files
             batchNumber = uint.MaxValue;
             index = -1;
 
-            for (int i = 0; i < entries.Count; i++)
+            lock (entries)
             {
-                if (entries[i].BatchNumber < batchNumber && (entries[i].Status == BatchEntry.BatchStatus.Stored_Ready))
+                for (int i = 0; i < entries.Count; i++)
                 {
-                    batchNumber = entries[i].BatchNumber;
-                    index = i;
+                    if (entries[i].BatchNumber < batchNumber && (entries[i].Status == BatchEntry.BatchStatus.Stored_Ready))
+                    {
+                        batchNumber = entries[i].BatchNumber;
+                        index = i;
+                    }
                 }
             }
 
@@ -93,16 +108,43 @@ namespace Primes.BatchDistributer.Files
             List<uint> batchNumbersL = new List<uint>();
             List<int> indexesL = new List<int>();
 
-            while (batchNumbersL.Count < max)
+            lock (entries)
             {
-                if (!FindLowestFreeBatch(out uint batchNum, out int index))
-                    break;
+                while (batchNumbersL.Count < max)
+                {
+                    if (!FindLowestFreeBatch(out uint batchNum, out int index))
+                        break;
 
-                batchNumbersL.Add(batchNum);
-                indexesL.Add(index);
+                    batchNumbersL.Add(batchNum);
+                    indexesL.Add(index);
+                }
             }
 
             batchNumbers = batchNumbersL.ToArray();
+            return indexesL.ToArray();
+        }
+        public int[] FindExpiredBatches(DateTime expireTime, out uint[] batchNumbers, out string[] workerIds)
+        {
+            List<int> indexesL = new List<int>();
+            List<uint> batchNumbersL = new List<uint>();
+            List<string> workerIdsL = new List<string>();
+
+            lock (entries)
+            {
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    if (!entries[i].LastSent.Equals(new TimeStamp(0)) && entries[i].AssignedWorkerId != "    " && entries[i].LastSent.GetDateTime() < expireTime)
+                    {
+                        indexesL.Add(i);
+                        batchNumbersL.Add(entries[i].BatchNumber);
+                        workerIdsL.Add(entries[i].AssignedWorkerId);
+                    }
+                }
+
+            }
+
+            batchNumbers = batchNumbersL.ToArray();
+            workerIds = workerIdsL.ToArray();
             return indexesL.ToArray();
         }
 
@@ -113,12 +155,15 @@ namespace Primes.BatchDistributer.Files
             List<int> indexes = new List<int>();
             List<uint> batchNumbersL = new List<uint>();
 
-            for (int i = 0; i < entries.Count; i++)
+            lock (entries)
             {
-                if (entries[i].AssignedWorkerId == workerId)
+                for (int i = 0; i < entries.Count; i++)
                 {
-                    indexes.Add(i);
-                    batchNumbersL.Add(entries[i].BatchNumber);
+                    if (entries[i].AssignedWorkerId == workerId)
+                    {
+                        indexes.Add(i);
+                        batchNumbersL.Add(entries[i].BatchNumber);
+                    }
                 }
             }
 
@@ -128,95 +173,138 @@ namespace Primes.BatchDistributer.Files
         public bool IsBatchAssignedToWorker(string workerId, uint batchNumber, out bool isAssigned)
         {
             isAssigned = false;
+            bool ret = false;
 
-            if (!FindBatchOfNumber(batchNumber, out int index))
-                return false;
+            lock (entries)
+            {
+                if (!FindBatchOfNumber(batchNumber, out int index))
+                    ret = false;
 
-            return IsBatchAssignedToWorker(workerId, index, out isAssigned);
+                ret = IsBatchAssignedToWorker(workerId, index, out isAssigned); 
+            }
+
+            return ret;
         }
         public bool IsBatchAssignedToWorker(string workerId, int index, out bool isAssigned)
         {
             isAssigned = false;
+            bool ret = false;
 
-            if (index >= 0 && index < entries.Count)
+            lock (entries)
             {
-                isAssigned = entries[index].AssignedWorkerId == workerId;
+                if (index >= 0 && index < entries.Count)
+                {
+                    isAssigned = entries[index].AssignedWorkerId == workerId;
 
-                return true;
+                    ret =  true;
+                }
             }
-            else
-                return false;
+            
+            return ret;
         }
         public bool AreBatchesAssignedToWorker(string workerId, uint[] batchNumbers, out bool isAssigned)
         {
             isAssigned = false;
+            bool ret = false;
 
-            Dictionary<uint, int> indexes = FindBatchesOfNumbers(batchNumbers);
+            lock (entries)
+            {
+                Dictionary<uint, int> indexes = FindBatchesOfNumbers(batchNumbers);
 
-            if (indexes.Count != batchNumbers.Length)
-                return false;
+                if (indexes.Count != batchNumbers.Length)
+                    ret = false;
 
-            return AreBatchesAssignedToWorker(workerId, indexes.GetValues(), out isAssigned);
+                ret = AreBatchesAssignedToWorker(workerId, indexes.GetValues(), out isAssigned);
+            }
+
+            return ret;
         }
         public bool AreBatchesAssignedToWorker(string workerId, int[] indexes, out bool isAssigned)
         {
             isAssigned = false;
+            bool ret = true;
 
-            for (int i = 0; i < indexes.Length; i++)
+            lock (entries)
             {
-                if (indexes[i] < 0 && indexes[i] >= entries.Count)
+                for (int i = 0; i < indexes.Length; i++)
                 {
-                    return false;
+                    if (indexes[i] < 0 && indexes[i] >= entries.Count)
+                    {
+                        ret =  false;
+                    }
                 }
-            }
 
-            for (int i = 0; i < indexes.Length; i++)
-            {
-                if (entries[indexes[i]].AssignedWorkerId != workerId)
+                if (ret)
                 {
-                    isAssigned = false;
-                    return true;
+                    for (int i = 0; i < indexes.Length; i++)
+                    {
+                        if (entries[indexes[i]].AssignedWorkerId != workerId)
+                        {
+                            isAssigned = false;
+                            ret = false;
+                            break;
+                        }
+                    }
                 }
             }
 
             isAssigned = true;
-            return true;
+            return !ret;
         }
         
 
 
 
-        public bool AssignBatch(string workerId, int index) => AssignBatch(workerId, BatchEntry.BatchStatus.Sent_Waiting, index);
-        public bool AssignBatches(string workerId, int[] indexes) => AssignBatches(workerId, BatchEntry.BatchStatus.Sent_Waiting, indexes);
-        public bool AssignBatch(string workerId, BatchEntry.BatchStatus status, int index)
+        public bool AssignBatch(string workerId, int index, TimeSetting timeSetting) => AssignBatch(workerId, BatchEntry.BatchStatus.Sent_Waiting, index, timeSetting);
+        public bool AssignBatches(string workerId, int[] indexes, TimeSetting timeSetting) => AssignBatches(workerId, BatchEntry.BatchStatus.Sent_Waiting, indexes, timeSetting);
+        public bool AssignBatch(string workerId, BatchEntry.BatchStatus status, int index, TimeSetting timeSetting)
         {
-            if (index >= 0 && index < entries.Count)
-            {
-                entries[index].AssignedWorkerId = workerId;
-                entries[index].Status = status;
+            bool ret = false;
 
-                return true;
-            }
-            else
-                return false;
-        }
-        public bool AssignBatches(string workerId, BatchEntry.BatchStatus status, int[] indexes)
-        {
-            for (int i = 0; i < indexes.Length; i++)
+            lock (entries)
             {
-                if (indexes[i] < 0 && indexes[i] >= entries.Count)
+                if (index >= 0 && index < entries.Count)
                 {
-                    return false;
+                    entries[index].AssignedWorkerId = workerId;
+                    entries[index].Status = status;
+
+                    entries[index] = ApplyTimeSetting(entries[index], timeSetting);
+
+                    ret =  true;
+                }
+                else
+                    ret =  false;
+            }
+
+            return ret;
+        }
+        public bool AssignBatches(string workerId, BatchEntry.BatchStatus status, int[] indexes, TimeSetting timeSetting)
+        {
+            bool ret = false;
+
+            lock (entries)
+            {
+                for (int i = 0; i < indexes.Length; i++)
+                {
+                    if (indexes[i] < 0 && indexes[i] >= entries.Count)
+                    {
+                        ret = false;
+                    }
+                }
+
+                if (!ret)
+                {
+                    for (int i = 0; i < indexes.Length; i++)
+                    {
+                        entries[indexes[i]].AssignedWorkerId = workerId;
+                        entries[indexes[i]].Status = status;
+
+                        entries[indexes[i]] = ApplyTimeSetting(entries[indexes[i]], timeSetting);
+                    }
                 }
             }
 
-            for (int i = 0; i < indexes.Length; i++)
-            {
-                entries[indexes[i]].AssignedWorkerId = workerId;
-                entries[indexes[i]].Status = status;
-            }
-
-            return true;
+            return ret;
         }
 
 
@@ -245,6 +333,70 @@ namespace Primes.BatchDistributer.Files
             }
 
             return table;
+        }
+
+
+
+        private BatchEntry ApplyTimeSetting(BatchEntry entry, TimeSetting setting)
+        {
+            switch (setting)
+            {
+                case TimeSetting.ResetBoth:
+                    entry.LastSent = new TimeStamp(0);
+                    entry.LastCompleted = new TimeStamp(0);
+                    break;
+
+                case TimeSetting.ResetSentUpdateCompleted:
+                    entry.LastSent = new TimeStamp(0);
+                    entry.LastCompleted = TimeStamp.Now();
+                    break;
+
+                case TimeSetting.ResetSentPreserveCompleted:
+                    entry.LastSent = new TimeStamp(0);
+                    break;
+
+                case TimeSetting.UpdateSentResetCompleted:
+                    entry.LastSent = TimeStamp.Now();
+                    entry.LastCompleted = new TimeStamp(0);
+                    break;
+
+                case TimeSetting.UpdateBoth:
+                    entry.LastSent = TimeStamp.Now();
+                    entry.LastCompleted = TimeStamp.Now();
+                    break;
+
+                case TimeSetting.UpdateSentPreserveCompleted:
+                    entry.LastSent = TimeStamp.Now();
+                    break;
+
+                case TimeSetting.PreserveSentResetCompleted:
+                    entry.LastCompleted = new TimeStamp(0);
+                    break;
+
+                case TimeSetting.PreserveSentUpdateCompleted:
+                    entry.LastCompleted = TimeStamp.Now();
+                    break;
+
+                case TimeSetting.PreserveBoth:
+                    break;
+            }
+
+            return entry;
+        }
+
+
+
+        public enum TimeSetting
+        {
+            ResetBoth,
+            ResetSentUpdateCompleted,
+            ResetSentPreserveCompleted,
+            UpdateSentResetCompleted,
+            UpdateBoth,
+            UpdateSentPreserveCompleted,
+            PreserveSentResetCompleted,
+            PreserveSentUpdateCompleted,
+            PreserveBoth
         }
     }
 }
