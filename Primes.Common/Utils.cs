@@ -256,15 +256,18 @@ namespace Primes.Common
         /// <param name="path"></param>
         public static void DeleteDirectory(string path)
         {
-            DirectoryInfo di = new DirectoryInfo(path);
+            if (Directory.Exists(path))
+            {
+                DirectoryInfo di = new DirectoryInfo(path);
 
-            foreach (FileInfo file in di.GetFiles())
-            {
-                file.Delete();
-            }
-            foreach (DirectoryInfo dir in di.GetDirectories())
-            {
-                dir.Delete(true);
+                foreach (FileInfo file in di.GetFiles())
+                {
+                    file.Delete();
+                }
+                foreach (DirectoryInfo dir in di.GetDirectories())
+                {
+                    dir.Delete(true);
+                }
             }
         }
     }

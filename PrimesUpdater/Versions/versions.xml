@@ -11,5 +11,27 @@
       <minor>4</minor>
       <patch>0</patch>
     </primes.exec>
+    <batch.distributer>
+      <major>0</major>
+      <minor>0</minor>
+      <patch>0</patch>
+    </batch.distributer>
   </stable>
+  <testing>
+    <primes.updater>
+      <major>1</major>
+      <minor>0</minor>
+      <patch>0</patch>
+    </primes.updater>
+    <primes.exec>
+      <major>1</major>
+      <minor>5</minor>
+      <patch>0</patch>
+    </primes.exec>
+    <batch.distributer>
+      <major>0</major>
+      <minor>0</minor>
+      <patch>1</patch>
+    </batch.distributer>
+  </testing>
 </versions>

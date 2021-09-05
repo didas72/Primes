@@ -5,7 +5,6 @@ using System.IO;
 using System.Xml;
 using System.Threading;
 
-using Primes;
 using Primes.Common;
 using Primes.Common.Files;
 using Primes.Updater.Files;
@@ -18,16 +17,26 @@ namespace Primes.Updater
         private const string versionsURL = "https://raw.githubusercontent.com/didas72/Primes/master/PrimesUpdater/Versions/versions.xml";
         private const string releaseLinkBase = "https://github.com/didas72/Primes/releases/download/";
         private const string NET472Ending = ".NET.Framework.4.7.2.7z";
-        private static string tmpDir;
+        private static string tmpDir, homeDir;
 
         private static bool updateSelf;
         private static bool updatePrimes;
 
+        private static volatile bool exiting = false;
+
         private static void Main(string[] args)
         {
-            InitDirs();
+            if (!Init())
+            {
+                Log.LogEvent(Log.EventType.Fatal, "Failed to init.", "MainThread");
+                Exit();
+            }
 
-            ParseArguments(args);
+            if (!ParseArguments(args))
+            {
+                Log.LogEvent(Log.EventType.Fatal, "Failed to parse arguments.", "MainThread");
+                Exit();
+            }
 
             if (updateSelf)
             {
@@ -47,18 +56,33 @@ namespace Primes.Updater
 
 
 
+        private static bool Init()
+        {
+            InitDirs();
+
+            InitLog();
+
+            return true;
+        }
         private static bool InitDirs()
         {
             Console.WriteLine("Setting up directories...");
 
-            tmpDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "primes");
-            Directory.CreateDirectory(tmpDir);
+            homeDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "primes");
+            Directory.CreateDirectory(homeDir);
 
             tmpDir = Path.Combine(tmpDir, "tmp");
             Utils.DeleteDirectory(tmpDir);
             Directory.CreateDirectory(tmpDir);
 
             Console.WriteLine("Directories set up.");
+
+            return true;
+        }
+        private static bool InitLog()
+        {
+            Log.InitLog(Path.Combine(homeDir, "updateLog.txt"));
+            Log.InitConsole();
 
             return true;
         }
@@ -87,7 +111,7 @@ namespace Primes.Updater
 
         private static int UpdateSelf()
         {
-            Console.WriteLine("Checking for updater updates...");
+            Log.LogEvent("Checking for updater updates...", "SelfUpdate");
 
             string selfPath = Utils.GetExecutablePath();
             FileVersionInfo selfInfo = FileVersionInfo.GetVersionInfo(selfPath);
@@ -96,12 +120,12 @@ namespace Primes.Updater
                 (byte)selfInfo.FileMinorPart,
                 (byte)selfInfo.ProductBuildPart);
 
-            Console.WriteLine($"SelfPath: {selfPath}");
-            Console.WriteLine($"SelfVersion: {selfVersion}");
+            Log.LogEvent($"SelfPath: {selfPath}", "SelfUpdate");
+            Log.LogEvent($"SelfVersion: {selfVersion}", "SelfUpdate");
 
             if (!GetLastestReleaseVersion(Product.Primes_Updater, out Version latestVersion)) return 2; //2 = failed to get version
 
-            Console.WriteLine($"LatestVersion: {latestVersion}");
+            Log.LogEvent($"LatestVersion: {latestVersion}", "SelfUpdate");
 
             if (latestVersion <= selfVersion) return 1; //1 = already up to date
 
@@ -109,7 +133,7 @@ namespace Primes.Updater
 
             GetLatestReleaseURL(Product.Primes_Updater, latestVersion, out string latestUrl);
 
-            Console.WriteLine($"LatestUrl: {latestUrl}");
+            Log.LogEvent($"LatestUrl: {latestUrl}", "SelfUpdate");
 
             string updatePath = Path.Combine(tmpDir, "tmp_updater.7z");
             string decompressPath = Path.Combine(tmpDir, "tmp_updater");
@@ -117,18 +141,18 @@ namespace Primes.Updater
 
             if (!Networking.TryDownloadFile(latestUrl, updatePath)) return 3; //3 = failed to download update
 
-            Console.WriteLine("Latest version downloaded.");
+            Log.LogEvent("Latest version downloaded.", "SelfUpdate");
 
             if (!SevenZip.TryDecompress7z(updatePath, decompressPath)) return 4; //4 = failed to decompress
 
-            Console.WriteLine("Version extracted.");
+            Log.LogEvent("Version extracted.", "SelfUpdate");
 
             string cmdCode = BuildSelfUpdateCMD(decompressPath, installPath, "PrimesUpdater.exe");
-            Console.WriteLine($"Update CMD code: {cmdCode}");
+            Log.LogEvent($"Update CMD code: {cmdCode}", "SelfUpdate");
 
 
 
-            Console.WriteLine("Restarting to update in 3 seconds...");
+            Log.LogEvent("Restarting to update in 3 seconds...", "SelfUpdate");
             Thread.Sleep(3000);
             LaunchSelfUpdateCMD(cmdCode);
 
@@ -143,7 +167,7 @@ namespace Primes.Updater
             string primesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "primes");
             if (!Directory.Exists(primesPath))
             {
-                Console.WriteLine("Primes install not found, installing...");
+                Log.LogEvent("Primes install not found, installing...", "PrimesUpdate");
                 Directory.CreateDirectory(primesPath);
                 primesPath = Path.Combine(primesPath, "bin");
                 Directory.CreateDirectory(primesPath);
@@ -154,7 +178,7 @@ namespace Primes.Updater
             primesPath = Path.Combine(primesPath, "bin");
             if (!Directory.Exists(primesPath))
             {
-                Console.WriteLine("Primes install not found, installing...");
+                Log.LogEvent("Primes install not found, installing...", "PrimesUpdate");
                 Directory.CreateDirectory(primesPath);
                 selfVersion = Version.empty;
                 goto primes_install;
@@ -167,8 +191,8 @@ namespace Primes.Updater
                 (byte)selfInfo.FileMinorPart,
                 (byte)selfInfo.ProductBuildPart);
 
-            Console.WriteLine($"PrimesPath: {primesPath}");
-            Console.WriteLine($"PrimesVersion: {selfVersion}");
+            Log.LogEvent($"PrimesPath: {primesPath}", "PrimesUpdate");
+            Log.LogEvent($"PrimesVersion: {selfVersion}", "PrimesUpdate");
 
 
 
@@ -176,7 +200,7 @@ namespace Primes.Updater
 
             if (!GetLastestReleaseVersion(Product.Primes_Exec, out Version latestVersion)) return 2; //2 = failed to get version
 
-            Console.WriteLine($"LatestVersion: {latestVersion}");
+            Log.LogEvent($"LatestVersion: {latestVersion}", "PrimesUpdate");
 
             if (latestVersion <= selfVersion) return 1; //1 = already up to date
 
@@ -184,7 +208,7 @@ namespace Primes.Updater
 
             GetLatestReleaseURL(Product.Primes_Exec, latestVersion, out string latestUrl);
 
-            Console.WriteLine($"LatestUrl: {latestUrl}");
+            Log.LogEvent($"LatestUrl: {latestUrl}", "PrimesUpdate");
 
             string updatePath = Path.Combine(tmpDir, "tmp_primes.7z");
             string decompressPath = Path.Combine(tmpDir, "tmp_primes");
@@ -192,20 +216,20 @@ namespace Primes.Updater
 
             if (!Networking.TryDownloadFile(latestUrl, updatePath)) return 3; //3 = failed to download update
 
-            Console.WriteLine("Latest version downloaded.");
+            Log.LogEvent("Latest version downloaded.", "PrimesUpdate");
 
             if (!SevenZip.TryDecompress7z(updatePath, decompressPath)) return 4; //4 = failed to decompress
 
-            Console.WriteLine("Version extracted.");
+            Log.LogEvent("Version extracted.", "PrimesUpdate");
 
             string cmdCode = BuildUpdateCMD(decompressPath, installPath, $"Primes {latestVersion} NET Framework 4.7.2");
-            Console.WriteLine($"Update CMD code: {cmdCode}");
+            Log.LogEvent($"Update CMD code: {cmdCode}", "PrimesUpdate");
 
 
 
-            Console.WriteLine("Updating...");
+            Log.LogEvent("Updating...", "PrimesUpdate");
             RunUpdateCMD(cmdCode);
-            Console.WriteLine("Update complete.");
+            Log.LogEvent("Update complete.", "PrimesUpdate");
 
 
 
@@ -347,12 +371,30 @@ namespace Primes.Updater
 
 
 
+        private static void Exit()
+        {
+            if (exiting)
+            {
+                Thread.Sleep(4000);
+                return;
+            }
+
+            exiting = true;
+
+            Log.Print("Something went wrong!");
+
+            Thread.Sleep(3000);
+
+            Environment.Exit(1);
+        }
+
+
+
         private enum Product
         {
             Primes_Updater,
             Primes_Exec,
         }
-
         private struct Version
         {
             public readonly byte major, minor, patch;
