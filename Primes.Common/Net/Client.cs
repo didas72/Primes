@@ -8,38 +8,64 @@ using Primes.Common;
 using Primes.Common.Net;
 using Primes.Common.Net.Messages;
 
-namespace Primes.BatchDistributer.Net
+namespace Primes.Common.Net
 {
+    /// <summary>
+    /// Wrapper class that contains a TcpClient and useful networking methods.
+    /// </summary>
     public class Client
     {
+        /// <summary>
+        /// The wrapped TcpClient instance.
+        /// </summary>
         public TcpClient socket;
-        private NetworkStream netStream;
+        /// <summary>
+        /// The callback for when a message is received.
+        /// </summary>
+        public MessageReceived messageReceived;
+
+        private readonly NetworkStream netStream;
         private Thread receiveThread;
         private volatile bool doListen = false;
 
-        public MessageReceived messageReceived;
+        private const ushort blockSize = ushort.MaxValue;
 
 
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
         public delegate void MessageReceived(IMessage message);
 
 
 
-        public Client() { }
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
+        /// <param name="socket">The TcpClient to wrap.</param>
         public Client(TcpClient socket)
         {
             this.socket = socket;
+            socket.SendBufferSize = blockSize;
+            socket.ReceiveBufferSize = blockSize;
             netStream = socket.GetStream();
         }
 
 
 
+        /// <summary>
+        /// Starts listening for incoming messages, calling <see cref="messageReceived"/> callback when needed.
+        /// </summary>
         public void StartListening()
         {
             doListen = true;
             receiveThread = new Thread(ReceiveLoop);
             receiveThread.Start();
         }
+        /// <summary>
+        /// Stops listening for incoming messages.
+        /// </summary>
         public void StopListening()
         {
             doListen = false;
@@ -48,34 +74,34 @@ namespace Primes.BatchDistributer.Net
 
 
 
+        /// <summary>
+        /// Sends an <see cref="IMessage"/> thorugh the TcpClient.
+        /// </summary>
+        /// <param name="message">The message to be sent.</param>
+        /// <returns></returns>
         public bool SendMessage(IMessage message)
         {
-            Log.LogEvent($"Sending message of type {message.MessageType} to client {socket.Client.RemoteEndPoint}.", "Client");
-
             try
             {
-                byte[] bytes = message.Serialize();
-                byte[] buffer = new byte[bytes.Length + 4];
-
-                Array.Copy(BitConverter.GetBytes(bytes.Length - 4), 0, buffer, 0, 4);
-                Array.Copy(bytes, 0, buffer, 4, bytes.Length);
+                byte[] buffer = message.Serialize();
 
                 if (socket.Connected)
                 {
-                    netStream.Write(buffer, 0, buffer.Length);
-                    netStream.Flush();
+                    SegmentedData.SendToStream(buffer, netStream, blockSize);
                 }
                 else
                     return false;
             }
-            catch (Exception e)
+            catch
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to send message of type {message.MessageType} to client {socket.Client.RemoteEndPoint}: {e.Message}.", "Client");
                 return false;
             }
 
             return true;
         }
+        /// <summary>
+        /// Disconnects the TcpClient and disposes all resources.
+        /// </summary>
         public void Disconnect()
         {
             StopListening();
@@ -93,23 +119,9 @@ namespace Primes.BatchDistributer.Net
                 {
                     if (netStream.DataAvailable)
                     {
-                        byte[] buffer = new byte[4];
-
-                        netStream.Read(buffer, 0, 4);
-
-                        int size = BitConverter.ToInt32(buffer, 0);
-
-                        int len = 0, head = 0;
-                        buffer = new byte[len];
-
-                        while (len < size)
-                        {
-                            netStream.Read(buffer, head, Math.Min(len, socket.ReceiveBufferSize));
-                        }
+                        byte[] buffer = SegmentedData.ReadFromStream(netStream, blockSize);
 
                         IMessage message = Message.Deserialize(buffer);
-
-                        Log.LogEvent($"Received message of type {message.MessageType}.", "ClientReceiveThread");
 
                         messageReceived.BeginInvoke(message, null, this);
                     }

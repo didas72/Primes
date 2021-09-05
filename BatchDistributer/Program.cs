@@ -29,7 +29,7 @@ namespace Primes.BatchDistributer
 
         private static void Main(string[] args)
         {
-            if (!Init(30000))
+            if (!Init(Settings.Default.port))
             {
                 Log.LogEvent(Log.EventType.Error, "Failed to init!", "MainThread");
 
@@ -182,8 +182,189 @@ namespace Primes.BatchDistributer
 
                 switch (arg)
                 {
-                    default:
-                        Log.LogEvent($"Unknown argument: {arg}", "MainThread");
+                    case "/?":
+                    case "-?":
+                        Log.Print("Arguments:");
+                        Log.Print("'-p P' - Port to use, P being the desired port. P must be an integer between 1 and 65535");
+                        Log.Print("'-ec T' - Time between expire checks, T being the desired value. T must be presented in the following format: 'HH:MM:SS'. T must be between 0:5:0 and 6:0:0");
+                        Log.Print("'-et T' - Time allowed before expires, T being the desired value. T must be presented in the following format: 'HH:MM:SS'. T must be between 24:0:0 and 720:0:0");
+                        Log.Print("'-b B' - Max batches allowed per user, B being the desired value. B must be and integer between 1 and 65535");
+                        Log.Print("'-mw M' - Max time allowed to wait for a message, in milliseconds, M being the desired value. M must be an integer between 100 and 60000");
+                        Log.Print("'-mcc C' - Max number of consecutive serving failures, C being the desired value. C must be an integer between 2 and 1000");
+                        break;
+
+                    case "-p":
+                        if (args.Length >= i)
+                        {
+                            if (ushort.TryParse(args[i + 1], out ushort port))
+                            {
+                                if (port != 0)
+                                {
+                                    Settings.Default.port = port;
+                                    Settings.Default.Save();
+                                }
+                                else
+                                {
+                                    Log.Print("Argument '-p' must be followed by a integer between 1 and 65535");
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                Log.Print("Argument '-p' must be followed by a integer between 1 and 65535");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            Log.Print("Argument '-p' must be followed by a integer between 1 and 65535");
+                            return false;
+                        }
+                        break;
+
+                    case "-ec":
+                        if (args.Length >= i)
+                        {
+                            if (TimeSpan.TryParse(args[i + 1], out TimeSpan span))
+                            {
+                                if (span.TotalMinutes >= 5 && span.TotalMinutes <= 360)
+                                {
+                                    Settings.Default.timeBetweenExpiredChecks = span;
+                                    Settings.Default.Save();
+                                }
+                                else
+                                {
+                                    Log.Print("Argument '-ec' must be followed by a value presented in the following format: 'HH:MM:SS' and between 0:5:0 and 6:0:0");
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                Log.Print("Argument '-ec' must be followed by a value presented in the following format: 'HH:MM:SS' and between 0:5:0 and 6:0:0");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            Log.Print("Argument '-ec' must be followed by a value presented in the following format: 'HH:MM:SS' and between 0:5:0 and 6:0:0");
+                            return false;
+                        }
+                        break;
+
+                    case "-et":
+                        if (args.Length >= i)
+                        {
+                            if (TimeSpan.TryParse(args[i + 1], out TimeSpan span))
+                            {
+                                if (span.TotalHours >= 24 && span.TotalHours <= 720)
+                                {
+                                    Settings.Default.expireTime = span;
+                                    Settings.Default.Save();
+                                }
+                                else
+                                {
+                                    Log.Print("Argument '-et' must be followed by a value presented in the following format: 'HH:MM:SS' and between 24:0:0 and 720:0:0");
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                Log.Print("Argument '-et' must be followed by a value presented in the following format: 'HH:MM:SS' and between 24:0:0 and 720:0:0");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            Log.Print("Argument '-et' must be followed by a value presented in the following format: 'HH:MM:SS' and between 24:0:0 and 720:0:0");
+                            return false;
+                        }
+                        break;
+
+                    case "-b":
+                        if (args.Length >= i)
+                        {
+                            if (ushort.TryParse(args[i + 1], out ushort bacthes))
+                            {
+                                if (bacthes != 0)
+                                {
+                                    Settings.Default.maxBatchesPerWorker = bacthes;
+                                    Settings.Default.Save();
+                                }
+                                else
+                                {
+                                    Log.Print("Argument '-b' must be followed by a integer between 1 and 65535");
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                Log.Print("Argument '-b' must be followed by a integer between 1 and 65535");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            Log.Print("Argument '-b' must be followed by a integer between 1 and 65535");
+                            return false;
+                        }
+                        break;
+
+                    case "-mw":
+                        if (args.Length >= i)
+                        {
+                            if (ushort.TryParse(args[i + 1], out ushort millis))
+                            {
+                                if (millis >= 100 && millis <= 60000)
+                                {
+                                    Settings.Default.maxWaitMessage = millis;
+                                    Settings.Default.Save();
+                                }
+                                else
+                                {
+                                    Log.Print("Argument '-mw' must be followed by a integer between 100 and 60000");
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                Log.Print("Argument '-mw' must be followed by a integer between 100 and 60000");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            Log.Print("Argument '-mw' must be followed by a integer between 100 and 60000");
+                            return false;
+                        }
+                        break;
+
+                    case "-mcc":
+                        if (args.Length >= i)
+                        {
+                            if (ushort.TryParse(args[i + 1], out ushort crashes))
+                            {
+                                if (crashes >= 2 && crashes <= 1000)
+                                {
+                                    Settings.Default.maxConsecutiveCrashes = crashes;
+                                    Settings.Default.Save();
+                                }
+                                else
+                                {
+                                    Log.Print("Argument '-mcc' must be followed by a integer between 2 and 1000");
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                Log.Print("Argument '-mcc' must be followed by a integer between 2 and 1000");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            Log.Print("Argument '-mcc' must be followed by a integer between 2 and 1000");
+                            return false;
+                        }
                         break;
                 }
             }

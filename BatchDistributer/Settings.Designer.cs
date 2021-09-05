@@ -38,12 +38,12 @@ namespace Primes.BatchDistributer {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("1500")]
-        public int maxWaitMillis {
+        public int maxWaitMessage {
             get {
-                return ((int)(this["maxWaitMillis"]));
+                return ((int)(this["maxWaitMessage"]));
             }
             set {
-                this["maxWaitMillis"] = value;
+                this["maxWaitMessage"] = value;
             }
         }
         
@@ -80,6 +80,18 @@ namespace Primes.BatchDistributer {
             }
             set {
                 this["expireTime"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("30000")]
+        public ushort port {
+            get {
+                return ((ushort)(this["port"]));
+            }
+            set {
+                this["port"] = value;
             }
         }
     }

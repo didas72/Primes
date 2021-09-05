@@ -123,7 +123,7 @@ namespace Primes.Exec
         {
             for (int i = 0; i < args.Length; i++)
             {
-                if (args[i] == "/?")
+                if (args[i] == "/?" || args[i] == "-?")
                 {
                     Log.Print("Arguments:");
                     Log.Print("'-t T' - Number of threads to use, T being the desired value. T must be a integer, positive and non zero value.");
@@ -152,6 +152,11 @@ namespace Primes.Exec
                                 Log.Print("Argument '-t' must be followed by a integer, positive and non zero value.");
                                 return false;
                             }
+                        }
+                        else
+                        {
+                            Log.Print("Argument '-t' must be followed by a integer, positive and non zero value.");
+                            return false;
                         }
                     }
                     else
@@ -192,6 +197,11 @@ namespace Primes.Exec
                             Properties.Settings.Default.PrimeBufferSize = bArg;
                             Properties.Settings.Default.Save();
                         }
+                        else
+                        {
+                            Log.Print("Argument '-b' must be followed by a integer, positive and non zero value.");
+                            return false;
+                        }
                     }
                     else
                     {
@@ -208,6 +218,11 @@ namespace Primes.Exec
                         {
                             Properties.Settings.Default.MaxJobQueue = qArg;
                             Properties.Settings.Default.Save();
+                        }
+                        else
+                        {
+                            Log.Print("Argument '-q' must be followed by a integer, positive and non zero value.");
+                            return false;
                         }
                     }
                     else
@@ -226,6 +241,11 @@ namespace Primes.Exec
                             Properties.Settings.Default.FrameTimeMilis = fArg;
                             Properties.Settings.Default.Save();
                         }
+                        else
+                        {
+                            Log.Print("Argument '-f' must be followed by a integer, positive and non zero value.");
+                            return false;
+                        }
                     }
                     else
                     {
@@ -236,10 +256,18 @@ namespace Primes.Exec
 
                 else if (args[i] == "-u")
                 {
-                    if (args[i + 1].ToLowerInvariant() == "x")
-                        Properties.Settings.Default.UseUI = false;
+                    if (args.Length >= i)
+                    {
+                        if (args[i + 1].ToLowerInvariant() == "x")
+                            Properties.Settings.Default.UseUI = false;
+                        else
+                            Properties.Settings.Default.UseUI = true;
+                    }
                     else
-                        Properties.Settings.Default.UseUI = true;
+                    {
+                        Log.Print("Argument '-u' must be followed by another value.");
+                        return false;
+                    }
                 }
             }
 

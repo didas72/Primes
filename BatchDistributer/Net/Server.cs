@@ -103,7 +103,7 @@ namespace Primes.BatchDistributer.Net
         private IMessage WaitForMessage()
         {
             bool wait = true;
-            int waitsLeft = Settings.Default.maxWaitMillis;
+            int waitsLeft = Settings.Default.maxWaitMessage;
 
             while (wait)
             {
@@ -269,7 +269,7 @@ namespace Primes.BatchDistributer.Net
             if (!(WaitForMessage() is Message_ClientBatchReceived _)) return;//if client didn't confirm proper data don't apply changes to db  
             if (sessionExpired) return;
 
-            Program.batchTable.AssignBatches(workerId, indexes);
+            Program.batchTable.AssignBatches(workerId, indexes, BatchTable.TimeSetting.ResetBoth);
         }
         private void HandleReturnBatchRequest(string workerId, byte objectCount)
         {
@@ -437,7 +437,7 @@ namespace Primes.BatchDistributer.Net
                 if (!isAssigned)
                     return false;
 
-                Program.batchTable.AssignBatches(workerId, BatchEntry.BatchStatus.Stored_Archived, indexes.GetValues());
+                Program.batchTable.AssignBatches(workerId, BatchEntry.BatchStatus.Stored_Archived, indexes.GetValues(), BatchTable.TimeSetting.PreserveSentUpdateCompleted);
             }
             catch (Exception e)
             {
@@ -456,7 +456,7 @@ namespace Primes.BatchDistributer.Net
                 {
                     Log.LogEvent(Log.EventType.Error, $"Error moving received batch {batchNumbers[i]} from cache to archive: {e.Message}.", "ServerThread");
 
-                    Program.batchTable.AssignBatch("    ", BatchEntry.BatchStatus.Lost, indexes[batchNumbers[i]]);
+                    Program.batchTable.AssignBatch("    ", BatchEntry.BatchStatus.Lost, indexes[batchNumbers[i]], BatchTable.TimeSetting.ResetBoth);
                 }
             }
 

@@ -55,7 +55,6 @@
     <Compile Include="Files\Worker.cs" />
     <Compile Include="Files\WorkerTable.cs" />
     <Compile Include="Log.cs" />
-    <Compile Include="Net\Client.cs" />
     <Compile Include="Net\ClientReceiver.cs" />
     <Compile Include="Net\ClientWaitQueue.cs" />
     <Compile Include="Net\Server.cs" />
@@ -66,7 +65,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="SevenZip.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -81,11 +79,8 @@
       <Name>Primes.Common</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="inc\7za.exe" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy /y $(ProjectDir)inc\7za.exe $(TargetDir)</PostBuildEvent>
+    <PostBuildEvent>xcopy /y $(SolutionDir)\Primes.Common\inc\7za.exe $(TargetDir)</PostBuildEvent>
   </PropertyGroup>
 </Project>

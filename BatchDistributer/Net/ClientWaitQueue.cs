@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using Primes.Common.Net;
+
 namespace Primes.BatchDistributer.Net
 {
     public class ClientWaitQueue
@@ -44,7 +46,7 @@ namespace Primes.BatchDistributer.Net
         }
         public bool TryGetNextClient(out Client client)
         {
-            client = new Client();
+            client = null;
 
             lock (clientQueue)
             {

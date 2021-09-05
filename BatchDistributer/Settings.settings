@@ -5,7 +5,7 @@
     <Setting Name="maxBatchesPerWorker" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">5</Value>
     </Setting>
-    <Setting Name="maxWaitMillis" Type="System.Int32" Scope="User">
+    <Setting Name="maxWaitMessage" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">1500</Value>
     </Setting>
     <Setting Name="maxConsecutiveCrashes" Type="System.Int32" Scope="User">
@@ -16,6 +16,9 @@
     </Setting>
     <Setting Name="expireTime" Type="System.TimeSpan" Scope="User">
       <Value Profile="(Default)">168.00:00:00</Value>
+    </Setting>
+    <Setting Name="port" Type="System.UInt16" Scope="User">
+      <Value Profile="(Default)">30000</Value>
     </Setting>
   </Settings>
 </SettingsFile>
