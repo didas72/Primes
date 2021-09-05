@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Primes.Exec
+namespace Primes.Common
 {
-    public static class ConsoleLock
+    static class ConsoleLock
     {
         public static UseForConsoleLock console = new UseForConsoleLock();
 

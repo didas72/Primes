@@ -44,10 +44,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsoleLock.cs" />
     <Compile Include="Files\Compression.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Files\Files.cs" />
     <Compile Include="Files\SevenZip.cs" />
+    <Compile Include="Log.cs" />
     <Compile Include="Mathf.cs" />
     <Compile Include="Net\Client.cs" />
     <Compile Include="Net\Messages\Message.cs" />

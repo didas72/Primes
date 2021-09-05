@@ -1,9 +1,6 @@
-# Ignore bin folders everywhere
 **/bin
 **/obj
 **/Intermediate
 **/v16
-PrimesShader
-PrimesCompute
 PrimesCpp
 PrimesSVC

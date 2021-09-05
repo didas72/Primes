@@ -6,6 +6,7 @@ using System.Threading;
 using System.IO;
 
 using Primes.Common;
+using Primes.Common.Files;
 using Primes.Common.Net;
 using Primes.Common.Net.Messages;
 using Primes.BatchDistributer.Files;
@@ -19,7 +20,7 @@ namespace Primes.BatchDistributer.Net
         private volatile bool doServe = false;
         private bool sessionExpired = false;
 
-        private Queue<IMessage> pendingMessageHandles = new Queue<IMessage>();
+        private readonly Queue<IMessage> pendingMessageHandles = new Queue<IMessage>();
 
         private Client client;
 

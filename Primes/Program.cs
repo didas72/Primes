@@ -31,7 +31,7 @@ namespace Primes.Exec
                 return;
             }
 
-            Log.LogEvent(Log.EventType.Info, "Initialization complete.", "MainThread", false);
+            LogExtension.LogEvent(Log.EventType.Info, "Initialization complete.", "MainThread", false);
 
             InitUI();
 
@@ -41,7 +41,7 @@ namespace Primes.Exec
             {
                 if (!Utils.HasDoableJobs(jobsPath))
                 {
-                    Log.LogEvent(Log.EventType.Warning, "No jobs to be executed...", "MainThread", true);
+                    LogExtension.LogEvent(Log.EventType.Warning, "No jobs to be executed...", "MainThread", true);
                     Thread.Sleep(Properties.Settings.Default.FrameTimeMilis + 20);
                     Exit(true);
                 }
@@ -50,8 +50,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to start job execution: {e.Message}", "MainThread", false);
-                Log.LogEvent(Log.EventType.Error, "Failed to start job execution.", "MainThread", true, false);
+                LogExtension.LogEvent(Log.EventType.Error, $"Failed to start job execution: {e.Message}", "MainThread", false);
+                LogExtension.LogEvent(Log.EventType.Error, "Failed to start job execution.", "MainThread", true, false);
             }
 
             while (doWait)
@@ -85,37 +85,37 @@ namespace Primes.Exec
                 if (!InitDirectories())
                     return false;
 
-                Log.InitLog(homePath);
+                LogExtension.InitLog(homePath);
 
-                Log.LogEvent(Log.EventType.Info, "Directories initialized.", "MainThread", true);
+                LogExtension.LogEvent(Log.EventType.Info, "Directories initialized.", "MainThread", true);
 
                 if (!LoadResources())
                     return false;
 
-                Log.LogEvent(Log.EventType.Info, "Resources loaded.", "MainThread", true);
+                LogExtension.LogEvent(Log.EventType.Info, "Resources loaded.", "MainThread", true);
 
                 if (!resourcesLoaded)
-                    Log.LogEvent(Log.EventType.Warning, "Some resource files were found. This could make prime search significantly slower.", "MainThread", true);
+                    LogExtension.LogEvent(Log.EventType.Warning, "Some resource files were found. This could make prime search significantly slower.", "MainThread", true);
 
                 if (!InitDistributer())
                     return false;
 
-                Log.LogEvent(Log.EventType.Info, "Distributer initialized.", "MainThread", true);
+                LogExtension.LogEvent(Log.EventType.Info, "Distributer initialized.", "MainThread", true);
 
                 return true;
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Fatal, $"Error during initialization: {e.Message}", "MainThread", false);
+                LogExtension.LogEvent(Log.EventType.Fatal, $"Error during initialization: {e.Message}", "MainThread", false);
 
                 return false;
             }
         }
         private static void FailedInit()
         {
-            Log.LogEvent(Log.EventType.Fatal, "Failed to initialize! (If used the /? argument everything is ok)", "MainThread", false);
+            LogExtension.LogEvent(Log.EventType.Fatal, "Failed to initialize! (If used the /? argument everything is ok)", "MainThread", false);
 
-            Log.Print("Press any key to exit.");
+            LogExtension.Print("Press any key to exit.");
 
             WaitForKey();
         }
@@ -125,14 +125,14 @@ namespace Primes.Exec
             {
                 if (args[i] == "/?" || args[i] == "-?")
                 {
-                    Log.Print("Arguments:");
-                    Log.Print("'-t T' - Number of threads to use, T being the desired value. T must be a integer, positive and non zero value.");
-                    Log.Print("'-p P' - Path of the directory to be used by this program, P being the desired path. P must be the FULL path to an existing directory.");
-                    Log.Print("'-b B' - Size (*8 bytes per thread) of the buffer that holds primes before adding to PrimeJobs. Lightly boosts performance but requires some extra memory.");
-                    Log.Print("'-q Q' - Maximum number of jobs paths queued for execution. Lower values result in slightly lower RAM usages and faster start-up times but more frequent scans for jobs.");
-                    Log.Print("'-f F' - Time, in milliseconds, between frames. Lower values will result in possibly faster refresh rates on the console but will slow prime calculations down slightly.");
-                    Log.Print("'-u U' - Wether or not UI is to be used, X representing a no and anything else a yes.");
-                    Log.Print("NOTE: Paths passed as arguments can only include spaces if encolsed in double quotes. Example: \"C:\\Documents\\primes\\\"");
+                    LogExtension.Print("Arguments:");
+                    LogExtension.Print("'-t T' - Number of threads to use, T being the desired value. T must be a integer, positive and non zero value.");
+                    LogExtension.Print("'-p P' - Path of the directory to be used by this program, P being the desired path. P must be the FULL path to an existing directory.");
+                    LogExtension.Print("'-b B' - Size (*8 bytes per thread) of the buffer that holds primes before adding to PrimeJobs. Lightly boosts performance but requires some extra memory.");
+                    LogExtension.Print("'-q Q' - Maximum number of jobs paths queued for execution. Lower values result in slightly lower RAM usages and faster start-up times but more frequent scans for jobs.");
+                    LogExtension.Print("'-f F' - Time, in milliseconds, between frames. Lower values will result in possibly faster refresh rates on the console but will slow prime calculations down slightly.");
+                    LogExtension.Print("'-u U' - Wether or not UI is to be used, X representing a no and anything else a yes.");
+                    LogExtension.Print("NOTE: Paths passed as arguments can only include spaces if encolsed in double quotes. Example: \"C:\\Documents\\primes\\\"");
                     return false;
                 }
 
@@ -149,19 +149,19 @@ namespace Primes.Exec
                             }
                             else
                             {
-                                Log.Print("Argument '-t' must be followed by a integer, positive and non zero value.");
+                                LogExtension.Print("Argument '-t' must be followed by a integer, positive and non zero value.");
                                 return false;
                             }
                         }
                         else
                         {
-                            Log.Print("Argument '-t' must be followed by a integer, positive and non zero value.");
+                            LogExtension.Print("Argument '-t' must be followed by a integer, positive and non zero value.");
                             return false;
                         }
                     }
                     else
                     {
-                        Log.Print("Argument '-t' must be followed by a integer, positive and non zero value.");
+                        LogExtension.Print("Argument '-t' must be followed by a integer, positive and non zero value.");
                         return false;
                     }
                 }
@@ -177,13 +177,13 @@ namespace Primes.Exec
                         }
                         else
                         {
-                            Log.Print($"Argument {args[i + 1]} is not a valid path.");
+                            LogExtension.Print($"Argument {args[i + 1]} is not a valid path.");
                             return false;
                         }
                     }
                     else
                     {
-                        Log.Print("Argument '-p' must be followed by a valid path.");
+                        LogExtension.Print("Argument '-p' must be followed by a valid path.");
                         return false;
                     }
                 }
@@ -199,13 +199,13 @@ namespace Primes.Exec
                         }
                         else
                         {
-                            Log.Print("Argument '-b' must be followed by a integer, positive and non zero value.");
+                            LogExtension.Print("Argument '-b' must be followed by a integer, positive and non zero value.");
                             return false;
                         }
                     }
                     else
                     {
-                        Log.Print("Argument '-b' must be followed by a integer, positive and non zero value.");
+                        LogExtension.Print("Argument '-b' must be followed by a integer, positive and non zero value.");
                         return false;
                     }
                 }
@@ -221,13 +221,13 @@ namespace Primes.Exec
                         }
                         else
                         {
-                            Log.Print("Argument '-q' must be followed by a integer, positive and non zero value.");
+                            LogExtension.Print("Argument '-q' must be followed by a integer, positive and non zero value.");
                             return false;
                         }
                     }
                     else
                     {
-                        Log.Print("Argument '-q' must be followed by a integer, positive and non zero value.");
+                        LogExtension.Print("Argument '-q' must be followed by a integer, positive and non zero value.");
                         return false;
                     }
                 }
@@ -243,13 +243,13 @@ namespace Primes.Exec
                         }
                         else
                         {
-                            Log.Print("Argument '-f' must be followed by a integer, positive and non zero value.");
+                            LogExtension.Print("Argument '-f' must be followed by a integer, positive and non zero value.");
                             return false;
                         }
                     }
                     else
                     {
-                        Log.Print("Argument '-f' must be followed by a integer, positive and non zero value.");
+                        LogExtension.Print("Argument '-f' must be followed by a integer, positive and non zero value.");
                         return false;
                     }
                 }
@@ -265,7 +265,7 @@ namespace Primes.Exec
                     }
                     else
                     {
-                        Log.Print("Argument '-u' must be followed by another value.");
+                        LogExtension.Print("Argument '-u' must be followed by another value.");
                         return false;
                     }
                 }
@@ -299,7 +299,7 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to initialize direcotries: '{e.Message}'", "MainThread", false);
+                LogExtension.LogEvent(Log.EventType.Error, $"Failed to initialize direcotries: '{e.Message}'", "MainThread", false);
 
                 return false;
             }
@@ -314,7 +314,7 @@ namespace Primes.Exec
             {
                 if (!File.Exists(knwonPrimesFilePath))
                 {
-                    Log.LogEvent(Log.EventType.Warning, "No knwon primes resource file found, skipping.", "ResourceLoading", false);
+                    LogExtension.LogEvent(Log.EventType.Warning, "No knwon primes resource file found, skipping.", "ResourceLoading", false);
 
                     resourcesLoaded = false;
 
@@ -323,7 +323,7 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, e.Message, "ResourceLoading", false);
+                LogExtension.LogEvent(Log.EventType.Error, e.Message, "ResourceLoading", false);
             }
 
             try
@@ -336,7 +336,7 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Warning, $"Failed to load knwon primes resource file: {e.Message}; {e.StackTrace}", "MainThread", false);
+                LogExtension.LogEvent(Log.EventType.Warning, $"Failed to load knwon primes resource file: {e.Message}; {e.StackTrace}", "MainThread", false);
 
                 resourcesLoaded = false;
             }
@@ -354,7 +354,7 @@ namespace Primes.Exec
             if (Properties.Settings.Default.UseUI)
                 ConsoleUI.StartUI();
             else
-                Log.InitConsole();
+                LogExtension.InitConsole();
         }
 
 
@@ -366,7 +366,7 @@ namespace Primes.Exec
 
             isExiting = true;
 
-            Log.LogEvent(Log.EventType.Info, "Preparng to exit...", "MainThread", true);
+            LogExtension.LogEvent(Log.EventType.Info, "Preparng to exit...", "MainThread", true);
 
             doWait = false;
 
@@ -377,11 +377,11 @@ namespace Primes.Exec
             if (ConsoleUI.UIEnabled)
                 ConsoleUI.StopUI();
 
-            Log.LogEvent(Log.EventType.Info, "Exiting.", "MainThread", false);
+            LogExtension.LogEvent(Log.EventType.Info, "Exiting.", "MainThread", false);
 
             if (waitForUser)
             {
-                Log.Print("Press any key to exit...");
+                LogExtension.Print("Press any key to exit...");
 
                 WaitForKey();
             }
@@ -393,13 +393,13 @@ namespace Primes.Exec
 
         private static void StartWork()
         {
-            Log.LogEvent(Log.EventType.Info, "Starting work...", "MainThread", true);
+            LogExtension.LogEvent(Log.EventType.Info, "Starting work...", "MainThread", true);
 
             jobDistributer.StartWork();
         }
         private static void StopWork()
         {
-            Log.LogEvent(Log.EventType.Info, "Stopping work...", "MainThread", true);
+            LogExtension.LogEvent(Log.EventType.Info, "Stopping work...", "MainThread", true);
 
             jobDistributer.StopWork();
         }

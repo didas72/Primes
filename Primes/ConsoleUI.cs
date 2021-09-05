@@ -50,8 +50,8 @@ namespace Primes.Exec
             {
                 doUI = false;
 
-                Log.LogEvent(Log.EventType.Error, $"Failed to start ConsoleUI: {e.Message}.", "ConsoleUI", false);
-                Log.LogEvent(Log.EventType.Warning, $"ConsoleUI failed to start, display mode changed to log only. Previous logs will not be displayed. Check log file for older logs.", "ConsoleUI", true, false);
+                LogExtension.LogEvent(Log.EventType.Error, $"Failed to start ConsoleUI: {e.Message}.", "ConsoleUI", false);
+                LogExtension.LogEvent(Log.EventType.Warning, $"ConsoleUI failed to start, display mode changed to log only. Previous logs will not be displayed. Check log file for older logs.", "ConsoleUI", true, false);
             }
         }
         public static void StopUI()
@@ -95,8 +95,8 @@ namespace Primes.Exec
             {
                 doUI = false;
 
-                Log.LogEvent(Log.EventType.Error, $"ConsoleUI crashed: {e.Message}.", "ConsoleUI", false);
-                Log.LogEvent(Log.EventType.Warning, "ConsoleUI crashed, display mode changed to log only. Previous logs will not be displayed. Check log file for older logs.", "ConsoleUI", true, false);
+                LogExtension.LogEvent(Log.EventType.Error, $"ConsoleUI crashed: {e.Message}.", "ConsoleUI", false);
+                LogExtension.LogEvent(Log.EventType.Warning, "ConsoleUI crashed, display mode changed to log only. Previous logs will not be displayed. Check log file for older logs.", "ConsoleUI", true, false);
             }
         }
 
@@ -118,7 +118,7 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Error when drawing individual progress: {e.Message}", "ConsoleUI", false);
+                LogExtension.LogEvent(Log.EventType.Error, $"Error when drawing individual progress: {e.Message}", "ConsoleUI", false);
             }
         }
         private static void DrawGlobalProgress(ref string ui)
@@ -144,7 +144,7 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to determine batch progress: {e.Message}", "ConsoleUI", false);
+                LogExtension.LogEvent(Log.EventType.Error, $"Failed to determine batch progress: {e.Message}", "ConsoleUI", false);
             }
         }
         private static void DrawLog(ref string ui)
@@ -165,7 +165,7 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Error when drawing log: {e.Message}", "ConsoleUI", false);
+                LogExtension.LogEvent(Log.EventType.Error, $"Error when drawing log: {e.Message}", "ConsoleUI", false);
             }
         }
 

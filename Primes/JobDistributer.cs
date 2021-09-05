@@ -51,12 +51,12 @@ namespace Primes.Exec
         {
             try
             {
-                Log.LogEvent(Log.EventType.Info, "Loading jobs.", "DistributingThread", true);
+                LogExtension.LogEvent(Log.EventType.Info, "Loading jobs.", "DistributingThread", true);
 
                 Queue<string> jobFiles = Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue);
 
-                Log.LogEvent(Log.EventType.Info, "Jobs loaded.", "DistributingThread", true);
-                Log.LogEvent(Log.EventType.Info, "Work started.", "DistributingThread", true);
+                LogExtension.LogEvent(Log.EventType.Info, "Jobs loaded.", "DistributingThread", true);
+                LogExtension.LogEvent(Log.EventType.Info, "Work started.", "DistributingThread", true);
 
                 while (distribute)
                 {
@@ -76,7 +76,7 @@ namespace Primes.Exec
                             }
                             catch (Exception e)
                             {
-                                Log.LogEvent(Log.EventType.Warning, $"Failed to deserialize job from file '{path}' for computing. Skipping. {e.Message}", "DistributingThread", true);
+                                LogExtension.LogEvent(Log.EventType.Warning, $"Failed to deserialize job from file '{path}' for computing. Skipping. {e.Message}", "DistributingThread", true);
                                 continue;
                             }
                         }
@@ -86,7 +86,7 @@ namespace Primes.Exec
 
                             if (jobFiles.Count <= 0)
                             {
-                                Log.LogEvent(Log.EventType.Info, "Finished distributing all jobs.", "JobDistributingThread", true);
+                                LogExtension.LogEvent(Log.EventType.Info, "Finished distributing all jobs.", "JobDistributingThread", true);
 
                                 distribute = false;
 
@@ -102,8 +102,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"JobDistributer crashed: {e.Message}.", "JobDistributer", false);
-                Log.LogEvent(Log.EventType.Error, "JobDistributer crashed.", "JobDistributer", true, false);
+                LogExtension.LogEvent(Log.EventType.Error, $"JobDistributer crashed: {e.Message}.", "JobDistributer", false);
+                LogExtension.LogEvent(Log.EventType.Error, "JobDistributer crashed.", "JobDistributer", true, false);
 
                 try
                 {
@@ -120,7 +120,7 @@ namespace Primes.Exec
 
         private void StopAllWorkers()
         {
-            Log.LogEvent(Log.EventType.Info, "Stopping Workers.", "MainThread", true);
+            LogExtension.LogEvent(Log.EventType.Info, "Stopping Workers.", "MainThread", true);
 
             for (int i = 0; i < Workers.Length; i++)
             {

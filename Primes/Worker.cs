@@ -114,7 +114,7 @@ namespace Primes.Exec
 
                         if (!doWork)
                         {
-                            Log.LogEvent(Log.EventType.Info, $"Pausing job {job.Start} of batch {job.Batch}. Saving.", $"WThread#{workerId:D2}", true);
+                            LogExtension.LogEvent(Log.EventType.Info, $"Pausing job {job.Start} of batch {job.Batch}. Saving.", $"WThread#{workerId:D2}", true);
                             break;
                         }
                     }
@@ -132,15 +132,15 @@ namespace Primes.Exec
 
                 TimeSpan elapsed = DateTime.Now - startingTime;
 
-                Log.LogEvent(Log.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WThread#{workerId:D2}", true);
+                LogExtension.LogEvent(Log.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WThread#{workerId:D2}", true);
 
                 if (ConsoleUI.UIEnabled)
                     ConsoleUI.RegisterJobSeconds(workerId, elapsed.TotalSeconds);
             }
             catch(Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Worker#{workerId} crashed: {e.Message}", $"Worker#{workerId.ToString("D2")}", false);
-                Log.LogEvent(Log.EventType.Error, "A worker has crashed. Check log for details.", $"Worker#{workerId.ToString("D2")}", true, false);
+                LogExtension.LogEvent(Log.EventType.Error, $"Worker#{workerId} crashed: {e.Message}", $"Worker#{workerId.ToString("D2")}", false);
+                LogExtension.LogEvent(Log.EventType.Error, "A worker has crashed. Check log for details.", $"Worker#{workerId.ToString("D2")}", true, false);
 
                 SaveJob_Crash(job);
             }
@@ -173,14 +173,14 @@ namespace Primes.Exec
                 string filePath = Path.Combine(dumpPath, $"{job.Batch}\\{job.Start}.primejob");
 
                 if (File.Exists(filePath))
-                    Log.LogEvent(Log.EventType.Warning, $"Completed job {job.Start}.primejob already exists. Overwritting.", $"Worker#{workerId:D2}");
+                    LogExtension.LogEvent(Log.EventType.Warning, $"Completed job {job.Start}.primejob already exists. Overwritting.", $"Worker#{workerId:D2}");
 
                 PrimeJob.Serialize(job, filePath);
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to serialize finished primejob: {e.Message}.", $"WThread#{workerId:D2}", false);
-                Log.LogEvent(Log.EventType.Error, "Failed to serialize finished primejob.", $"WThread#{workerId:D2}", true, false);
+                LogExtension.LogEvent(Log.EventType.Error, $"Failed to serialize finished primejob: {e.Message}.", $"WThread#{workerId:D2}", false);
+                LogExtension.LogEvent(Log.EventType.Error, "Failed to serialize finished primejob.", $"WThread#{workerId:D2}", true, false);
 
                 SaveJob_Crash(job);
             }
@@ -193,8 +193,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to serialize paused primejob: {e.Message}.", $"WThread#{workerId:D2}", false);
-                Log.LogEvent(Log.EventType.Error, "Failed to serialize paused primejob.", $"WThread#{workerId:D2}", true, false);
+                LogExtension.LogEvent(Log.EventType.Error, $"Failed to serialize paused primejob: {e.Message}.", $"WThread#{workerId:D2}", false);
+                LogExtension.LogEvent(Log.EventType.Error, "Failed to serialize paused primejob.", $"WThread#{workerId:D2}", true, false);
 
                 SaveJob_Crash(job);
             }
@@ -208,8 +208,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to restore job: {e.Message}.", $"Worker#{workerId:D2}", false);
-                Log.LogEvent(Log.EventType.Error, "Failed to restore job.", $"Worker#{workerId:D2}", true, false);
+                LogExtension.LogEvent(Log.EventType.Error, $"Failed to restore job: {e.Message}.", $"Worker#{workerId:D2}", false);
+                LogExtension.LogEvent(Log.EventType.Error, "Failed to restore job.", $"Worker#{workerId:D2}", true, false);
             }
         }
     }
