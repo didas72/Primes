@@ -1,0 +1,1 @@
+OpenCover.Console.exe -register:user -target:"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe" -targetargs:".\UnitTestsPrimes\bin\Debug\UnitTestsPrimes.dll" -filter:"+[Primes.Common*]* -[UnitTestsPrimes*]*" -output:".\PrimesCommon_Project_coverage.xml"
