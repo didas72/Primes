@@ -24,6 +24,18 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
+            Random rdm = new Random();
+
+            for (int i = 0; i < 1000000; i++)
+            {
+                ulong src = (ulong)((double)rdm.Next() * (double)rdm.Next());
+                ulong sysSqrt = (ulong)Math.Ceiling(Math.Sqrt(src));
+                ulong primesSqrt = Mathf.UlongSqrtHigh((ulong)src);
+
+                if (sysSqrt != primesSqrt)
+                    Red($"Failed at {i}: sqrt({src}) = {sysSqrt} while UlongSqrtHigh() = {primesSqrt}");
+            }
+
             Blue("//Done");
             Console.ReadLine();
         }

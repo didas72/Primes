@@ -85,10 +85,10 @@ namespace Primes.Common
 		/// <returns>Upwards-rounded square root.</returns>
 		public static ulong UlongSqrtHigh(ulong number)
 		{
-			if (number < 2)
+			if (number <= 2)
 				return number;
 
-			ulong max = 4294967295, min = 0, c, c2;
+			ulong max = 4294967296, min = 0, c, c2;
 
 			while (true)
 			{
