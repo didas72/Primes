@@ -5,8 +5,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+    - name: UploadCoverage
     - uses: codecov/codecov-action@v2.0.3
       with:
         files: Code_coverage.xml
-    - name: UploadCoverage
-      run: codecov -f Code_coverage.xml
