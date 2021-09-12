@@ -10,23 +10,48 @@ namespace Primes.Tester
 {
     class Program
     {
-        private static Log log;
+        private static string homePath;
+
+
 
         static void Main(string[] args)
         {
-            Console.WriteLine("PrimesTexter.exe by Didas72 and PeakRead");
+            Log.Print("PrimesTexter.exe by Didas72 and PeakRead");
 
-            ParseArguments(ref args);
+            Init(ref args);
 
-            log = new Log(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "PrimesTester.log.txt"));
-            log.Write(Log.EventType.Info, "Start");
-            log.WriteRaw($"Options: \n{RunOptions.ExportOptions()}\n");
+            Log.LogEvent(Log.EventType.Info, $"Options: \n{RunOptions.ExportOptions()}\n", "MainThread", false);
 
-            CollectSystemInfo();
+            if (RunOptions.CollectSysInfo)
+                CollectSystemInfo();
 
-            RunBenchmark();
+            if (RunOptions.RunBenchmark)
+                RunBenchmark();
+
+            Log.Print("Done. Press any key to exit.");
+            Utils.WaitForKey();
         }
 
+
+
+        private static void Init(ref string[] args)
+        {
+            InitDirs();
+
+            InitLog();
+
+            ParseArguments(ref args);
+        }
+        private static void InitDirs()
+        {
+            homePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "primes");
+            Directory.CreateDirectory(homePath);
+        }
+        private static void InitLog()
+        {
+            Log.InitConsole();
+            Log.InitLog(homePath, "testerLog.txt");
+        }
         private static void ParseArguments(ref string[] args)
         {
             for (int i = 0; i < args.Length; i++)
@@ -35,96 +60,121 @@ namespace Primes.Tester
                 {
                     case "/?":
 
-                        Console.WriteLine("Simple benchmarking / stress testing tool based on prime checking.");
-                        Console.WriteLine();
-                        Console.WriteLine("Arguments:");
-                        Console.WriteLine("/b          - Runs benchmark.");
-                        Console.WriteLine("/b-prime    - Runs prime testing performance tests. Used by default. (use with /b)");
-                        Console.WriteLine("/b-sqrt     - Runs square root performance tests. Not used by default. (use with /b)");
-                        Console.WriteLine("/s          - Runs stress test. (Not implemented)");
-                        Console.WriteLine("/threads-XX - Runs with XX threads. If not included the program will decide the most appropriate value.");
-                        Console.WriteLine("/no-sys-info  - Disables collection of system information. Not set by default.");
+                        Log.Print("Simple benchmarking / stress testing tool based on prime checking.");
+                        Log.Print("Arguments:");
+                        Log.Print("-b          - Runs benchmark.");
+                        Log.Print("-b-prime    - Runs prime testing performance tests. Not used by default. (use with /b)");
+                        Log.Print("-b-sqrt     - Runs square root performance tests. Not used by default. (use with /b)");
+                        Log.Print("-s          - Runs stress test. (Not implemented)");
+                        Log.Print("-threads-XX - Runs with XX threads. If not included the program will decide the most appropriate value.");
+                        Log.Print("-no-sys-info  - Disables collection of system information. Not set by default.");
 
                         Environment.Exit(0);
 
                         break;
 
-                    case "/b":
+                    case "-b":
                         RunOptions.RunBenchmark = true;
                         break;
 
-                    case "/b-prime":
+                    case "-b-prime":
                         RunOptions.RunPrime = true;
                         break;
 
-                    case "/b-sqrt":
+                    case "-b-sqrt":
                         RunOptions.RunSqrt = true;
                         break;
 
-                    case "/s":
+                    case "-s":
                         RunOptions.RunStressTest = true;
                         break;
 
-                    case "/no-sys-info":
+                    case "-no-sys-info":
                         RunOptions.CollectSysInfo = false;
                         break;
 
                     default:
 
-                        if (args[i].StartsWith("/threads-"))
+                        if (args[i].StartsWith("-threads-"))
+                        {
                             if (!int.TryParse(args[i].Substring(9), out RunOptions.Threads))
                             {
-                                Console.WriteLine("Invalid thread count!");
+                                Log.Print("Invalid thread count!");
                                 Thread.Sleep(2000);
                                 Environment.Exit(0);
                             }
+                        }
+                        else
+                            Log.Print("Invalid arg");
                         
                         break;
                 }
             }
         }
 
+
+
         private static void CollectSystemInfo()
         {
             try
             {
-                if (RunOptions.CollectSysInfo)
-                {
-                    Console.WriteLine("Collecting system details...");
-                    log.WriteRaw($"System Info:\n{new InfoCollector().GetDetails()}\n");
-                }
+                Log.Print("Collecting system details...");
+                Log.LogEvent(Log.EventType.Info, $"System Info:\n{new InfoCollector().GetDetails()}\n", "SystemDetails", false);
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Failed to collect system info: {e.Message}");
+                Log.LogEvent(Log.EventType.Error, $"Failed to collect system info: {e.Message}", "SystemDetails");
             }
         }
 
+
+
         private static void RunBenchmark()
         {
-            Console.WriteLine("Starting benchmark...");
-
-            Console.WriteLine("Starting single thread performance tests...");
+            Log.Print("Starting benchmark...");
 
             TimeSpan span;
 
             if (RunOptions.RunPrime)
             {
+                Log.Print("Starting single thread performance tests...");
+
                 span = Benchmark.SingleThreadPrimeBenchmark(Tests.small_start, Tests.small_max);
-                log.Write(Log.EventType.Performance, $"Single thread (small): {span.TotalMilliseconds:N4}");
-                Console.WriteLine($"Small values: {span.TotalMilliseconds:N4} ms");
+                Log.LogEvent(Log.EventType.Performance, $"Single thread (small): {span.TotalMilliseconds:N4}", "Benchmark", false);
+                Log.Print($"Single small values: {span.TotalMilliseconds:N4} ms");
 
                 span = Benchmark.SingleThreadPrimeBenchmark(Tests.med_start, Tests.med_max);
-                log.Write(Log.EventType.Performance, $"Single thread (med): {span.TotalMilliseconds:N4}");
-                Console.WriteLine($"Medium values: {span.TotalMilliseconds:N4} ms");
+                Log.LogEvent(Log.EventType.Performance, $"Single thread (med): {span.TotalMilliseconds:N4}", "Benchmark", false);
+                Log.Print($"Single medium values: {span.TotalMilliseconds:N4} ms");
 
                 span = Benchmark.SingleThreadPrimeBenchmark(Tests.large_start, Tests.large_max);
-                log.Write(Log.EventType.Performance, $"Single thread (large): {span.TotalMilliseconds:N4}\n");
-                Console.WriteLine($"Large values: {span.TotalMilliseconds:N4} ms");
+                Log.LogEvent(Log.EventType.Performance, $"Single thread (large): {span.TotalMilliseconds:N4}", "Benchmark", false);
+                Log.Print($"Single large values: {span.TotalMilliseconds:N4} ms");
 
-                span = Benchmark.SingleThreadPrimeBenchmark(Tests.huge_start, Tests.huge_max);
-                log.Write(Log.EventType.Performance, $"Single thread (huge): {span.TotalMilliseconds:N4}\n");
-                Console.WriteLine($"Huge values: {span.TotalMilliseconds:N4} ms");
+                //span = Benchmark.SingleThreadPrimeBenchmark(Tests.huge_start, Tests.huge_max);
+                //Log.LogEvent(Log.EventType.Performance, $"Single thread (huge): {span.TotalMilliseconds:N4}\n", "Benchmark", false);
+                //Log.Print($"Single huge values: {span.TotalMilliseconds:N4} ms");
+
+                Log.Print("Single threads tests complete.");
+                Log.Print("Starting multi thread performance tests...");
+
+                span = Benchmark.MultiThreadPrimeBenchmark(Tests.small_start, Tests.small_max, Environment.ProcessorCount);
+                Log.LogEvent(Log.EventType.Performance, $"Multi thread (small): {span.TotalMilliseconds:N4}", "Benchmark", false);
+                Log.Print($"Multi small values: {span.TotalMilliseconds:N4} ms");
+
+                span = Benchmark.MultiThreadPrimeBenchmark(Tests.med_start, Tests.med_max, Environment.ProcessorCount);
+                Log.LogEvent(Log.EventType.Performance, $"Multi thread (medium): {span.TotalMilliseconds:N4}", "Benchmark", false);
+                Log.Print($"Multi medium values: {span.TotalMilliseconds:N4} ms");
+
+                span = Benchmark.MultiThreadPrimeBenchmark(Tests.large_start, Tests.large_max, Environment.ProcessorCount);
+                Log.LogEvent(Log.EventType.Performance, $"Multi thread (large): {span.TotalMilliseconds:N4}", "Benchmark", false);
+                Log.Print($"Multi large values: {span.TotalMilliseconds:N4} ms");
+
+                span = Benchmark.MultiThreadPrimeBenchmark(Tests.huge_start, Tests.huge_max, Environment.ProcessorCount);
+                Log.LogEvent(Log.EventType.Performance, $"Multi thread (huge): {span.TotalMilliseconds:N4}", "Benchmark", false);
+                Log.Print($"Multi huge values: {span.TotalMilliseconds:N4} ms");
+
+                Log.Print("Multi threads tests complete.");
             }
             
             if (RunOptions.RunSqrt)
@@ -132,7 +182,7 @@ namespace Primes.Tester
                 throw new NotImplementedException();
             }
 
-            Console.WriteLine("Single threads tests complete.");
+            Log.Print("Tests complete.");
         }
     }
 }

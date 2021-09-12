@@ -6,7 +6,7 @@ using System.Xml;
 
 using Primes.Common;
 using Primes.Common.Files;
-using Primes.Updater.Net;
+using Primes.Common.Net;
 
 namespace Primes.Updater
 {

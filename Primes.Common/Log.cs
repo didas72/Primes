@@ -85,7 +85,7 @@ Start time {now.Hour}:{now.Minute}:{now.Second}
 ";
             try
             {
-                File.AppendAllText(Path.Combine(LogPath, "log.txt"), log);
+                File.AppendAllText(Path.Combine(LogPath, LogFile), log);
             }
             catch
             {

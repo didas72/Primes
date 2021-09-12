@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Primes.Tester
+﻿namespace Primes.Tester
 {
-    static class Tests
+    public static class Tests
     {
         public const ulong small_start = 2, small_max = 50000000;               //2     =>  50M
         public const ulong med_start = 50000000, med_max = 200000000;           //50M   =>  200M

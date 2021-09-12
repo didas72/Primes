@@ -2,7 +2,6 @@
 using System.IO;
 using System.Threading;
 
-using Primes;
 using Primes.Common;
 using Primes.Common.Files;
 

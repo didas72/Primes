@@ -1,0 +1,166 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Xml;
+using System.Net.Sockets;
+using System.Threading;
+
+using Primes.Common;
+using Primes.Common.Files;
+using Primes.Common.Net;
+using Primes.Common.Net.Messages;
+
+namespace Primes.Exec.Net
+{
+    public class BatchDownloader
+    {
+        private const string ipURL = "https://raw.githubusercontent.com/didas72/Primes/master/PrimesUpdater/Access/Access.xml";
+        private readonly Queue<IMessage> pendingMessageHandles = new Queue<IMessage>();
+
+
+        public BatchDownloader() { }
+
+
+        public bool TryDownloadBatches(string finalDir, string tmpDir, string workerId)
+        {
+            if (!GetIPAndPort(tmpDir, out string ipAddress, out int port))
+                return false;
+
+            Client client = new Client(new TcpClient());
+            client.messageReceived = MessageReceivedCallback;
+            client.StartListening();
+            client.socket.Connect(ipAddress, port);
+
+            bool badDownload = DoDowloadBatches(client, finalDir, tmpDir, workerId);
+
+
+
+            client.StopListening();
+            client.Disconnect();
+
+
+
+            return badDownload;
+        }
+        private bool DoDowloadBatches(Client client, string finalDir, string tmpDir, string workerId)
+        {
+            IMessage message = WaitForMessage();
+            if (message is Message_ServerWelcomeWait) { }
+            else return false;
+
+
+
+            message = WaitForMessage();
+            if (message is Message_ServerRequestWorkerId)
+            {
+                client.SendMessage(new Message_ClientWorkerId(workerId));
+            }
+            else return false;
+
+
+
+            message = WaitForMessage();
+            if (message is Message_ServerStateRequest)
+            {
+                client.SendMessage(new Message_ClientRequest(Message_ClientRequest.Request.NewBatch, 5));
+            }
+            else return false;
+
+
+
+            message = WaitForMessage();
+            if (message is Message_ServerBatchSend)
+            {
+                Message_ServerBatchSend batchMessage = message as Message_ServerBatchSend;
+
+                string batchFilePath = Path.Combine(tmpDir, "batches.7z");
+
+                File.WriteAllBytes(batchFilePath, batchMessage.objectData);
+
+                if (!SevenZip.TryDecompress7z(batchFilePath, finalDir))
+                    return false;
+            }
+            else return false;
+
+
+
+            return true;
+        }
+
+
+
+        private bool GetIPAndPort(string tmpDir, out string ipAddress, out int port)
+        {
+            ipAddress = string.Empty;
+            port = 0;
+
+
+
+            string accessPath = Path.Combine(tmpDir, "Access.xml");
+            if (!Networking.TryDownloadFile(ipURL, accessPath))
+                return false;
+
+
+
+            XmlDocument doc = new XmlDocument();
+            doc.Load(accessPath);
+            var access = doc.LastChild;
+
+
+
+            if (!access.GetFirstChildOfName("ipAddress", out XmlNode xmlIpAddress))
+                return false;
+
+            if (!access.GetFirstChildOfName("port", out XmlNode xmlPort))
+                return false;
+
+
+
+            ipAddress = xmlIpAddress.InnerXml;
+            port = int.Parse(xmlPort.InnerXml);
+
+            return true;
+        }
+        public void MessageReceivedCallback(IMessage message)
+        {
+            lock (pendingMessageHandles)
+            {
+                pendingMessageHandles.Enqueue(message);
+            }
+        }
+
+
+
+        private IMessage WaitForMessage()
+        {
+            bool wait = true;
+            int waitsLeft = 1500;
+
+            while (wait)
+            {
+                lock (pendingMessageHandles)
+                {
+                    wait = pendingMessageHandles.Count == 0;
+                }
+
+                Thread.Sleep(1);
+
+                waitsLeft--;
+
+                if (waitsLeft >= 0)
+                {
+                    return null;
+                }
+            }
+
+            IMessage message;
+
+            lock (pendingMessageHandles)
+            {
+                message = pendingMessageHandles.Dequeue();
+            }
+
+            return message;
+        }
+    }
+}

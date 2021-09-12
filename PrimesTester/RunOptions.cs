@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Primes.Tester
 {
-    static class RunOptions
+    public static class RunOptions
     {
         public static bool RunBenchmark = false;
         public static bool RunStressTest = false;

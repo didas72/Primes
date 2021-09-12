@@ -59,8 +59,6 @@ namespace Primes.Tester
             }
 
             return outp;
-
-            //outp += $"\n";
         }
     }
 }

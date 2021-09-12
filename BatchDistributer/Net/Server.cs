@@ -422,7 +422,7 @@ namespace Primes.BatchDistributer.Net
         {
             string[] batches = Directory.GetFiles(Paths.cachePath);
             uint[] batchNumbers = new uint[batches.Length];
-            Dictionary<uint, int> indexes = new Dictionary<uint, int>();
+            Dictionary<uint, int> indexes;
 
             try
             {
