@@ -439,19 +439,14 @@ namespace Primes.Common.Files
         /// <returns></returns>
         public static byte[] Serializev1_2_0(KnownPrimesResourceFile file)
         {
-            throw new NotImplementedException("Compression is not implemented.");
+            MemoryStream stream = new MemoryStream();
 
-            /*byte[] bytes = new byte[8 + file.Primes.Length * 8];
+            stream.Write(new byte[] { file.FileVersion.major, file.FileVersion.minor, file.FileVersion.patch, file.FileCompression.GetByte() }, 0, 4);
 
-            bytes[0] = file.FileVersion.major; bytes[1] = file.FileVersion.minor; bytes[2] = file.FileVersion.patch;
-            bytes[3] = file.FileCompression.GetByte();
+            ulong last = 0;
+            Compression.NCC.StreamCompress(stream, file.Primes, ref last);
 
-            //compression??
-
-            Array.Copy(BitConverter.GetBytes(file.Primes.Length), 0, bytes, 4, 4);
-            Buffer.BlockCopy(file.Primes, 0, bytes, 8, file.Primes.Length * 8);
-
-            return bytes;*/
+            return stream.ToArray();
         }
 
 
