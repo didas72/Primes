@@ -377,7 +377,7 @@ namespace Primes.Exec
             {
                 LogExtension.Print("Press any key to exit...");
 
-                WaitForKey();
+                Utils.WaitForKey();
             }
 
             Environment.Exit(0);

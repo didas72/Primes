@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using Primes.Common;
 using Primes.Common.Net;
 
 namespace Primes.BatchDistributer.Net
