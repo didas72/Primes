@@ -117,7 +117,7 @@ namespace Primes.Exec
 
             LogExtension.Print("Press any key to exit.");
 
-            WaitForKey();
+            Utils.WaitForKey();
         }
         private static bool ParseArguments(ref string[] args)
         {
@@ -135,7 +135,6 @@ namespace Primes.Exec
                     LogExtension.Print("NOTE: Paths passed as arguments can only include spaces if encolsed in double quotes. Example: \"C:\\Documents\\primes\\\"");
                     return false;
                 }
-
                 else if (args[i] == "-t")
                 {
                     if (args.Length >= i)
@@ -165,7 +164,6 @@ namespace Primes.Exec
                         return false;
                     }
                 }
-
                 else if (args[i] == "-p")
                 {
                     if (args.Length >= i)
@@ -187,7 +185,6 @@ namespace Primes.Exec
                         return false;
                     }
                 }
-
                 else if (args[i] == "-b")
                 {
                     if (args.Length >= i)
@@ -209,7 +206,6 @@ namespace Primes.Exec
                         return false;
                     }
                 }
-
                 else if (args[i] == "-q")
                 {
                     if (args.Length >= i)
@@ -231,7 +227,6 @@ namespace Primes.Exec
                         return false;
                     }
                 }
-
                 else if (args[i] == "-f")
                 {
                     if (args.Length >= i)
@@ -253,7 +248,6 @@ namespace Primes.Exec
                         return false;
                     }
                 }
-
                 else if (args[i] == "-u")
                 {
                     if (args.Length >= i)
@@ -402,13 +396,6 @@ namespace Primes.Exec
             LogExtension.LogEvent(Log.EventType.Info, "Stopping work...", "MainThread", true);
 
             jobDistributer.StopWork();
-        }
-
-
-
-        private static void WaitForKey()
-        {
-            Console.ReadKey(true);
         }
     }
 }

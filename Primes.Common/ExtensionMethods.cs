@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
 
 namespace Primes.Common
 {
@@ -91,5 +92,29 @@ namespace Primes.Common
         /// <param name="dictionary">Dictionary from which to take the keys.</param>
         /// <returns></returns>
         public static K[] GetKeys<K, V>(this Dictionary<K, V> dictionary) => dictionary.Keys.ToArray();
+        /// <summary>
+        /// Gets the first child with a certain name from a XmlNode.
+        /// </summary>
+        /// <param name="parent"></param>
+        /// <param name="name">The name to check for.</param>
+        /// <param name="child">The child XmlNode</param>
+        /// <returns>Boolean indicating the operation's success.</returns>
+        public static bool GetFirstChildOfName(this XmlNode parent, string name, out XmlNode child)
+        {
+            child = null;
+
+            var children = parent.ChildNodes;
+
+            foreach (XmlNode fChild in children)
+            {
+                if (fChild.Name == name)
+                {
+                    child = fChild;
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

@@ -78,7 +78,7 @@ namespace Primes.Common.Net
         /// Sends an <see cref="IMessage"/> thorugh the TcpClient.
         /// </summary>
         /// <param name="message">The message to be sent.</param>
-        /// <returns></returns>
+        /// <returns>Boolean indicating the operation's success.</returns>
         public bool SendMessage(IMessage message)
         {
             try

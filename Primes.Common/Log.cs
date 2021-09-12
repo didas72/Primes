@@ -13,6 +13,10 @@ namespace Primes.Common
         /// The path to the log file.
         /// </summary>
         public static string LogPath { get; private set; }
+        /// <summary>
+        /// The name of the log file.
+        /// </summary>
+        public static string LogFile { get; private set; }
 
 
 
@@ -44,7 +48,11 @@ namespace Primes.Common
             /// <summary>
             /// Informative only event, reporting program performance. Useful for both the user and the programmer.
             /// </summary>
-            Performance
+            Performance,
+            /// <summary>
+            /// Informative only event, reporting program performance. Useful for the programmer only and might be confusing for the user.
+            /// </summary>
+            DevInfo,
         }
 
 
@@ -54,9 +62,17 @@ namespace Primes.Common
         /// </summary>
         /// <param name="path">The path to the log file.</param>
         /// <remarks>Must be called once before calling any other log related method.</remarks>
-        public static void InitLog(string path)
+        public static void InitLog(string path) => InitLog(path, "log.txt");
+        /// <summary>
+        /// Initializes the log file. 
+        /// </summary>
+        /// <param name="path">The path to the log file.</param>
+        /// <param name="logFile">The file name for the log.</param>
+        /// <remarks>Must be called once before calling any other log related method.</remarks>
+        public static void InitLog(string path, string logFile)
         {
             LogPath = path;
+            LogFile = logFile;
 
             DateTime now = DateTime.Now;
             string log = $@"
@@ -136,6 +152,11 @@ Start time {now.Hour}:{now.Minute}:{now.Second}
                         Console.ForegroundColor = ConsoleColor.White;
                         break;
 
+                    case EventType.DevInfo:
+                        Console.BackgroundColor = ConsoleColor.Black;
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        break;
+
                     case EventType.Warning:
                         Console.BackgroundColor = ConsoleColor.Black;
                         Console.ForegroundColor = ConsoleColor.Yellow;
@@ -160,8 +181,11 @@ Start time {now.Hour}:{now.Minute}:{now.Second}
                 SafeWriteLine(log);
             }
 
-            if (LogPath != null && writeToFile)
-                if (!TryWriteLog(Path.Combine(LogPath, "log.txt"), log + "\n"))
+            if (LogPath == null) 
+                Print("Log path is not set!");
+
+            if (writeToFile)
+                if (!TryWriteLog(Path.Combine(LogPath, LogFile), log + "\n"))
                     Print("Failed to write log to file.");
         }
 

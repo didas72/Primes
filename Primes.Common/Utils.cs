@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 
 using Primes;
 using Primes.Common;
@@ -269,6 +270,16 @@ namespace Primes.Common
                     dir.Delete(true);
                 }
             }
+        }
+
+
+
+        /// <summary>
+        /// Waits for a key to be pressed while in console.
+        /// </summary>
+        public static void WaitForKey()
+        {
+            Console.ReadKey(true);
         }
     }
 }
