@@ -102,34 +102,9 @@ namespace Primes.Updater
 
 
 
-            string[] settings = null;
-            if (File.Exists(Path.Combine(installPath, "Primes.exe.config")))
-            {
-                settings = File.ReadAllLines(Path.Combine(installPath, "Primes.exe.config"));
-            }
-
-
-
             Log.LogEvent("Updating...", "PrimesUpdate");
             RunUpdateCMD(cmdCode, tmpDir);
             Log.LogEvent("Update complete.", "PrimesUpdate");
-
-
-
-            if (settings != null)
-            {
-                string[] newSettings = File.ReadAllLines(Path.Combine(installPath, "Primes.exe.config"));
-
-                if (newSettings.Length == settings.Length)
-                {
-                    File.WriteAllLines(Path.Combine(installPath, "Primes.exe.config"), settings);
-                    Log.LogEvent("Reloading old settings...", "PrimesUpdte");
-                }
-                else
-                {
-                    Log.LogEvent(Log.EventType.Warning, "New version includes new settings, which means the updater is unable to preserve current settings.", "PrimesUpdte");
-                }
-            }
 
 
 
