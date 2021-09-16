@@ -132,15 +132,16 @@ namespace Primes.Exec
 
                 TimeSpan elapsed = DateTime.Now - startingTime;
 
-                LogExtension.LogEvent(Log.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WThread#{workerId:D2}", true);
+                if (doWork)
+                    LogExtension.LogEvent(Log.EventType.Info, $"Finished job {job.Start} of batch {job.Batch}. Elapsed {elapsed.Hours}:{elapsed.Minutes}:{elapsed.Seconds}. Saving.", $"WThread#{workerId:D2}", true);
 
                 if (ConsoleUI.UIEnabled)
                     ConsoleUI.RegisterJobSeconds(workerId, elapsed.TotalSeconds);
             }
             catch(Exception e)
             {
-                LogExtension.LogEvent(Log.EventType.Error, $"Worker#{workerId} crashed: {e.Message}", $"Worker#{workerId.ToString("D2")}", false);
-                LogExtension.LogEvent(Log.EventType.Error, "A worker has crashed. Check log for details.", $"Worker#{workerId.ToString("D2")}", true, false);
+                Log.LogException($"Worker#{workerId} crashed.", $"Worker#{workerId:D2}", e);
+                LogExtension.LogEvent(Log.EventType.Error, "A worker has crashed. Check log for details.", $"Worker#{workerId:D2}", true, false);
 
                 SaveJob_Crash(job);
             }
@@ -179,8 +180,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                LogExtension.LogEvent(Log.EventType.Error, $"Failed to serialize finished primejob: {e.Message}.", $"WThread#{workerId:D2}", false);
                 LogExtension.LogEvent(Log.EventType.Error, "Failed to serialize finished primejob.", $"WThread#{workerId:D2}", true, false);
+                Log.LogException("Failed to serialize finished primejob.", $"WThread#{workerId:D2}", e);
 
                 SaveJob_Crash(job);
             }
@@ -193,8 +194,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                LogExtension.LogEvent(Log.EventType.Error, $"Failed to serialize paused primejob: {e.Message}.", $"WThread#{workerId:D2}", false);
                 LogExtension.LogEvent(Log.EventType.Error, "Failed to serialize paused primejob.", $"WThread#{workerId:D2}", true, false);
+                Log.LogException("Failed to serialize paused primejob.", $"WThread#{workerId:D2}", e);
 
                 SaveJob_Crash(job);
             }
@@ -208,8 +209,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                LogExtension.LogEvent(Log.EventType.Error, $"Failed to restore job: {e.Message}.", $"Worker#{workerId:D2}", false);
                 LogExtension.LogEvent(Log.EventType.Error, "Failed to restore job.", $"Worker#{workerId:D2}", true, false);
+                Log.LogException("Failed to restore job.", $"Worker#{workerId:D2}", e);
             }
         }
     }

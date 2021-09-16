@@ -88,7 +88,8 @@ namespace Primes.BatchDistributer.Net
                     crashCount++;
                     consecutiveCrashes++;
 
-                    Log.LogEvent(Log.EventType.Error, $"Error (count {crashCount}t:{consecutiveCrashes}c) in server thread: {e.Message}.", "ServerThread");
+                    Log.LogEvent(Log.EventType.Error, $"Error (count {crashCount}t:{consecutiveCrashes}c) in server thread.", "ServerThread");
+                    Log.LogException($"Error (count {crashCount}t:{consecutiveCrashes}c) in server thread.", "ServerThread", e);
 
                     if (consecutiveCrashes >= Settings.Default.maxConsecutiveCrashes)
                     {
@@ -217,7 +218,8 @@ namespace Primes.BatchDistributer.Net
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to handle client {client.socket.Client.RemoteEndPoint}: {e.Message}.", "ServerThread");
+                Log.LogEvent(Log.EventType.Error, $"Failed to handle client {client.socket.Client.RemoteEndPoint}", "ServerThread");
+                Log.LogException($"Failed to handle client {client.socket.Client.RemoteEndPoint}", "ServerThread", e);
             }
         }
         private void HandleRequest(string workerId, Message_ClientRequest.Request request, byte objectCount)
@@ -315,7 +317,8 @@ namespace Primes.BatchDistributer.Net
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Warning, $"Failed to close session with client {endpoint} in a correct way: {e.Message}", "ServerThread");
+                Log.LogEvent(Log.EventType.Warning, $"Failed to close session with client {endpoint} in a correct way", "ServerThread");
+                Log.LogException($"Failed to close session with client {endpoint} in a correct way", "ServerThread", e);
 
                 client = null;
             }
@@ -345,7 +348,8 @@ namespace Primes.BatchDistributer.Net
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to compress and load {batchNumbers.Length} batches: {e.Message}.", "ServerThread");
+                Log.LogEvent(Log.EventType.Error, $"Failed to compress and load {batchNumbers.Length} batches.", "ServerThread");
+                Log.LogException($"Failed to compress and load {batchNumbers.Length} batches.", "ServerThread", e);
             }
 
             return false;
@@ -400,7 +404,8 @@ namespace Primes.BatchDistributer.Net
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to unload and uncompress batches: {e.Message}.", "ServerThread");
+                Log.LogEvent(Log.EventType.Error, "Failed to unload and uncompress batches.", "ServerThread");
+                Log.LogException("Failed to unload and uncompress batches.", "ServerThread", e);
 
                 return -1;
             }
@@ -442,7 +447,8 @@ namespace Primes.BatchDistributer.Net
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Error handling received batches: {e.Message}.", "ServerThread");
+                Log.LogEvent(Log.EventType.Error, "Error handling received batches.", "ServerThread");
+                Log.LogException("Error handling received batches.", "ServerThread", e);
 
                 return false;
             }
@@ -455,7 +461,8 @@ namespace Primes.BatchDistributer.Net
                 }
                 catch (Exception e)
                 {
-                    Log.LogEvent(Log.EventType.Error, $"Error moving received batch {batchNumbers[i]} from cache to archive: {e.Message}.", "ServerThread");
+                    Log.LogEvent(Log.EventType.Error, $"Error moving received batch {batchNumbers[i]} from cache to archive.", "ServerThread");
+                    Log.LogException($"Error moving received batch {batchNumbers[i]} from cache to archive.", "ServerThread", e);
 
                     Program.batchTable.AssignBatch("    ", BatchEntry.BatchStatus.Lost, indexes[batchNumbers[i]], BatchTable.TimeSetting.ResetBoth);
                 }
@@ -469,7 +476,8 @@ namespace Primes.BatchDistributer.Net
                 }
                 catch (Exception e)
                 {
-                    Log.LogEvent(Log.EventType.Error, $"Failed to delete sent batch {i} from storage: {e.Message}.", "ServerThread");
+                    Log.LogEvent(Log.EventType.Error, $"Failed to delete sent batch {i} from storage.", "ServerThread");
+                    Log.LogException($"Failed to delete sent batch {i} from storage.", "ServerThread", e);
                 }
             }
 

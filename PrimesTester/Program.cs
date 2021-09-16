@@ -123,7 +123,8 @@ namespace Primes.Tester
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to collect system info: {e.Message}", "SystemDetails");
+                Log.LogEvent(Log.EventType.Error, "Failed to collect system info", "SystemDetails");
+                Log.LogException("Failed to collect system info", "SystemDetails", e);
             }
         }
 

@@ -27,9 +27,13 @@ namespace Primes.Common
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="PathTooLongException"></exception>
         /// <exception cref="DirectoryNotFoundException"></exception>
-        public static Queue<string> GetDoableJobs(string path, uint maxCount)
+        public static Queue<string> GetDoableJobs(string path, uint maxCount, bool sort)
         {
-            string[] files = GetSubFilesSorted(path, "*.primejob");
+            string[] files;
+            if (sort)
+                files = GetSubFilesSorted(path, "*.primejob");
+            else
+                files = GetSubFiles(path, "*.primejob");
 
             Queue<string> doableJobs = new Queue<string>();
 
@@ -57,7 +61,15 @@ namespace Primes.Common
         {
             jobPath = string.Empty;
 
-            string[] files = GetSubFilesSorted(path, "*.primejob");
+            string[] files;
+            try
+            {
+                files = GetSubFilesSorted(path, "*.primejob");
+            }
+            catch (Exception e)
+            {
+                files = GetSubFiles(path, "*.primejob");
+            }
 
             for (int i = 0; i < files.Length; i++)
             {

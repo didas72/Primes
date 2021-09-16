@@ -51,11 +51,10 @@ namespace Primes.Exec
         {
             try
             {
-                LogExtension.LogEvent(Log.EventType.Info, "Loading jobs.", "DistributingThread", true);
+                Queue<string> jobFiles;
 
-                Queue<string> jobFiles = Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue);
+                jobFiles = TryGetSorted();
 
-                LogExtension.LogEvent(Log.EventType.Info, "Jobs loaded.", "DistributingThread", true);
                 LogExtension.LogEvent(Log.EventType.Info, "Work started.", "DistributingThread", true);
 
                 while (distribute)
@@ -76,13 +75,14 @@ namespace Primes.Exec
                             }
                             catch (Exception e)
                             {
-                                LogExtension.LogEvent(Log.EventType.Warning, $"Failed to deserialize job from file '{path}' for computing. Skipping. {e.Message}", "DistributingThread", true);
+                                LogExtension.LogEvent(Log.EventType.Warning, $"Failed to deserialize job from file '{path}' for computing. Skipping.", "DistributingThread", true, false);
+                                Log.LogException($"Failed to deserialize job from file '{path}' for computing.", "DistributingThread", e);
                                 continue;
                             }
                         }
                         else if (jobFiles.Count <= 0)
                         {
-                            jobFiles = Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue);
+                            jobFiles = TryGetSorted();
 
                             if (jobFiles.Count <= 0)
                             {
@@ -102,8 +102,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                LogExtension.LogEvent(Log.EventType.Error, $"JobDistributer crashed: {e.Message}.", "JobDistributer", false);
                 LogExtension.LogEvent(Log.EventType.Error, "JobDistributer crashed.", "JobDistributer", true, false);
+                Log.LogException("JobDistributer crashed.", "JobDistributer", e);
 
                 try
                 {
@@ -115,6 +115,26 @@ namespace Primes.Exec
             
             Program.Exit(true);
         }
+
+
+
+        private Queue<string> TryGetSorted()
+        {
+            Log.LogEvent($"Loading {Properties.Settings.Default.MaxJobQueue} jobs for processing.", "DistributingThread");
+
+            try
+            {
+                return Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue, true);
+            }
+            catch (Exception e)
+            {
+                LogExtension.LogEvent(Log.EventType.Warning, "Failed to sort files for execution.", "DistributingThread", true, false);
+                Log.LogException("Failed to sort files for execution.", "DistributingThread", e);
+
+                return Utils.GetDoableJobs(jobPath, Properties.Settings.Default.MaxJobQueue, false);
+            }
+        }
+
 
 
 

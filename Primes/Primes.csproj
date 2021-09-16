@@ -67,7 +67,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BatchDownloader.cs" />
+    <None Include="BatchDownloader.cs" />
     <Compile Include="ConsoleUI.cs" />
     <Compile Include="JobDistributer.cs" />
     <Compile Include="LogExtension.cs" />

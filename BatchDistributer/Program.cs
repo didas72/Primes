@@ -135,7 +135,9 @@ namespace Primes.BatchDistributer
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to init DB: {e.Message}.", "MainThread");
+                Log.LogEvent(Log.EventType.Error, "Failed to init DB.", "MainThread");
+                Log.LogException("Failed to init DB.", "MainThread", e);
+
                 return false;
             }
 
@@ -389,7 +391,8 @@ namespace Primes.BatchDistributer
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Fatal, $"Failed to start serving: {e.Message}.", "MainThread");
+                Log.LogEvent(Log.EventType.Fatal, "Failed to start serving.", "MainThread");
+                Log.LogException("Failed to start serving.", "MainThread", e);
 
                 return false;
             }
@@ -441,7 +444,8 @@ namespace Primes.BatchDistributer
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to properly stop client receiver and server: {e.Message}.", "MainThread");
+                Log.LogEvent(Log.EventType.Error, "Failed to properly stop client receiver and server.", "MainThread");
+                Log.LogException("Failed to properly stop client receiver and server.", "MainThread", e);
             }
 
             SaveDB();
@@ -474,7 +478,8 @@ namespace Primes.BatchDistributer
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to store worker table to normal location: {e.Message}.", "SaveDB");
+                Log.LogEvent(Log.EventType.Error, "Failed to store worker table to normal location.", "SaveDB", true, false);
+                Log.LogException("Failed to store worker table to normal location.", "SaveDB", e);
 
                 try//try dump to home directory
                 {
@@ -482,7 +487,8 @@ namespace Primes.BatchDistributer
                 }
                 catch (Exception e1)
                 {
-                    Log.LogEvent(Log.EventType.Error, $"Failed to dump worker table to home directory: {e1.Message}.", "SaveDB");
+                    Log.LogEvent(Log.EventType.Error, "Failed to dump worker table to home directory.", "SaveDB", true, false);
+                    Log.LogException("Failed to dump worker table to home directory.", "SaveDB", e1);
 
                     try//try dump to desktop
                     {
@@ -490,7 +496,8 @@ namespace Primes.BatchDistributer
                     }
                     catch (Exception e2)//rest in peace
                     {
-                        Log.LogEvent(Log.EventType.Error, $"Failed to dump worker table to desktop: {e2.Message}. Data lost.", "SaveDB");
+                        Log.LogEvent(Log.EventType.Error, "Failed to dump worker table to desktop. Data lost.", "SaveDB", true, false);
+                        Log.LogException("Failed to dump worker table to desktop. Data lost.", "SaveDB", e2);
                     }
                 }
             }
@@ -501,7 +508,8 @@ namespace Primes.BatchDistributer
             }
             catch (Exception e)
             {
-                Log.LogEvent(Log.EventType.Error, $"Failed to store batch table to normal location: {e.Message}.", "SaveDB");
+                Log.LogEvent(Log.EventType.Error, "Failed to store batch table to normal location.", "SaveDB", true, false);
+                Log.LogException("Failed to store batch table to normal location.", "SaveDB", e);
 
                 try//try dump to home directory
                 {
@@ -509,7 +517,8 @@ namespace Primes.BatchDistributer
                 }
                 catch (Exception e1)
                 {
-                    Log.LogEvent(Log.EventType.Error, $"Failed to dump batch table to home directory: {e1.Message}.", "SaveDB");
+                    Log.LogEvent(Log.EventType.Error, "Failed to dump batch table to home directory.", "SaveDB", true, false);
+                    Log.LogException("Failed to dump batch table to home directory.", "SaveDB", e1);
 
                     try//try dump to desktop
                     {
@@ -517,7 +526,8 @@ namespace Primes.BatchDistributer
                     }
                     catch (Exception e2)//rest in peace
                     {
-                        Log.LogEvent(Log.EventType.Error, $"Failed to dump batch table to desktop: {e2.Message}. Data lost.", "SaveDB");
+                        Log.LogEvent(Log.EventType.Error, "Failed to dump batch table to desktop. Data lost.", "SaveDB", true, false);
+                        Log.LogException("Failed to dump batch table to desktop. Data lost.", "SaveDB", e2);
                     }
                 }
             }

@@ -40,7 +40,8 @@ namespace Primes.BatchDistributer.Net
                     }
                     catch (Exception e)
                     {
-                        Log.LogEvent(Log.EventType.Error, $"Failed to disconnect queued client: {e.Message}", "ClientWaitQueue");
+                        Log.LogEvent(Log.EventType.Error, "Failed to disconnect queued client.", "ClientWaitQueue");
+                        Log.LogException("Failed to disconnect queued client.", "ClientWaitQueue", e);
                     }
                 }
             }

@@ -8,7 +8,7 @@
     </primes.updater>
     <primes.exec>
       <major>1</major>
-      <minor>4</minor>
+      <minor>5</minor>
       <patch>0</patch>
     </primes.exec>
     <batch.distributer>

@@ -73,7 +73,8 @@ namespace Primes.BatchDistributer.Net
                 }
                 catch (Exception e)
                 {
-                    Log.LogEvent(Log.EventType.Error, $"Failed to accept client: {e.Message}.", "ClientReceiver");
+                    Log.LogEvent(Log.EventType.Error, "Failed to accept client.", "ClientReceiver");
+                    Log.LogException("Failed to accept client.", "ClientReceiver", e);
                 }
             }
 

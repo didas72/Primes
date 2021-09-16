@@ -49,8 +49,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                LogExtension.LogEvent(Log.EventType.Error, $"Failed to start job execution: {e.Message}", "MainThread", false);
                 LogExtension.LogEvent(Log.EventType.Error, "Failed to start job execution.", "MainThread", true, false);
+                Log.LogException("Failed to start job execution.", "MainThread", e);
             }
 
             while (doWait)
@@ -105,7 +105,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                LogExtension.LogEvent(Log.EventType.Fatal, $"Error during initialization: {e.Message}", "MainThread", false);
+                LogExtension.LogEvent(Log.EventType.Fatal, "Error during initialization.", "MainThread", false);
+                Log.LogException("Error during initialization.", "MainThread", e);
 
                 return false;
             }
@@ -292,7 +293,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                LogExtension.LogEvent(Log.EventType.Error, $"Failed to initialize direcotries: '{e.Message}'", "MainThread", false);
+                LogExtension.LogEvent(Log.EventType.Error, "Failed to initialize direcotries.", "MainThread", true);
+                Log.LogException("Failed to initialize direcotries.", "MainThread", e);
 
                 return false;
             }
@@ -329,7 +331,8 @@ namespace Primes.Exec
             }
             catch (Exception e)
             {
-                LogExtension.LogEvent(Log.EventType.Warning, $"Failed to load knwon primes resource file: {e.Message}; {e.StackTrace}", "MainThread", false);
+                LogExtension.LogEvent(Log.EventType.Warning, "Failed to load knwon primes resource file.", "MainThread", false);
+                Log.LogException("Failed to load knwon primes resource file.", "MainThread", e);
 
                 resourcesLoaded = false;
             }

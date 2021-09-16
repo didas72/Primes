@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Primes.Common
 {
@@ -187,6 +189,20 @@ Start time {now.Hour}:{now.Minute}:{now.Second}
             if (writeToFile)
                 if (!TryWriteLog(Path.Combine(LogPath, LogFile), log + "\n"))
                     Print("Failed to write log to file.");
+        }
+
+
+
+        public static void LogException(string msg, string sender, Exception e)
+        {
+            string data = string.Empty;
+
+            foreach (KeyValuePair<object, object> obj in e.Data)
+            {
+                data += $"[{obj.Key}:{obj.Value}]\n";
+            }
+
+            LogEvent(EventType.Error, $"{msg}\nException details:\n-Message: {e.Message}\n-Stack trace: {e.StackTrace}\n-Data: {data}\n//==========", sender, false);
         }
 
 
