@@ -202,7 +202,7 @@ Start time {now.Hour}:{now.Minute}:{now.Second}
                 data += $"[{obj.Key}:{obj.Value}]\n";
             }
 
-            LogEvent(EventType.Error, $"{msg}\nException details:\n-Message: {e.Message}\n-Stack trace: {e.StackTrace}\n-Data: {data}\n//==========", sender, false);
+            LogEvent(EventType.Error, $"{msg}\nException details:\n{e}", sender, false);
         }
 
 

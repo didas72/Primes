@@ -116,5 +116,22 @@ namespace Primes.Common
 
             return false;
         }
+        public static int[] GetIndexesOf(this string str, string value)
+        {
+            List<int> outp = new List<int>();
+            int last = 0;
+
+            while(true)
+            {
+                last = str.IndexOf(value, last);
+
+                if (last == -1) break;
+                outp.Add(last);
+                last++;
+            }
+
+            return outp.ToArray();
+        }
+        public static void Add<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, KeyValuePair<TKey, TValue> pair) => dictionary.Add(pair.Key, pair.Value);
     }
 }

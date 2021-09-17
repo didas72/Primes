@@ -49,6 +49,7 @@
     <Compile Include="Files\Compression.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Files\Files.cs" />
+    <Compile Include="Files\Settings.cs" />
     <Compile Include="Files\SevenZip.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Mathf.cs" />

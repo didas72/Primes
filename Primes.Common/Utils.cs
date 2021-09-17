@@ -66,7 +66,7 @@ namespace Primes.Common
             {
                 files = GetSubFilesSorted(path, "*.primejob");
             }
-            catch (Exception e)
+            catch
             {
                 files = GetSubFiles(path, "*.primejob");
             }

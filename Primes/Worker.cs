@@ -3,7 +3,6 @@ using System.IO;
 using System.Threading;
 using System.Collections.Generic;
 
-using Primes;
 using Primes.Common;
 using Primes.Common.Files;
 
