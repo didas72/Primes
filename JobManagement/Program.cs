@@ -24,8 +24,61 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
+            KnownPrimesResourceFile file = KnownPrimesResourceFile.Deserialize("C:\\Users\\diogo\\Documents\\primes\\resources\\knownPrimes.rsrc");
+            ulong[] primes = file.Primes;
+
+            Stopwatch stopwatch1 = new Stopwatch();
+            Stopwatch stopwatch2 = new Stopwatch();
+            stopwatch1.Start();
+
+            for (ulong i = 0; i < 100000; i++)
+            {
+                IsPrime_AntunesSenior(i);
+            }
+
+            stopwatch1.Stop();
+            stopwatch2.Start();
+
+            for (ulong i = 0; i < 100000; i++)
+            {
+                Mathf.IsPrime(i, ref primes);
+            }
+
+            stopwatch2.Stop();
+
+            Green($"{stopwatch1.ElapsedMilliseconds} and {stopwatch2.ElapsedMilliseconds}");
+
             Blue("//Done");
             Console.ReadLine();
+        }
+
+        //By ReccaGithub
+        public static bool IsPrime_AntunesSenior(ulong value)
+        {
+            if (value % 3 == 0)
+                return false;
+
+            ulong n, j = 1;
+
+            while (true)
+            {
+                n = (6 * j - 1);
+
+                if (n > Mathf.UlongSqrtHigh(value) || value % n == 0)
+                    break;
+
+                n = (6 * j + 1);
+
+                if (n > Mathf.UlongSqrtHigh(value) || value % n == 0)
+                    break;
+
+                j++;
+            }
+
+            if (n > Mathf.UlongSqrtHigh(value))
+                return true;
+
+            return false;
         }
 
         public static void Red(string msg)
