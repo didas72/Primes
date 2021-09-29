@@ -118,6 +118,8 @@ namespace Primes.Common.Files
         {
             private const int BlockSize = 65536;
 
+
+
             /// <summary>
             /// Compresses an <see cref="ulong"/> array using NCC.
             /// </summary>
@@ -334,6 +336,51 @@ namespace Primes.Common.Files
 
                 if (stream.RemainingBytes() == 0)
                     pendingBlockRead = false;
+            }
+        }
+
+
+
+        public static class HuffmanCoding
+        {
+            private const int BlockSize = 65536;
+
+
+
+            public static byte[] CompressDifferences(ulong[] ulongs)
+            {
+                ushort[] diffs = new ushort[];
+
+                throw new NotImplementedException();
+                return bytes;
+            }
+            public static byte[] CompressAbsolutes(ulong[] ulongs)
+            {
+                byte[] bytes = new byte[ulongs.Length * 8];
+                Buffer.BlockCopy(ulongs, 0, bytes, 0, bytes.Length);
+
+                float[] frequencies = new float[256];
+
+                for (int i = 0; i < bytes.Length; i++)
+                    frequencies[bytes[i]]++;
+
+                Node<byte>[] nodes = new Node<byte>[256];
+
+                throw new NotImplementedException();
+                return bytes;
+            }
+
+
+            
+            private class Node<TSymbol>
+            {
+                public TSymbol Symbol;
+                public float Frequency;
+                public Node<TSymbol> Parent;
+                public Node<TSymbol> child1, child2;
+
+                public Node(TSymbol symbol, float frequency) { Symbol = symbol; Frequency = frequency; Parent = null; child1 = null; child2 = null; }
+                public Node(TSymbol symbol, float frequency, Node<TSymbol> parent) { Symbol = symbol; Frequency = frequency; Parent = parent; child1 = null; child2 = null; }
             }
         }
 
