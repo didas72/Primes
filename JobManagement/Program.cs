@@ -24,29 +24,9 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
-            KnownPrimesResourceFile file = KnownPrimesResourceFile.Deserialize("C:\\Users\\diogo\\Documents\\primes\\resources\\knownPrimes.rsrc");
-            ulong[] primes = file.Primes;
+            ulong[] ulongs = new ulong[] { 2, 3, 5, 7, 11, 13, 17, 19, 21, 23, 255, 257 };
 
-            Stopwatch stopwatch1 = new Stopwatch();
-            Stopwatch stopwatch2 = new Stopwatch();
-            stopwatch1.Start();
-
-            for (ulong i = 0; i < 100000; i++)
-            {
-                IsPrime_AntunesSenior(i);
-            }
-
-            stopwatch1.Stop();
-            stopwatch2.Start();
-
-            for (ulong i = 0; i < 100000; i++)
-            {
-                Mathf.IsPrime(i, ref primes);
-            }
-
-            stopwatch2.Stop();
-
-            Green($"{stopwatch1.ElapsedMilliseconds} and {stopwatch2.ElapsedMilliseconds}");
+            Primes.Common.Files.Compression.HuffmanCoding.CompressAbsolutes(ulongs);
 
             Blue("//Done");
             Console.ReadLine();

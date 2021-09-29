@@ -347,27 +347,63 @@ namespace Primes.Common.Files
 
 
 
-            public static byte[] CompressDifferences(ulong[] ulongs)
+            /*public static byte[] CompressDifferences(ulong[] ulongs)
             {
                 ushort[] diffs = new ushort[];
 
                 throw new NotImplementedException();
                 return bytes;
-            }
+            }*/
             public static byte[] CompressAbsolutes(ulong[] ulongs)
             {
                 byte[] bytes = new byte[ulongs.Length * 8];
                 Buffer.BlockCopy(ulongs, 0, bytes, 0, bytes.Length);
 
+                List<Node<byte>> nodes = new List<Node<byte>>(256);
                 float[] frequencies = new float[256];
 
                 for (int i = 0; i < bytes.Length; i++)
+                {
                     frequencies[bytes[i]]++;
+                }
+                
+                for (int i = 0; i < frequencies.Length; i++)
+                {
+                    nodes.Add(new Node<byte>((byte)i, frequencies[i] / bytes.Length));
+                }
 
-                Node<byte>[] nodes = new Node<byte>[256];
+                nodes.RemoveAll((x) => x.Frequency == 0);
+
+                while (nodes.Count > 1)
+                {
+                    nodes.Sort((x, y) => x.Frequency.CompareTo(y.Frequency));
+                    Node<byte> n1 = nodes[0], n2 = nodes[1];
+
+                    Node<byte> newN = new Node<byte>(0, n1.Frequency + n2.Frequency, n1, n2);
+                    n1.Parent = newN;
+                    n2.Parent = newN;
+
+                    nodes.Remove(n1);
+                    nodes.Remove(n2);
+                    nodes.Add(newN);
+                }
+
+                Console.WriteLine(GetTreeString(nodes[0]));
 
                 throw new NotImplementedException();
                 return bytes;
+            }
+
+            private static string GetTreeString<T>(Node<T> root)
+            {
+                string ret = string.Empty;
+
+                if (root.child1 != null)
+                    ret += $"{{{GetTreeString(root.child1)}, {GetTreeString(root.child2)}}}";
+                else
+                    ret += $"={root.Symbol}=";
+
+                return ret;
             }
 
 
@@ -381,6 +417,7 @@ namespace Primes.Common.Files
 
                 public Node(TSymbol symbol, float frequency) { Symbol = symbol; Frequency = frequency; Parent = null; child1 = null; child2 = null; }
                 public Node(TSymbol symbol, float frequency, Node<TSymbol> parent) { Symbol = symbol; Frequency = frequency; Parent = parent; child1 = null; child2 = null; }
+                public Node(TSymbol symbol, float frequency, Node<TSymbol> child1, Node<TSymbol> child2) { Symbol = symbol; Frequency = frequency; Parent = null; this.child1 = child1; this.child2 = child2; }
             }
         }
 
