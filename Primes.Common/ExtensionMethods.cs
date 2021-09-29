@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
@@ -133,5 +134,31 @@ namespace Primes.Common
             return outp.ToArray();
         }
         public static void Add<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, KeyValuePair<TKey, TValue> pair) => dictionary.Add(pair.Key, pair.Value);
+        public static int[] ToIntArray(this List<bool> self, out int usedBits)
+        {
+            int[] ret = new int[Mathf.DivideRoundUp(self.Count, 32)];
+
+            int byteHeader = 0;
+            int bitHeader = 0;
+
+            for (usedBits = 0; usedBits < self.Count; usedBits++)
+            {
+                ret[byteHeader] = ret[byteHeader] << 1;
+
+                if (self[usedBits])
+                {
+                    ret[byteHeader] = ret[byteHeader] | 0x01;
+                }
+
+                bitHeader++;
+                if (bitHeader >= 32)
+                {
+                    byteHeader++;
+                    bitHeader = 0;
+                }
+            }
+
+            return ret;
+        }
     }
 }

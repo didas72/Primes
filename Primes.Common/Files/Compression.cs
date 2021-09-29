@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Primes.Common.Files
 {
@@ -363,45 +365,246 @@ namespace Primes.Common.Files
                 float[] frequencies = new float[256];
 
                 for (int i = 0; i < bytes.Length; i++)
-                {
                     frequencies[bytes[i]]++;
-                }
-                
+
                 for (int i = 0; i < frequencies.Length; i++)
-                {
                     nodes.Add(new Node<byte>((byte)i, frequencies[i] / bytes.Length));
-                }
 
                 nodes.RemoveAll((x) => x.Frequency == 0);
+
+                foreach (var n in nodes)
+                    Console.WriteLine($"symbol {n.Symbol} freq {(n.Frequency * 100f):F2}");
+
+                Node<byte> treeRoot = BuildNodeTreeByte(nodes, out Dictionary<byte, List<bool>> dictionary);
+
+                Console.WriteLine(GetTreeString(treeRoot));
+
+                List<bool> outBits = new List<bool>();
+                
+                for (int i = 0; i < bytes.Length; i++)
+                    outBits.AddRange(dictionary[bytes[i]].ToArray());
+
+                int[] ints = outBits.ToIntArray(out int usedBits);
+                byte[] dictionaryBytes = SerializeByteDictionary(dictionary);
+
+                int len = 4 + dictionaryBytes.Length + Mathf.DivideRoundUp(usedBits, 8);
+                int intBytes = Mathf.DivideRoundUp(usedBits, 8);
+                bytes = new byte[4 + dictionaryBytes.Length + Mathf.DivideRoundUp(usedBits, 8)]; //0 = int primesInFile
+                Array.Copy(BitConverter.GetBytes(ulongs.Length), 0, bytes, 0, 4);
+                Array.Copy(dictionaryBytes, 0, bytes, 4, dictionaryBytes.Length);
+                Buffer.BlockCopy(ints, 0, bytes, 4 + dictionaryBytes.Length, intBytes);
+
+                Console.WriteLine(GetDictionaryString(dictionary));
+
+                return bytes;
+            }
+            public static ulong[] UncompressAbsolutes(byte[] bytes)
+            {
+                int primesInFile = BitConverter.ToInt32(bytes, 0);
+                ulong[] ulongs = new ulong[primesInFile];
+
+                Dictionary<byte, List<bool>> dictionary = DeserializeByteDictionary(bytes, 4, out int byteHeader);
+                Console.WriteLine(GetDictionaryString(dictionary));
+                int bitHeader = 0;
+                byte[] tmpBytes = new byte[8];
+
+                for (int i = 0; i < ulongs.Length; i++)
+                {
+                    for (int b = 0; b < 8; b++)
+                    {
+                        tmpBytes[b] = ExtractValue(bytes, byteHeader, bitHeader, dictionary, out byteHeader, out bitHeader);
+                    }
+
+                    ulongs[i] = BitConverter.ToUInt64(tmpBytes, 0);
+                }
+
+                return ulongs;
+            }
+
+
+
+            private static Node<byte> BuildNodeTreeByte(List<Node<byte>> nodes, out Dictionary<byte, List<bool>> dictionary)
+            {
+                Console.WriteLine("==Build Node Tree Byte==");
+
+                dictionary = new Dictionary<byte, List<bool>>();
+
+                Node<byte> newNode = null;
 
                 while (nodes.Count > 1)
                 {
                     nodes.Sort((x, y) => x.Frequency.CompareTo(y.Frequency));
                     Node<byte> n1 = nodes[0], n2 = nodes[1];
 
-                    Node<byte> newN = new Node<byte>(0, n1.Frequency + n2.Frequency, n1, n2);
-                    n1.Parent = newN;
-                    n2.Parent = newN;
+                    newNode = new Node<byte>(0, n1.Frequency + n2.Frequency, n1, n2);
+                    n1.Parent = newNode;
+                    n2.Parent = newNode;
 
                     nodes.Remove(n1);
                     nodes.Remove(n2);
-                    nodes.Add(newN);
+                    nodes.Add(newNode);
+
+                    if (n1.child1 == null)
+                        dictionary.Add(n1.Symbol, new List<bool>(new bool[] { false }));
+                    else
+                        RecursiveAppendBool(n1, false, dictionary);
+
+                    if (n2.child1 == null)
+                        dictionary.Add(n2.Symbol, new List<bool>(new bool[] { true }));
+                    else
+                        RecursiveAppendBool(n2, true, dictionary);
+
+                    Console.WriteLine($"iters for {n1.Symbol} and {n2.Symbol}");
                 }
 
-                Console.WriteLine(GetTreeString(nodes[0]));
-
-                throw new NotImplementedException();
-                return bytes;
+                return newNode;
             }
-
             private static string GetTreeString<T>(Node<T> root)
             {
+                Console.WriteLine("==Get Tree String==");
+
                 string ret = string.Empty;
 
                 if (root.child1 != null)
                     ret += $"{{{GetTreeString(root.child1)}, {GetTreeString(root.child2)}}}";
                 else
                     ret += $"={root.Symbol}=";
+
+                return ret;
+            }
+            private static byte[] SerializeByteDictionary(Dictionary<byte, List<bool>> dictionary)
+            {
+                Console.WriteLine("==Serialize Byte Dictionary==");
+
+                byte[] keys = dictionary.GetKeys();
+                List<bool>[] values = dictionary.GetValues();
+                List<byte> bytes = new List<byte>();
+
+                bytes.Add((byte)dictionary.Count);
+
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    int[] ints = values[i].ToIntArray(out int bitsUsed);
+
+                    byte[] localBytes = new byte[Mathf.DivideRoundUp(bitsUsed, 8)];
+                    Buffer.BlockCopy(ints, 0, localBytes, 0, localBytes.Length);//the rest is padded with 0s
+
+                    bytes.Add(keys[i]);
+                    bytes.Add((byte)bitsUsed);
+                    bytes.AddRange(localBytes);
+
+                    Console.WriteLine($"len {localBytes.Length} first {localBytes[0]}");
+                    foreach (bool b in values[i])
+                        Console.Write(b.ToString() + " ");
+
+                    Console.Write('\n');
+                }
+
+                return bytes.ToArray();
+            }
+            private static void RecursiveAppendBool(Node<byte> node, bool value, Dictionary<byte, List<bool>> dictionary)
+            {
+                if (node.child1 != null)
+                {
+                    RecursiveAppendBool(node.child1, value, dictionary);
+                    RecursiveAppendBool(node.child2, value, dictionary);
+                }
+                else
+                    dictionary[node.Symbol].Add(value);
+            }
+            private static Dictionary<byte, List<bool>> DeserializeByteDictionary(byte[] bytes, int startAddress, out int nextAddress)
+            {
+                byte entryCount = bytes[startAddress];
+
+                Dictionary<byte, List<bool>> ret = new Dictionary<byte, List<bool>>(entryCount);
+
+                int header = startAddress + 1;
+
+                for (int i = 0; i < entryCount; i++)
+                {
+                    byte symbol = bytes[header++];
+                    byte bitsUsed = bytes[header++];
+
+                    byte[] localBytes = new byte[Mathf.DivideRoundUp(bitsUsed, 8)];
+                    Array.Copy(bytes, header, localBytes, 0, localBytes.Length);
+                    header += localBytes.Length;
+
+                    List<bool> value = new List<bool>(BoolArrFromBytes(localBytes, bitsUsed));
+
+                    //Console.WriteLine($"Symbol {symbol} value below local.Len {localBytes.Length} value f{localBytes[0]}");
+                    //foreach (bool b in value)
+                        //Console.Write(b.ToString() + " ");
+                    //Console.Write('\n');
+
+                    ret.Add(symbol, value);
+                }
+
+                nextAddress = header;
+                return ret;
+            }
+            private static bool[] BoolArrFromBytes(byte[] bytes, byte bits)
+            {
+                bool[] ret = new bool[bits];
+
+                for (int i = 0, b = 0; i < bits; i++)
+                {
+                    ret[i] = ((bytes[b] >> (i % 8)) % 2) == 0;
+
+                    Console.WriteLine($"i{i} b{b} byte{bytes[b]:B} ret{ret[i]}");
+
+                    blah
+                        //broken af
+
+                    if ((i % 8) == 7)
+                        b++;
+                }
+                Console.WriteLine();
+
+                return ret;
+            }
+            private static byte ExtractValue(byte[] bytes, int startIndex, int startBit, Dictionary<byte, List<bool>> dictionary, out int endIndex, out int endBit)
+            {
+                Console.WriteLine("==Extract Value==");
+
+                byte[] symbols = dictionary.GetKeys();
+                List<bool>[] values = dictionary.GetValues();
+
+                int byteHeader = startIndex;
+                int bitHeader = startBit;
+                List<bool> currentVal = new List<bool>();
+
+                while(true)
+                {
+                    bool step = (bytes[byteHeader] << bitHeader++) == 0;
+
+                    if (bitHeader >= 8)
+                    {
+                        byteHeader++;
+                        bitHeader = 0;
+                    }
+
+                    currentVal.Add(step);
+
+                    for (int i = 0; i < values.Length; i++)
+                    {
+                        if (values[i] == currentVal)
+                        {
+                            endIndex = byteHeader;
+                            endBit = bitHeader;
+                            return symbols[i];
+                        }
+                    }
+                }
+
+                throw new Exception("Invalid value!");
+            }
+            private static string GetDictionaryString(Dictionary<byte, List<bool>> dictionary)
+            {
+                Console.WriteLine("==Get Dictionary String==");
+
+                string ret = string.Empty;
+                foreach (var pair in dictionary)
+                    ret += $"{pair.Key}:{pair.Value.ToIntArray(out int _)[0]}\n";
 
                 return ret;
             }
