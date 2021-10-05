@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace Primes.Common.Files
 {
@@ -343,82 +341,138 @@ namespace Primes.Common.Files
 
 
 
-        public static class HuffmanCoding
+        /*public static class HuffmanCoding
         {
             private const int BlockSize = 65536;
 
 
 
-            /*public static byte[] CompressDifferences(ulong[] ulongs)
+            public static byte[] CompressDifferences(ulong[] ulongs)
             {
                 ushort[] diffs = new ushort[];
 
                 throw new NotImplementedException();
                 return bytes;
-            }*/
+            }
             public static byte[] CompressAbsolutes(ulong[] ulongs)
             {
-                byte[] bytes = new byte[ulongs.Length * 8];
-                Buffer.BlockCopy(ulongs, 0, bytes, 0, bytes.Length);
-
+                //allocate needed memory
+                MyBitArray outBits = new MyBitArray();
                 List<Node<byte>> nodes = new List<Node<byte>>(256);
                 float[] frequencies = new float[256];
 
+
+
+                //get the bytes from the absolute values
+                byte[] bytes = new byte[ulongs.Length * 8];
+                Buffer.BlockCopy(ulongs, 0, bytes, 0, bytes.Length);
+
+
+
+                //calculate symbol frequencies
                 for (int i = 0; i < bytes.Length; i++)
                     frequencies[bytes[i]]++;
 
+
+
+                //create nodes for each symbol
                 for (int i = 0; i < frequencies.Length; i++)
                     nodes.Add(new Node<byte>((byte)i, frequencies[i] / bytes.Length));
 
+
+
+                //remove empty nodes
                 nodes.RemoveAll((x) => x.Frequency == 0);
 
-                foreach (var n in nodes)
-                    Console.WriteLine($"symbol {n.Symbol} freq {(n.Frequency * 100f):F2}");
 
+
+                //build and print tree and dictionary
                 Node<byte> treeRoot = BuildNodeTreeByte(nodes, out Dictionary<byte, List<bool>> dictionary);
-
                 Console.WriteLine(GetTreeString(treeRoot));
-
-                List<bool> outBits = new List<bool>();
-                
-                for (int i = 0; i < bytes.Length; i++)
-                    outBits.AddRange(dictionary[bytes[i]].ToArray());
-
-                int[] ints = outBits.ToIntArray(out int usedBits);
-                byte[] dictionaryBytes = SerializeByteDictionary(dictionary);
-
-                int len = 4 + dictionaryBytes.Length + Mathf.DivideRoundUp(usedBits, 8);
-                int intBytes = Mathf.DivideRoundUp(usedBits, 8);
-                bytes = new byte[4 + dictionaryBytes.Length + Mathf.DivideRoundUp(usedBits, 8)]; //0 = int primesInFile
-                Array.Copy(BitConverter.GetBytes(ulongs.Length), 0, bytes, 0, 4);
-                Array.Copy(dictionaryBytes, 0, bytes, 4, dictionaryBytes.Length);
-                Buffer.BlockCopy(ints, 0, bytes, 4 + dictionaryBytes.Length, intBytes);
-
                 Console.WriteLine(GetDictionaryString(dictionary));
+
+
+
+                //add dictionary to the output
+                for (int i = 0; i < bytes.Length; i++)
+                    outBits.AppendBoolArray(dictionary[bytes[i]].ToArray());
+
+                
+
+                //serialize dictionary and coded data
+                byte[] dictionaryBytes = SerializeByteDictionary(dictionary);
+                byte[] codedBytes = outBits.Serialize();
+
+
+
+                //merge into one array
+                int len = dictionaryBytes.Length + codedBytes.Length;
+                bytes = new byte[len];
+                Array.Copy(dictionaryBytes, 0, bytes, 0, dictionaryBytes.Length);
+                Buffer.BlockCopy(codedBytes, 0, bytes, dictionaryBytes.Length, codedBytes.Length);
+                
+
 
                 return bytes;
             }
             public static ulong[] UncompressAbsolutes(byte[] bytes)
             {
-                int primesInFile = BitConverter.ToInt32(bytes, 0);
-                ulong[] ulongs = new ulong[primesInFile];
+                //allocate needed memory
+                List<ulong> ret = new List<ulong>();
 
-                Dictionary<byte, List<bool>> dictionary = DeserializeByteDictionary(bytes, 4, out int byteHeader);
+
+
+                //deserialize dictionary and print outputs
+                Dictionary<byte, List<bool>> dictionary = DeserializeByteDictionary(bytes, 5, out int byteHeader);
+                Console.WriteLine($"Out byteHeader={byteHeader}");
                 Console.WriteLine(GetDictionaryString(dictionary));
-                int bitHeader = 0;
-                byte[] tmpBytes = new byte[8];
 
-                for (int i = 0; i < ulongs.Length; i++)
+
+
+                //deserialize MyBitArray
+                byte[] arrayBytes = new byte[bytes.Length - byteHeader];
+                Array.Copy(bytes, byteHeader, arrayBytes, 0, arrayBytes.Length);
+                MyBitArray inBits = MyBitArray.Deserialize(arrayBytes);
+
+
+
+                int header = 0;
+                List<bool> value = new List<bool>();
+
+
+
+                while(true)
                 {
-                    for (int b = 0; b < 8; b++)
-                    {
-                        tmpBytes[b] = ExtractValue(bytes, byteHeader, bitHeader, dictionary, out byteHeader, out bitHeader);
-                    }
+                    bool step = inBits.GetBool(header++);
 
-                    ulongs[i] = BitConverter.ToUInt64(tmpBytes, 0);
+                    value.Add(step);
+
+                    foreach (var pair in dictionary)
+                    {
+                        if (pair.Value.Count != value.Count)
+                            continue;
+
+                        bool match = true;
+
+                        for (int i = 0; i < value.Count; i++)
+                        {
+                            if (pair.Value[i] != value[i])
+                            {
+                                match = false;
+                                break;
+                            }
+                        }
+
+                        if (!match)
+                            continue;
+
+                        ret.Add(pair.Key);
+                    }
                 }
 
-                return ulongs;
+                
+
+                return ret.ToArray();
             }
 
 
@@ -461,7 +515,7 @@ namespace Primes.Common.Files
             }
             private static string GetTreeString<T>(Node<T> root)
             {
-                Console.WriteLine("==Get Tree String==");
+                //Console.WriteLine("==Get Tree String==");
 
                 string ret = string.Empty;
 
@@ -519,6 +573,7 @@ namespace Primes.Common.Files
                 Dictionary<byte, List<bool>> ret = new Dictionary<byte, List<bool>>(entryCount);
 
                 int header = startAddress + 1;
+                //Console.WriteLine($"Pre header={header - 1}");
 
                 for (int i = 0; i < entryCount; i++)
                 {
@@ -531,13 +586,10 @@ namespace Primes.Common.Files
 
                     List<bool> value = new List<bool>(BoolArrFromBytes(localBytes, bitsUsed));
 
-                    //Console.WriteLine($"Symbol {symbol} value below local.Len {localBytes.Length} value f{localBytes[0]}");
-                    //foreach (bool b in value)
-                        //Console.Write(b.ToString() + " ");
-                    //Console.Write('\n');
-
                     ret.Add(symbol, value);
                 }
+
+                //Console.WriteLine($"Deserialized Dictionary entries={entryCount} header={header} dictionarySize={ret.Count}");
 
                 nextAddress = header;
                 return ret;
@@ -546,36 +598,34 @@ namespace Primes.Common.Files
             {
                 bool[] ret = new bool[bits];
 
-                for (int i = 0, b = 0; i < bits; i++)
+                for (int i = 0; i < bits; i++)
                 {
-                    ret[i] = ((bytes[b] >> (i % 8)) % 2) == 0;
+                    //last bool is high bit
+                    int shift = i % 7; //first () is absolute shift second is relative shift
+                    int byteIndex = shift / 8;
 
-                    Console.WriteLine($"i{i} b{b} byte{bytes[b]:B} ret{ret[i]}");
+                    ret[i] = ((bytes[byteIndex] >> shift) % 2) != 0;
 
-                    blah
-                        //broken af
-
-                    if ((i % 8) == 7)
-                        b++;
+                    //Console.WriteLine($"i{i} s{shift} b{byteIndex} byte{bytes[byteIndex]} ret{ret[i]}");
                 }
-                Console.WriteLine();
 
                 return ret;
             }
-            private static byte ExtractValue(byte[] bytes, int startIndex, int startBit, Dictionary<byte, List<bool>> dictionary, out int endIndex, out int endBit)
+            private static byte ExtractValue(byte[] bytes, ref int byteHeader, ref int bitHeader, Dictionary<byte, List<bool>> dictionary)
             {
                 Console.WriteLine("==Extract Value==");
 
                 byte[] symbols = dictionary.GetKeys();
                 List<bool>[] values = dictionary.GetValues();
-
-                int byteHeader = startIndex;
-                int bitHeader = startBit;
                 List<bool> currentVal = new List<bool>();
 
+                int counter = 0;
                 while(true)
                 {
-                    bool step = (bytes[byteHeader] << bitHeader++) == 0;
+                    Console.WriteLine($"counter{counter} b{byteHeader} i{bitHeader}");
+
+                    //last bool is high bit
+                    bool step = (bytes[byteHeader] >> bitHeader++) != 0;
 
                     if (bitHeader >= 8)
                     {
@@ -585,15 +635,20 @@ namespace Primes.Common.Files
 
                     currentVal.Add(step);
 
+                    Console.WriteLine("Val");
+                    foreach (bool b in currentVal)
+                        Console.Write(b);
+                    Console.Write('\n');
+
                     for (int i = 0; i < values.Length; i++)
                     {
                         if (values[i] == currentVal)
                         {
-                            endIndex = byteHeader;
-                            endBit = bitHeader;
                             return symbols[i];
                         }
                     }
+
+                    counter++;
                 }
 
                 throw new Exception("Invalid value!");
@@ -622,7 +677,7 @@ namespace Primes.Common.Files
                 public Node(TSymbol symbol, float frequency, Node<TSymbol> parent) { Symbol = symbol; Frequency = frequency; Parent = parent; child1 = null; child2 = null; }
                 public Node(TSymbol symbol, float frequency, Node<TSymbol> child1, Node<TSymbol> child2) { Symbol = symbol; Frequency = frequency; Parent = null; this.child1 = child1; this.child2 = child2; }
             }
-        }
+        }*/
 
 
 

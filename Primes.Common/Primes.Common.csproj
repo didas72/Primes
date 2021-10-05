@@ -53,6 +53,7 @@
     <Compile Include="Files\SevenZip.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Mathf.cs" />
+    <Compile Include="MyBitArray.cs" />
     <Compile Include="Net\Client.cs" />
     <Compile Include="Net\Messages\Message.cs" />
     <Compile Include="Net\Messages\Message_ClientBatchReceived.cs" />

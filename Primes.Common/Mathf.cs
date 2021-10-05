@@ -12,7 +12,14 @@ namespace Primes.Common
 		/// </summary>
 		/// <param name="number">The number to be checked.</param>
 		/// <returns>True if the number is prime, false otherwise.</returns>
-		public static bool IsPrime(ulong number)
+		public static bool IsPrime(ulong number) => IsPrime(number, 5);
+		/// <summary>
+		/// Checks if a number is prime or not, using PeakRead's method.
+		/// </summary>
+		/// <param name="number">The number to be checked.</param>
+		/// <param name="current">The last number checked against.</param>
+		/// <returns>True if the number is prime, false otherwise.</returns>
+		public static bool IsPrime(ulong number, ulong current)
 		{
 			if (number < 2)
 				return false;
@@ -23,7 +30,8 @@ namespace Primes.Common
 			if ((number % 2) == 0)
 				return false;
 
-			ulong current = 5, sqrt = UlongSqrtHigh(number);
+			current = Mathf.Clamp(current, 5, ulong.MaxValue);
+			ulong sqrt = UlongSqrtHigh(number);
 
 			while (current <= sqrt)
 			{
@@ -67,6 +75,8 @@ namespace Primes.Common
 
 					if ((current % 2) == 0)
 						current--;
+
+					return IsPrime(number, current);
 				}
 
 				if (number % current == 0)

@@ -141,8 +141,9 @@ namespace Primes.Common
             int byteHeader = 0;
             int bitHeader = 0;
 
-            for (usedBits = 0; usedBits < self.Count; usedBits++)
+            for (usedBits = self.Count - 1; usedBits >= 0; usedBits--)
             {
+                //last bool is high bit
                 ret[byteHeader] = ret[byteHeader] << 1;
 
                 if (self[usedBits])
@@ -158,6 +159,7 @@ namespace Primes.Common
                 }
             }
 
+            usedBits = self.Count;
             return ret;
         }
     }

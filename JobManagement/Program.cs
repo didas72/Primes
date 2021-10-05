@@ -24,20 +24,17 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
-            /*List<bool> list = new List<bool>(new bool[] { true, false, true, false, false, true, false, true, true });
+            Console.WriteLine("Start");
 
-            foreach (int i in list.ToIntArray(out int _))
-                Console.WriteLine(i);
-            Console.ReadLine();
-
-            return;*/
-
-            Console.WriteLine(Mathf.DivideRoundUp(1009, 8));
+            /*Console.WriteLine(Mathf.DivideRoundUp(1009, 8));
 
             ulong[] ulongs = new ulong[] { 2, 3, 5, 7, 11, 13, 17, 19, 21, 23, 255, 257 };
 
             byte[] compressed = Compression.HuffmanCoding.CompressAbsolutes(ulongs);
-            Green("Compressed");
+            Green($"Compressed len{compressed.Length}");
+            foreach (byte b in compressed)
+                Console.Write($"{b} ");
+            Console.WriteLine();
             ulong[] uncompressed = Compression.HuffmanCoding.UncompressAbsolutes(compressed);
             Green("Uncompresed");
 
@@ -48,7 +45,7 @@ namespace JobManagement
 
             for (int i = 0; i < ulongs.Length; i++)
                 if (ulongs[i] != uncompressed[i])
-                    Red($"Values at index {i} differ. {ulongs[i]}:{uncompressed[i]}");
+                    Red($"Values at index {i} differ. {ulongs[i]}:{uncompressed[i]}");*/
 
             Blue("//Done");
             Console.ReadLine();
