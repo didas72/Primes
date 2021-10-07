@@ -6,8 +6,8 @@ using System.Threading;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 
-using Primes;
 using Primes.Common;
 using Primes.Common.Files;
 using Primes.Common.Net;
@@ -24,32 +24,15 @@ namespace JobManagement
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
 
-            Console.WriteLine("Start");
+            Blue("Start");
 
-            /*Console.WriteLine(Mathf.DivideRoundUp(1009, 8));
-
-            ulong[] ulongs = new ulong[] { 2, 3, 5, 7, 11, 13, 17, 19, 21, 23, 255, 257 };
-
-            byte[] compressed = Compression.HuffmanCoding.CompressAbsolutes(ulongs);
-            Green($"Compressed len{compressed.Length}");
-            foreach (byte b in compressed)
-                Console.Write($"{b} ");
-            Console.WriteLine();
-            ulong[] uncompressed = Compression.HuffmanCoding.UncompressAbsolutes(compressed);
-            Green("Uncompresed");
-
-            if (ulongs.Length != uncompressed.Length)
-            {
-                Red($"Arrays differ in length. {ulongs.Length}:{uncompressed.Length}");
-            }
-
-            for (int i = 0; i < ulongs.Length; i++)
-                if (ulongs[i] != uncompressed[i])
-                    Red($"Values at index {i} differ. {ulongs[i]}:{uncompressed[i]}");*/
+            
 
             Blue("//Done");
             Console.ReadLine();
         }
+        
+
 
         //By ReccaGithub
         public static bool IsPrime_AntunesSenior(ulong value)

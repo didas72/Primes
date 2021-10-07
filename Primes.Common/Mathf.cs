@@ -281,9 +281,9 @@ namespace Primes.Common
 		/// <returns></returns>
 		public static ulong Clamp(ulong value, ulong min, ulong max)
 		{
-			value = value > max ? max : value;
+			value = (value > max) ? max : value;
 
-			return value < min ? min : value;
+			return (value < min) ? min : value;
 		}
 	}
 }
