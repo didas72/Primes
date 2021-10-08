@@ -12,16 +12,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="Primes.CUDA.cu">
-      <Filter>CUDA</Filter>
-    </CudaCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Primes.CUDA.cuh">
       <Filter>CUDA</Filter>
-    </ClInclude>
-    <ClInclude Include="Primes.CUDA.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

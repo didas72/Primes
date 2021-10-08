@@ -891,6 +891,25 @@ namespace Primes.Common.Files
 
 
 
+        public static int RawFileSize(PrimeJob job)
+        {
+            if (!Version.IsCompatible(job.FileVersion))
+                throw new IncompatibleVersionException();
+
+            int size = job.Primes.Count * sizeof(ulong);
+
+            if (job.FileVersion.IsEqual(new Version(1, 2, 0)))
+                size += 32;
+            else if (job.FileVersion.IsEqual(new Version(1, 1, 0)))
+                size += 35;
+            else if (job.FileVersion.IsEqual(new Version(1, 0, 0)))
+                size += 31;
+
+            return size;
+        }
+
+
+
         /// <summary>
         /// Struct that represents a file verion.
         /// </summary>

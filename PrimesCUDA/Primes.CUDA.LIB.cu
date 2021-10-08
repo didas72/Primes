@@ -4,14 +4,7 @@
 #include <stdint.h>
 #include <cstdlib>
 
-#include "Primes.CUDA.LIB.h"
 #include "Primes.CUDA.cuh"
-
-#ifdef __INTELLISENSE__
-#define CUDA_KERNEL(...)
-#else
-#define CUDA_KERNEL(...) <<< __VA_ARGS__ >>>
-#endif
 
 int main() { return 0; }
 

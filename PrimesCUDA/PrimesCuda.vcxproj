@@ -107,11 +107,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="Primes.CUDA.cu" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Primes.CUDA.cuh" />
-    <ClInclude Include="Primes.CUDA.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Primes.CUDA.LIB.cu" />

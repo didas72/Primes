@@ -19,6 +19,10 @@ namespace Primes.Common
         /// The name of the log file.
         /// </summary>
         public static string LogFile { get; private set; }
+        /// <summary>
+        /// Setting to print logs to screen by default.
+        /// </summary>
+        public static bool PrintByDefault { get; set; } = true;
 
 
 
@@ -110,14 +114,14 @@ Start time {now.Hour}:{now.Minute}:{now.Second}
         /// </summary>
         /// <param name="msg">The log message.</param>
         /// <param name="sender">The name of the sender.</param>
-        public static void LogEvent(string msg, string sender) => LogEvent(EventType.Info, msg, sender, true, true);
+        public static void LogEvent(string msg, string sender) => LogEvent(EventType.Info, msg, sender, PrintByDefault, true);
         /// <summary>
         /// Logs an event, printing to screen and saving to file.
         /// </summary>
         /// <param name="eventType">The type of event to be logged.</param>
         /// <param name="msg">The log message.</param>
         /// <param name="sender">The name of the sender.</param>
-        public static void LogEvent(EventType eventType, string msg, string sender) => LogEvent(eventType, msg, sender, true, true);
+        public static void LogEvent(EventType eventType, string msg, string sender) => LogEvent(eventType, msg, sender, PrintByDefault, true);
         /// <summary>
         /// Logs an event, optionally printing it to screen.
         /// </summary>

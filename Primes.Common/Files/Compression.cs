@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Primes.Common.Files
 {
@@ -9,6 +10,8 @@ namespace Primes.Common.Files
     /// </summary>
     public static class Compression
     {
+        private const int BlockSize = 65536;
+
         /// <summary>
         /// Class that contains all methods related to Optimized Numerical Sequence Storage compression.
         /// These methods were originally made by PeakRead and adapted to C# by Didas72.
@@ -116,10 +119,6 @@ namespace Primes.Common.Files
         /// </summary>
         public static class NCC
         {
-            private const int BlockSize = 65536;
-
-
-
             /// <summary>
             /// Compresses an <see cref="ulong"/> array using NCC.
             /// </summary>

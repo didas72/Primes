@@ -21,8 +21,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestsPrimes", "UnitTest
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrimesCUDA", "PrimesCUDA\PrimesCuda.vcxproj", "{997E0757-EA74-4A4E-A0FC-47D8C8831A15}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrimesCudaLib", "PrimesCudaLib\PrimesCudaLib.vcxproj", "{91F3B2BE-4471-42B0-98FD-40FC079EDFB3}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,12 +97,6 @@ Global
 		{997E0757-EA74-4A4E-A0FC-47D8C8831A15}.Release|Any CPU.ActiveCfg = Release|x64
 		{997E0757-EA74-4A4E-A0FC-47D8C8831A15}.Release|x64.ActiveCfg = Release|x64
 		{997E0757-EA74-4A4E-A0FC-47D8C8831A15}.Release|x64.Build.0 = Release|x64
-		{91F3B2BE-4471-42B0-98FD-40FC079EDFB3}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{91F3B2BE-4471-42B0-98FD-40FC079EDFB3}.Debug|x64.ActiveCfg = Debug|x64
-		{91F3B2BE-4471-42B0-98FD-40FC079EDFB3}.Debug|x64.Build.0 = Debug|x64
-		{91F3B2BE-4471-42B0-98FD-40FC079EDFB3}.Release|Any CPU.ActiveCfg = Release|x64
-		{91F3B2BE-4471-42B0-98FD-40FC079EDFB3}.Release|x64.ActiveCfg = Release|x64
-		{91F3B2BE-4471-42B0-98FD-40FC079EDFB3}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -285,5 +285,31 @@ namespace Primes.Common
 
 			return (value < min) ? min : value;
 		}
+		/// <summary>
+		/// Clamps a value between a minimum and a maximum.
+		/// </summary>
+		/// <param name="value">The number to be clamped.</param>
+		/// <param name="min">Minimum final value.</param>
+		/// <param name="max">Maximum final value.</param>
+		/// <returns></returns>
+		public static float Clamp(float value, float min, float max)
+		{
+			value = (value > max) ? max : value;
+
+			return (value < min) ? min : value;
+		}
+		/// <summary>
+		/// Clamps a value between a minimum and a maximum.
+		/// </summary>
+		/// <param name="value">The number to be clamped.</param>
+		/// <param name="min">Minimum final value.</param>
+		/// <param name="max">Maximum final value.</param>
+		/// <returns></returns>
+		public static double Clamp(double value, double min, double max)
+		{
+			value = (value > max) ? max : value;
+
+			return (value < min) ? min : value;
+		}
 	}
 }
