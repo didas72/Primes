@@ -3,14 +3,16 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using System.Text;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 using Primes.Common;
 using Primes.Common.Files;
-using System.Runtime.Serialization.Formatters.Binary;
+using Primes.Common.ErrorCorrection;
 
 namespace JobManagement
 {
@@ -23,7 +25,7 @@ namespace JobManagement
 
         private static ScanResults results;
 
-        private readonly static Task todo = Task.None;
+        private readonly static Task todo = Task.Temporary;
 
         static void Main()
         {
@@ -221,7 +223,7 @@ namespace JobManagement
         }
         public static void Temporary()
         {
-            
+            PrimeJob job = PrimeJob.Deserialize("E:\\Documents\\primes\\completed\\125\\1240000000000.primejob");
         }
 
 

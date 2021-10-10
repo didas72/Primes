@@ -117,6 +117,12 @@ namespace Primes.Common
 
             return false;
         }
+        /// <summary>
+        /// Returns the indexes of all the occurences of a given string.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="value">The string to look for.</param>
+        /// <returns></returns>
         public static int[] GetIndexesOf(this string str, string value)
         {
             List<int> outp = new List<int>();
@@ -133,7 +139,20 @@ namespace Primes.Common
 
             return outp.ToArray();
         }
+        /// <summary>
+        /// Adds a KeyValuePair to a dictionary.
+        /// </summary>
+        /// <typeparam name="TKey"></typeparam>
+        /// <typeparam name="TValue"></typeparam>
+        /// <param name="dictionary"></param>
+        /// <param name="pair">The KeyValuePair to add.</param>
         public static void Add<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, KeyValuePair<TKey, TValue> pair) => dictionary.Add(pair.Key, pair.Value);
+        /// <summary>
+        /// Converts a list of bools to an int array.
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="usedBits">The number of bits actually stored.</param>
+        /// <returns></returns>
         public static int[] ToIntArray(this List<bool> self, out int usedBits)
         {
             int[] ret = new int[Mathf.DivideRoundUp(self.Count, 32)];

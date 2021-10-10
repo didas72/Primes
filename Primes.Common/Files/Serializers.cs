@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 
+using Primes.Common.ErrorCorrection;
+
 namespace Primes.Common.Files
 {
     /// <summary>
@@ -36,6 +38,16 @@ namespace Primes.Common.Files
          *  24  8 bytes     ulong       progress
          *  32  xxx         ulong[]     (compressed) primes
          */
+        /* v1.3.0 (WIP)
+         *  0   3 bytes     Version     version (1 byte major, 1 byte minor, 1 byte patch)
+         *  3   1 byte      Comp        compression header (0b000000, 1 bit NNC, 1 bit ONSS)
+         *  4   4 bytes     uint        batch
+         *  8   8 bytes     ulong       start
+         *  16  8 bytes     ulong       count
+         *  24  8 bytes     ulong       progress
+         *  32  2 bytes     ushort      header checksum (fletcher 16)
+         *  34  xxx         EPB         error protected blocks containing primes (optionally compressed) (fletcher 16 in blocks of 4096 bytes) (smaller blocks so little is wasted when corrupted blocks)
+         */
 
 
 
@@ -44,7 +56,7 @@ namespace Primes.Common.Files
         /// </summary>
         /// <param name="bytes">Byte array contaning the serialized <see cref="PrimeJob"/>.</param>
         /// <returns></returns>
-        public static PrimeJob Deserializev1_0_0(ref byte[] bytes)
+        public static PrimeJob Deserializev1_0_0(byte[] bytes)
         {
             ulong start = BitConverter.ToUInt64(bytes, 3);
             ulong count = BitConverter.ToUInt64(bytes, 11);
@@ -62,7 +74,7 @@ namespace Primes.Common.Files
         /// </summary>
         /// <param name="bytes">Byte array contaning the serialized <see cref="PrimeJob"/>.</param>
         /// <returns></returns>
-        public static PrimeJob Deserializev1_1_0(ref byte[] bytes)
+        public static PrimeJob Deserializev1_1_0(byte[] bytes)
         {
             uint batch = BitConverter.ToUInt32(bytes, 3);
             ulong start = BitConverter.ToUInt64(bytes, 7);
@@ -81,7 +93,7 @@ namespace Primes.Common.Files
         /// </summary>
         /// <param name="bytes">Byte array contaning the serialized <see cref="PrimeJob"/>.</param>
         /// <returns></returns>
-        public static PrimeJob Deserializev1_2_0(ref byte[] bytes)
+        public static PrimeJob Deserializev1_2_0(byte[] bytes)
         {
             PrimeJob.Comp comp = new PrimeJob.Comp(bytes[3]);
 
@@ -103,6 +115,36 @@ namespace Primes.Common.Files
                 primes = GetRawPrimes(primesBytes);
 
             return new PrimeJob(new PrimeJob.Version(1, 2, 0), comp, batch, start, count, progress, ref primes);
+        }
+        public static PrimeJob Deserializev1_3_0(byte[] bytes)
+        {
+            PrimeJob.Comp comp = new PrimeJob.Comp(bytes[3]);
+
+            uint batch = BitConverter.ToUInt32(bytes, 4);
+            ulong start = BitConverter.ToUInt64(bytes, 8);
+            ulong count = BitConverter.ToUInt64(bytes, 16);
+            ulong progress = BitConverter.ToUInt64(bytes, 24);
+            ushort headerChecksum = BitConverter.ToUInt16(bytes, 32);
+
+            byte[] headerBytes = new byte[32];
+            Array.Copy(bytes, 0, headerBytes, 0, 32);
+
+            if (Fletcher.Fletcher16(headerBytes) != headerChecksum)
+                throw new Exception("Corrupted header.");
+
+            byte[] block;
+            List<byte> primeBytes = new List<byte>();
+            int header = 34;
+            
+            while (true)
+            {
+                //how you keepin track of what's been used and what's not
+                //(streams ofc)
+
+                break;
+            }
+
+            throw new NotImplementedException();
         }
 
 
@@ -230,7 +272,7 @@ namespace Primes.Common.Files
         /// <returns></returns>
         public static byte[] Serializev1_2_0(PrimeJob job)
         {
-            List<byte> bytes = new List<byte>(new byte[] { job.FileVersion.major, job.FileVersion.minor, job.FileVersion.patch, job.FileCompression.GetByte() }); //missing size for compressed primes
+            List<byte> bytes = new List<byte>(new byte[] { job.FileVersion.major, job.FileVersion.minor, job.FileVersion.patch, job.FileCompression.GetByte() });
 
             bytes.AddRange(BitConverter.GetBytes(job.Batch));
             bytes.AddRange(BitConverter.GetBytes(job.Start));
@@ -260,6 +302,58 @@ namespace Primes.Common.Files
             }
 
             bytes.AddRange(primeBytes);
+
+            return bytes.ToArray();
+        }
+        /// <summary>
+        /// Serializes a <see cref="PrimeJob"/> of version 1.3.0 to a byte array.
+        /// </summary>
+        /// <param name="job"><see cref="PrimeJob"/> to serialize.</param>
+        /// <returns></returns>
+        public static byte[] Serializev1_3_0(PrimeJob job)
+        {
+            const int EPB_DataSize = 4096;
+
+            List<byte> bytes = new List<byte>(new byte[] { job.FileVersion.major, job.FileVersion.minor, job.FileVersion.patch, job.FileCompression.GetByte() });
+
+            bytes.AddRange(BitConverter.GetBytes(job.Batch));
+            bytes.AddRange(BitConverter.GetBytes(job.Start));
+            bytes.AddRange(BitConverter.GetBytes(job.Count));
+            bytes.AddRange(BitConverter.GetBytes(job.Progress));
+            bytes.AddRange(BitConverter.GetBytes(Fletcher.Fletcher16(bytes.ToArray())));
+
+            byte[] primeBytes;
+
+            if (job.FileCompression.IsCompressed())
+            {
+                if (job.FileCompression.ONSS)
+                {
+                    primeBytes = Compression.ONSS.Compress(job.Primes.ToArray());
+                }
+                else if (job.FileCompression.NCC)
+                {
+                    primeBytes = Compression.NCC.Compress(job.Primes.ToArray());
+                }
+                else
+                    throw new Compression.InvalidCompressionMethodException();
+            }
+            else
+            {
+                primeBytes = new byte[job.Primes.Count * 8];
+
+                Buffer.BlockCopy(job.Primes.ToArray(), 0, primeBytes, 0, job.Primes.Count * 8);
+            }
+
+            ErrorProtectedBlock[] blocks = new ErrorProtectedBlock[Mathf.DivideRoundUp(primeBytes.Length, EPB_DataSize)];
+
+            byte[] buffer = new byte[EPB_DataSize];
+
+            for (int i = 0; i < blocks.Length; i++)
+            {
+                int dataInBlock = Mathf.Clamp(primeBytes.Length - (i * (EPB_DataSize)), 1, EPB_DataSize);
+                Array.Copy(primeBytes, i * (EPB_DataSize), buffer, 0, dataInBlock);
+                blocks[i] = new ErrorProtectedBlock(ErrorProtectedBlock.ErrorProtectionType.Fletcher16, buffer, BitConverter.GetBytes(Fletcher.Fletcher16(buffer)));
+            }
 
             return bytes.ToArray();
         }

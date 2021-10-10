@@ -197,6 +197,12 @@ Start time {now.Hour}:{now.Minute}:{now.Second}
 
 
 
+        /// <summary>
+        /// Logs and exception with it's details.
+        /// </summary>
+        /// <param name="msg">The log message.</param>
+        /// <param name="sender">The name of the sender.</param>
+        /// <param name="e">The exception to log.</param>
         public static void LogException(string msg, string sender, Exception e)
         {
             string data = string.Empty;
