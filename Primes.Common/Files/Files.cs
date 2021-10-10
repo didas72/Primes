@@ -834,6 +834,12 @@ namespace Primes.Common.Files
                         message += $"Prime at index {i} is greater than job start plus job count. Value {job.Primes[i]}\n";
 
                     last = job.Primes[i]; //Update value to check the order
+
+                    if (message.Length >= 100000)
+                    {
+                        message += "Max message length reached. Checking stopped.";
+                        return false;
+                    }
                 }
             }
 

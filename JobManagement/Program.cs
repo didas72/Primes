@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 
 using Primes.Common;
 using Primes.Common.Files;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace JobManagement
 {
@@ -22,7 +23,7 @@ namespace JobManagement
 
         private static ScanResults results;
 
-        private const Task todo = Task.None;
+        private readonly static Task todo = Task.None;
 
         static void Main()
         {
@@ -35,7 +36,20 @@ namespace JobManagement
             
             switch(todo)
             {
-                //do stuff
+                case Task.None:
+                    break;
+
+                case Task.Scan:
+                    DoScan();
+                    break;
+
+                case Task.ProcessScanResults:
+                    ProcessScanResults();
+                    break;
+
+                case Task.Temporary:
+                    Temporary();
+                    break;
             }
 
             //end
@@ -65,8 +79,8 @@ namespace JobManagement
 
 
             //setup paths
-            //string sourcePath = "E:\\Documents\\primes\\working\\tmpsrc";
-            string sourcePath = "E:\\Documents\\00_Archieved_Primes\\Completed\\";
+            string sourcePath = "E:\\Documents\\primes\\working\\tmpsrc";
+            //string sourcePath = "E:\\Documents\\00_Archieved_Primes\\Completed\\";
             string tmpPath = Path.Combine(basePath, "tmp");
             string destPath = Path.Combine(basePath, "outp");
             string rejectsPath = Path.Combine(basePath, "rejects");
@@ -84,8 +98,7 @@ namespace JobManagement
             //do info updates
             while (thread.IsAlive)
             {
-                float progress = Mathf.Clamp((float)(scanner.currentBatch / (float)scanner.batchCount), 0.0001f, 1f);
-                double tS = (double)scanner.lastScanTime.Seconds / progress;
+                double tS = (double)scanner.lastScanTime.Seconds * (double)(scanner.batchCount - scanner.currentBatch);
                 int ETR_h = (int)(tS / 3600);
                 int ETR_m = (int)((tS / 60) % 60);
                 int ETR_s = (int)(tS % 60);
@@ -102,7 +115,7 @@ namespace JobManagement
 
                 for (int i = 0; i < Mathf.Clamp(prints.Count, 0, 10); i++)
                 {
-                    White(prints[i]);
+                    White(prints[prints.Count - i - 1]);
                 }
 
                 Thread.Sleep(6000);
@@ -120,13 +133,95 @@ namespace JobManagement
 
 
             //save results
-            FileStream stream = File.OpenWrite(Path.Combine(destPath, "results.bin"));
+            FileStream stream = File.Open(Path.Combine(destPath, "results.bin"), FileMode.OpenOrCreate, FileAccess.ReadWrite);
             lock (results)
             {
                 ScanResults.Serialize(stream, results);
             }
             stream.Flush();
+
+            stream.Seek(0, SeekOrigin.Begin);
+
+            ScanResults res = ScanResults.Deserialize(stream);
             stream.Close();
+
+            if (res.ZippedSizes.Count != results.ZippedSizes.Count)
+                Console.WriteLine("Fuck1");
+
+            if (res.NCCSizes.Count != results.NCCSizes.Count)
+                Console.WriteLine("Fuck2");
+
+            if (res.RawSizes.Count != results.RawSizes.Count)
+                Console.WriteLine("Fuck3");
+
+            if (res.PrimeDensities.Count != results.PrimeDensities.Count)
+                Console.WriteLine("Fuck4");
+
+            if (res.TwinPrimes.Count != results.TwinPrimes.Count)
+                Console.WriteLine("Fuck5");
+
+            if (res.AverageZippedSize() != results.AverageZippedSize())
+                Console.WriteLine("Fuck6");
+
+            if (res.AverageNCCSize() != results.AverageNCCSize())
+                Console.WriteLine("Fuck7"); //
+
+            if (res.AverageRawSize() != results.AverageRawSize())
+                Console.WriteLine("Fuck8"); //
+
+            if (res.AverageZippedRatio() != results.AverageZippedRatio())
+                Console.WriteLine("Fuck9");
+
+            if (res.AverageNCCRatio() != results.AverageNCCRatio())
+                Console.WriteLine("Fuck10"); //
+
+            if (res.AveragePrimesPerFile() != results.AveragePrimesPerFile())
+                Console.WriteLine("Fuck11"); //
+
+            if (res.AveragePrimeDensity() != results.AveragePrimeDensity())
+                Console.WriteLine("Fuck12"); //
+
+            if (res.TotalPrimeCount() != results.TotalPrimeCount())
+                Console.WriteLine("Fuck13");
+
+            if (res.TotalZippedSize() != results.TotalZippedSize())
+                Console.WriteLine("Fuck14");
+
+            if (res.TotalNCCSize() != results.TotalNCCSize())
+                Console.WriteLine("Fuck15");
+
+            if (res.TotalRawSize() != results.TotalRawSize())
+                Console.WriteLine("Fuck16");
+
+            if (res.TotalTwinPrimes() != results.TotalTwinPrimes())
+                Console.WriteLine("Fuck17");
+        }
+        public static void ProcessScanResults()
+        {
+            string resultsPath = Path.Combine(basePath, "outp\\results.bin");
+           
+            FileStream s = File.OpenRead(resultsPath);
+            ScanResults r = ScanResults.Deserialize(s);
+
+            White($"File stats:");
+            White($"Total raw size: {r.TotalRawSize()}");
+            White($"Total NCC size: {r.TotalNCCSize()}");
+            White($"Total zipped size: {r.TotalZippedSize()}");
+            White($"Average raw size: {r.AverageRawSize()}");
+            White($"Average NCC size: {r.AverageNCCSize()}");
+            White($"Average zipped size: {r.AverageZippedSize()}");
+            White($"Average NCC ratio: {r.AverageNCCRatio()}");
+            White($"Average zipped ratio: {r.AverageZippedRatio()}");
+            White($"");
+            White($"Primes stats:");
+            White($"Total primes: {r.TotalPrimeCount()}");
+            White($"Average primes per file: {r.AveragePrimesPerFile()}");
+            White($"Average prime density: {r.AveragePrimeDensity()}");
+            White($"Total twin primes: {r.TotalTwinPrimes()}");
+        }
+        public static void Temporary()
+        {
+            
         }
 
 
@@ -218,7 +313,8 @@ namespace JobManagement
             None,
             Scan,
             ProcessScanResults,
-            GenerateBatches
+            GenerateBatches,
+            Temporary
         }
     }
 }

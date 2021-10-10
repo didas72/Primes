@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace JobManagement
 {
@@ -107,63 +107,118 @@ namespace JobManagement
 
 
         #region IO
-        public static void Serialize(Stream destination, ScanResults results)
+        public static void Serialize(Stream stream, ScanResults results)
         {
-            BinaryFormatter bf = new BinaryFormatter();
-            bf.Serialize(destination, results);
-        }
-
-        public static ScanResults Deserialize(Stream source)
-        {
-            BinaryFormatter bf = new BinaryFormatter();
-            return (ScanResults)bf.Deserialize(source);
-        }
-        /*public byte[] Serialize()
-        {
-            List<byte> bytes = new List<byte>();
             byte[] buffer;
 
-            //bytes.AddRange(BitConverter.GetBytes());
-            bytes.AddRange(BitConverter.GetBytes(zippedTotalSize));
-            bytes.AddRange(BitConverter.GetBytes(NCCTotalSize));
-            bytes.AddRange(BitConverter.GetBytes(rawTotalSize));
+            Console.WriteLine(stream.Length);
 
-            buffer = new byte[ZippedSizes.Count * sizeof(long)];
-            Buffer.BlockCopy(ZippedSizes.ToArray(), 0, buffer, 0, buffer.Length);
-            bytes.AddRange(buffer);
+            stream.Write(BitConverter.GetBytes(results.ZippedSizes.Count), 0, 4);
+            buffer = new byte[results.ZippedSizes.Count * 8];
+            Buffer.BlockCopy(results.ZippedSizes.ToArray(), 0, buffer, 0, buffer.Length);
+            stream.Write(buffer, 0, buffer.Length);
 
-            buffer = new byte[NCCSizes.Count * sizeof(long)];
-            Buffer.BlockCopy(NCCSizes.ToArray(), 0, buffer, 0, buffer.Length);
-            bytes.AddRange(buffer);
+            Console.WriteLine($"{results.ZippedSizes.Count} {stream.Length}");
 
-            buffer = new byte[RawSizes.Count * sizeof(long)];
-            Buffer.BlockCopy(RawSizes.ToArray(), 0, buffer, 0, buffer.Length);
-            bytes.AddRange(buffer);
+            stream.Write(BitConverter.GetBytes(results.NCCSizes.Count), 0, 4);
+            buffer = new byte[results.NCCSizes.Count * 8];
+            Buffer.BlockCopy(results.NCCSizes.ToArray(), 0, buffer, 0, buffer.Length);
+            stream.Write(buffer, 0, buffer.Length);
 
-            bytes.AddRange(BitConverter.GetBytes(averageZippedSize));
-            bytes.AddRange(BitConverter.GetBytes(averageNCCSize));
-            bytes.AddRange(BitConverter.GetBytes(averageRawSize));
+            Console.WriteLine($"{results.NCCSizes.Count} {stream.Length}");
 
-            bytes.AddRange(BitConverter.GetBytes(averageZippedRatio));
-            bytes.AddRange(BitConverter.GetBytes(averageNCCRatio));
+            stream.Write(BitConverter.GetBytes(results.RawSizes.Count), 0, 4);
+            buffer = new byte[results.RawSizes.Count * 8];
+            Buffer.BlockCopy(results.RawSizes.ToArray(), 0, buffer, 0, buffer.Length);
+            stream.Write(buffer, 0, buffer.Length);
 
-            bytes.AddRange(BitConverter.GetBytes(totalPrimeCount));
+            Console.WriteLine($"{results.RawSizes.Count} {stream.Length}");
 
-            buffer = new byte[PrimesPerFiles.Count * sizeof(long)];
-            Buffer.BlockCopy(PrimesPerFiles.ToArray(), 0, buffer, 0, buffer.Length);
-            bytes.AddRange(buffer);
+            stream.Write(BitConverter.GetBytes(results.PrimesPerFiles.Count), 0, 4);
+            buffer = new byte[results.PrimesPerFiles.Count * 8];
+            Buffer.BlockCopy(results.PrimesPerFiles.ToArray(), 0, buffer, 0, buffer.Length);
+            stream.Write(buffer, 0, buffer.Length);
 
-            bytes.AddRange(BitConverter.GetBytes(averagePrimesPerFile));
+            Console.WriteLine($"{results.PrimesPerFiles.Count} {stream.Length}");
 
-            BinaryFormatter bf = new BinaryFormatter();
-            MemoryStream ms = new MemoryStream();
-            bf.Serialize(ms, PrimeDensities);
-            Buffer.BlockCopy(PrimesPerFiles.ToArray(), 0, buffer, 0, buffer.Length);
-            bytes.AddRange(buffer);
+            stream.Write(BitConverter.GetBytes(results.PrimeDensities.Count), 0, 4);
+            foreach (PrimeDensity dens in results.PrimeDensities)
+                stream.Write(PrimeDensity.Serialize(dens), 0, PrimeDensity.size);
 
-            throw new NotImplementedException();
-            return bytes.ToArray();
-        }*/
+            Console.WriteLine($"{results.PrimeDensities.Count} {stream.Length}");
+
+            stream.Write(BitConverter.GetBytes(results.TwinPrimes.Count), 0, 4);
+            foreach (TwinPrimes twins in results.TwinPrimes)
+                stream.Write(JobManagement.TwinPrimes.Serialize(twins), 0, 8);
+
+            Console.WriteLine($"{results.TwinPrimes.Count} {stream.Length}");
+
+            stream.Flush();
+
+            Console.WriteLine(stream.Length);
+        }
+
+        public static ScanResults Deserialize(Stream stream)
+        {
+            byte[] buffer;
+            ScanResults ret = new ScanResults();
+
+            buffer = new byte[4];
+            stream.Read(buffer, 0, 4);
+            long[] ZippedSizes = new long[BitConverter.ToInt32(buffer, 0)];
+            buffer = new byte[ZippedSizes.Length * 8];
+            stream.Read(buffer, 0, buffer.Length);
+            Buffer.BlockCopy(buffer, 0, ZippedSizes, 0, buffer.Length);
+            ret.ZippedSizes = new List<long>(ZippedSizes);
+
+            buffer = new byte[4];
+            stream.Read(buffer, 0, 4);
+            long[] NCCSizes = new long[BitConverter.ToInt32(buffer, 0)];
+            buffer = new byte[NCCSizes.Length * 8];
+            stream.Read(buffer, 0, buffer.Length);
+            Buffer.BlockCopy(buffer, 0, NCCSizes, 0, buffer.Length);
+            ret.NCCSizes = new List<long>(NCCSizes);
+
+            buffer = new byte[4];
+            stream.Read(buffer, 0, 4);
+            long[] RawSizes = new long[BitConverter.ToInt32(buffer, 0)];
+            buffer = new byte[RawSizes.Length * 8];
+            stream.Read(buffer, 0, buffer.Length);
+            Buffer.BlockCopy(buffer, 0, RawSizes, 0, buffer.Length);
+            ret.RawSizes = new List<long>(RawSizes);
+
+            buffer = new byte[4];
+            stream.Read(buffer, 0, 4);
+            long[] PrimesPerFiles = new long[BitConverter.ToInt32(buffer, 0)];
+            buffer = new byte[PrimesPerFiles.Length * 8];
+            stream.Read(buffer, 0, buffer.Length);
+            Buffer.BlockCopy(buffer, 0, PrimesPerFiles, 0, buffer.Length);
+            ret.PrimesPerFiles = new List<long>(PrimesPerFiles);
+
+            buffer = new byte[4];
+            stream.Read(buffer, 0, 4);
+            PrimeDensity[] PrimeDensities = new PrimeDensity[BitConverter.ToInt32(buffer, 0)];
+            buffer = new byte[PrimeDensity.size];
+            for (int i = 0; i < PrimeDensities.Length; i++)
+            {
+                stream.Read(buffer, 0, buffer.Length);
+                PrimeDensities[i] = PrimeDensity.Deserialize(buffer);
+            }
+            ret.PrimeDensities = new List<PrimeDensity>(PrimeDensities);
+
+            buffer = new byte[4];
+            stream.Read(buffer, 0, 4);
+            TwinPrimes[] TwinPrimes = new TwinPrimes[BitConverter.ToInt32(buffer, 0)];
+            buffer = new byte[8];
+            for (int i = 0; i < TwinPrimes.Length; i++)
+            {
+                stream.Read(buffer, 0, buffer.Length);
+                TwinPrimes[i] = JobManagement.TwinPrimes.Deserialize(buffer);
+            }
+            ret.TwinPrimes = new List<TwinPrimes>(TwinPrimes);
+
+            return ret;
+        }
         #endregion
     }
 }

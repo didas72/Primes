@@ -442,6 +442,7 @@ namespace Primes.Common.Files
             MemoryStream stream = new MemoryStream();
 
             stream.Write(new byte[] { file.FileVersion.major, file.FileVersion.minor, file.FileVersion.patch, file.FileCompression.GetByte() }, 0, 4);
+            stream.Write(BitConverter.GetBytes(file.Primes.Length), 0, 4);
 
             ulong last = 0;
             Compression.NCC.StreamCompress(stream, file.Primes, ref last);

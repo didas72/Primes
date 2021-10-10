@@ -83,7 +83,7 @@ namespace JobManagement
 
 
                 Log.LogEvent("Retrieveing job list...", "Scanner");
-                string[] jobs = Directory.GetFiles(batchUncompressPath, "*.primejob");
+                string[] jobs = Utils.GetSubFilesSorted(batchUncompressPath, "*.primejob");
                 Log.LogEvent("Job list retrieved.", "Scanner");
 
 
