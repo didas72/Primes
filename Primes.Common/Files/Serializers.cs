@@ -116,8 +116,16 @@ namespace Primes.Common.Files
 
             return new PrimeJob(new PrimeJob.Version(1, 2, 0), comp, batch, start, count, progress, ref primes);
         }
+        /// <summary>
+        /// Deserializes a <see cref="PrimeJob"/> of version 1.3.0 from a byte array.
+        /// </summary>
+        /// <param name="bytes">Byte array contaning the serialized <see cref="PrimeJob"/>.</param>
+        /// <returns></returns>
+        [Obsolete("Not fully implemented yet.")]
         public static PrimeJob Deserializev1_3_0(byte[] bytes)
         {
+            throw new NotImplementedException();
+
             PrimeJob.Comp comp = new PrimeJob.Comp(bytes[3]);
 
             uint batch = BitConverter.ToUInt32(bytes, 4);
@@ -310,8 +318,11 @@ namespace Primes.Common.Files
         /// </summary>
         /// <param name="job"><see cref="PrimeJob"/> to serialize.</param>
         /// <returns></returns>
+        [Obsolete("Not fully implemented yet.")]
         public static byte[] Serializev1_3_0(PrimeJob job)
         {
+            throw new NotImplementedException();
+
             const int EPB_DataSize = 4096;
 
             List<byte> bytes = new List<byte>(new byte[] { job.FileVersion.major, job.FileVersion.minor, job.FileVersion.patch, job.FileCompression.GetByte() });
