@@ -446,7 +446,7 @@ namespace Primes.Common.Files
 
                     last = job.Primes[i]; //Update value to check the order
 
-                    if (message.Length >= 100000)
+                    if (message.Length >= 10000)
                     {
                         message += "Max message length reached. Checking stopped.";
                         return false;

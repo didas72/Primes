@@ -9,6 +9,11 @@ namespace JobManagement
 {
     public class Scanner
     {
+        public TimeSpan lastScanTime = new TimeSpan();
+        public volatile int currentBatch = 0, batchCount = 0;
+
+
+
         private readonly string SCAN_LOCK = "";
 
         private ScanResults results;
@@ -17,8 +22,14 @@ namespace JobManagement
         private bool batchNeedsRepacking = false;
         private bool batchNeedsRejecting = false;
 
-        public TimeSpan lastScanTime = new TimeSpan();
-        public volatile int currentBatch = 0, batchCount = 0;
+        private Thread[] threads;
+
+
+
+        public Scanner(int threadCount)
+        {
+            threads = new Thread[threadCount];
+        }
 
 
 
@@ -94,16 +105,46 @@ namespace JobManagement
                 {
                     string jobSourcePath = jobs[j];
 
-                    LoadAndScanJob(jobSourcePath);
+                    int assignedThread = 0;
+                    int i = 0;
+
+                    while(true)
+                    {
+                        if (threads[i] == null)
+                        {
+                            assignedThread = i;
+                            break;
+                        }
+                        else if (!threads[i].IsAlive)
+                        {
+                            assignedThread = i;
+                            break;
+                        }
+
+                        i++;
+                        if (i >= threads.Length) i = 0;
+
+                        Thread.Sleep(0);
+                    }
+
+                    threads[i] = new Thread(() => LoadAndScanJob(jobSourcePath));
+                    threads[i].Start(); ;
                 }
 
+                for (int i = 0; i < threads.Length; i++)
+                    if (threads[i] != null)
+                        threads[i].Join();
+
                 Log.LogEvent("Jobs scanned.", "Scanner");
+                Program.Print("Jobs scanned.");
+
+                string compressDir = Path.Combine(batchUncompressPath, batchFileName);
 
                 if (batchNeedsRepacking)
                 {
                     Log.LogEvent($"Repacking batch {batchFileName}.", "Scanner");
 
-                    if (!SevenZip.TryCompress7z(batchUncompressPath, batchFinalPath))
+                    if (!SevenZip.TryCompress7z(compressDir, batchFinalPath))
                     {
                         Log.LogEvent(Log.EventType.Error, $"Failed to repack batch {batchFileName}.", "Scanner");
                     }
@@ -112,7 +153,7 @@ namespace JobManagement
                 {
                     Log.LogEvent(Log.EventType.Warning, $"Rejecting batch {batchFileName}.", "Scanner");
 
-                    if (!SevenZip.TryCompress7z(batchUncompressPath, Path.Combine(rejectsDirectory, batchFileName + ".rejected.7z")))
+                    if (!SevenZip.TryCompress7z(compressDir, Path.Combine(rejectsDirectory, batchFileName + ".rejected.7z")))
                     {
                         Log.LogEvent(Log.EventType.Error, $"Failed to repack batch {batchFileName}.", "Scanner");
                     }
@@ -125,6 +166,11 @@ namespace JobManagement
 
                 lastScanTime = DateTime.Now - start;
                 currentBatch = b + 1;
+
+                Program.Print("Batch scan complete");
+
+                Utils.DeleteDirectory(tmpDirectory);
+                Directory.CreateDirectory(tmpDirectory);
             }
 
             Log.LogEvent("Scan complete.", "Scanner");
@@ -193,17 +239,21 @@ namespace JobManagement
             }
 
             //register stats
-            results.NCCSizes.Add(new FileInfo(jobPath).Length);
-            results.RawSizes.Add(PrimeJob.RawFileSize(job));
-            results.PrimesPerFiles.Add(job.Primes.Count);
-            results.PrimeDensities.Add(new PrimeDensity(job.Start, job.Count, (ulong)job.Primes.Count));
+            lock (results)
+            {
+                results.NCCSizes.Add(new FileInfo(jobPath).Length);
+                results.RawSizes.Add(PrimeJob.RawFileSize(job));
+                results.PrimesPerFiles.Add(job.Primes.Count);
+                results.PrimeDensities.Add(new PrimeDensity(job.Start, job.Count, (ulong)job.Primes.Count));
+            }
 
             //scan for twin primes
             ulong last = job.Primes[0];
             for (int i = 1; i < job.Primes.Count; i++)
             {
                 if (job.Primes[i] - last <= 2)
-                    results.TwinPrimes.Add(new TwinPrimes(last, job.Primes[i]));
+                    lock (results)
+                        results.TwinPrimes.Add(new TwinPrimes(last, job.Primes[i]));
             }
 
             return true;
