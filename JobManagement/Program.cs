@@ -18,14 +18,14 @@ namespace JobManagement
 {
     class Program
     {
-        public const string basePath = "E:\\Documents\\primes\\working\\";
+        public const string basePath = "D:\\Documents\\primes\\working\\";
         public const ulong perJob = 10000000;
 
         public static List<string> prints = new List<string>();
 
         private static ScanResults results;
 
-        private readonly static Task todo = Task.Scan;
+        private readonly static Task todo = Task.ProcessScanResults;
 
         static void Main()
         {
@@ -166,10 +166,21 @@ namespace JobManagement
             White($"Average primes per file: {r.AveragePrimesPerFile()}");
             White($"Average prime density: {r.AveragePrimeDensity()}");
             White($"Total twin primes: {r.TotalTwinPrimes()}");
+
+            r.PrimeDensities.Sort((PrimeDensity a, PrimeDensity b) => a.start.CompareTo(b.start));
+
+            string densityCSV = "Start\tDensity\n";
+
+            for (int i = 0; i < 10000; i++)
+            {
+                densityCSV += $"{r.PrimeDensities[i].start}\t{r.PrimeDensities[i].Density}\n";
+            }
+
+            File.WriteAllText(Path.Combine(basePath, "outp\\densities.csv"), densityCSV.TrimEnd('\n').Replace(".", ","));
         }
         public static void Temporary()
         {
-            PrimeJob job = PrimeJob.Deserialize("E:\\Documents\\primes\\completed\\125\\1240000000000.primejob");
+
         }
 
 
