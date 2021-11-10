@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using System.Diagnostics;
 using System.Xml;
+using System.Diagnostics;
 
 using Primes.Common;
 using Primes.Common.Files;
@@ -49,22 +49,22 @@ namespace Primes.Updater
 
             Log.LogEvent("Version extracted.", "SelfUpdate");
 
-            string cmdCode = BuildSelfUpdateCMD(decompressPath, installPath, "PrimesUpdater.exe");
+            string cmdCode = CmdHelper.BuildSelfUpdateCMD(decompressPath, installPath, "PrimesUpdater.exe");
             Log.LogEvent(Log.EventType.DevInfo, $"Update CMD code: {cmdCode}", "SelfUpdate");
 
 
 
             Log.LogEvent("Restarting to update in 3 seconds...", "SelfUpdate");
             Thread.Sleep(3000);
-            LaunchSelfUpdateCMD(cmdCode, tmpDir);
+            CmdHelper.LaunchSelfUpdateCMD(cmdCode, tmpDir);
 
 
 
             return UpdateResult.Updated;
         }
-        public static UpdateResult UpdatePrimes(string tmpDir)
+        public static UpdateResult UpdatePrimes(string tmpDir, string primesPath)
         {
-            Version primesVersion = GetPrimesVersion(out string primesPath);
+            Version primesVersion = GetPrimesVersion(ref primesPath);
 
             Log.LogEvent($"PrimesPath: {primesPath}", "PrimesUpdate");
             Log.LogEvent($"PrimesVersion: {primesVersion}", "PrimesUpdate");
@@ -97,13 +97,13 @@ namespace Primes.Updater
             if (!SevenZip.TryDecompress7z(updatePath, decompressPath)) return UpdateResult.Failed_Extraction;
             Log.LogEvent("Version extracted.", "PrimesUpdate");
 
-            string cmdCode = BuildUpdateCMD(decompressPath, installPath, $"Primes {latestVersion} NET Framework 4.7.2");
+            string cmdCode = CmdHelper.BuildUpdateCMD(decompressPath, installPath, $"Primes {latestVersion} NET Framework 4.7.2");
             Log.LogEvent(Log.EventType.DevInfo, $"Update CMD code: {cmdCode}", "PrimesUpdate");
 
 
 
             Log.LogEvent("Updating...", "PrimesUpdate");
-            RunUpdateCMD(cmdCode, tmpDir);
+            CmdHelper.RunUpdateCMD(cmdCode, tmpDir);
             Log.LogEvent("Update complete.", "PrimesUpdate");
 
 
@@ -157,64 +157,6 @@ namespace Primes.Updater
 
 
 
-        public static string BuildSelfUpdateCMD(string uncompressPath, string installPath, string execToStart)
-        {
-            return $"ping -n 3 127.0.0.1>nul\n" +
-                    $"taskkill -f -im 7za.exe\n" +
-                    $"del /f /q /s \"{installPath}\\*.*\"\n" +
-                    $"xcopy \"{uncompressPath}\\*.*\" \"{installPath}\"\n" +
-                    $"start \"PrimesUpdater.exe\" \"{installPath}\\{execToStart}\" -ns\n" +
-                    $"ping -n 5 127.0.0.1>nul\n" +
-                    $"exit";
-        }
-        public static string BuildUpdateCMD(string uncompressPath, string installPath, string containingDirName)
-        {
-            return $"@ping -n 3 127.0.0.1>nul\n" +
-                    $"@taskkill -f -im 7za.exe\n" +
-                    $"del /f /q /s \"{installPath}\\*.*\"\n" +
-                    $"xcopy \"{uncompressPath}\\{containingDirName}\\bin\\*.*\" \"{installPath}\"\n" +
-                    $"@ping -n 3 127.0.0.1>nul\n" +
-                    $"exit";
-        }
-        public static void LaunchSelfUpdateCMD(string cmdCode, string tmpDir)
-        {
-            string programPath = Path.Combine(tmpDir, "update.bat");
-            File.WriteAllText(programPath, cmdCode);
-
-            ProcessStartInfo startInfo = new ProcessStartInfo()
-            {
-                FileName = programPath
-            };
-
-            Process updater = new Process
-            {
-                StartInfo = startInfo
-            };
-            updater.Start();
-
-            Environment.Exit(0);
-        }
-        public static void RunUpdateCMD(string cmdCode, string tmpDir)
-        {
-            string programPath = Path.Combine(tmpDir, "update.bat");
-            File.WriteAllText(programPath, cmdCode);
-
-            ProcessStartInfo startInfo = new ProcessStartInfo()
-            {
-                FileName = programPath
-            };
-
-            Process updater = new Process
-            {
-                StartInfo = startInfo
-            };
-            updater.Start();
-
-            updater.WaitForExit();
-        }
-
-
-
         public static string GetProductXMLCode(Product product)
         {
             switch (product)
@@ -246,31 +188,34 @@ namespace Primes.Updater
 
 
 
-        private static Version GetPrimesVersion(out string primesPath)
+        private static Version GetPrimesVersion(ref string primesPath)
         {
-            primesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "primes");
-            if (!Directory.Exists(primesPath))
+            if (string.IsNullOrEmpty(primesPath))
             {
-                Log.LogEvent("Primes install not found, installing...", "PrimesUpdate");
-                Directory.CreateDirectory(primesPath);
+                primesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "primes");
+                if (!Directory.Exists(primesPath))
+                {
+                    Log.LogEvent("Primes install not found, installing...", "PrimesUpdate");
+                    Directory.CreateDirectory(primesPath);
+                    primesPath = Path.Combine(primesPath, "bin");
+                    Directory.CreateDirectory(primesPath);
+                    return Version.empty;
+                }
+
                 primesPath = Path.Combine(primesPath, "bin");
-                Directory.CreateDirectory(primesPath);
-                return Version.empty;
-            }
+                if (!Directory.Exists(primesPath))
+                {
+                    Log.LogEvent("Primes install not found, installing...", "PrimesUpdate");
+                    Directory.CreateDirectory(primesPath);
+                    return Version.empty;
+                }
 
-            primesPath = Path.Combine(primesPath, "bin");
-            if (!Directory.Exists(primesPath))
-            {
-                Log.LogEvent("Primes install not found, installing...", "PrimesUpdate");
-                Directory.CreateDirectory(primesPath);
-                return Version.empty;
-            }
-
-            primesPath = Path.Combine(primesPath, "Primes.exe");
-            if (!File.Exists(primesPath))
-            {
-                Log.LogEvent("Primes install not found, installing...", "PrimesUpdate");
-                return Version.empty;
+                primesPath = Path.Combine(primesPath, "Primes.exe");
+                if (!File.Exists(primesPath))
+                {
+                    Log.LogEvent("Primes install not found, installing...", "PrimesUpdate");
+                    return Version.empty;
+                }
             }
 
             FileVersionInfo primesInfo = FileVersionInfo.GetVersionInfo(primesPath);

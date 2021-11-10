@@ -281,6 +281,8 @@ namespace Primes.Common
                 {
                     dir.Delete(true);
                 }
+
+                Directory.Delete(path);
             }
         }
 

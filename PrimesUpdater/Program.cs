@@ -8,7 +8,7 @@ namespace Primes.Updater
 {
     class Program
     {
-        private static string tmpDir, homeDir;
+        public static string tmpDir, homeDir, installDir;
 
         private static bool updateSelf;
         private static bool updatePrimes;
@@ -34,13 +34,19 @@ namespace Primes.Updater
             if (updateSelf)
             {
                 Updater.UpdateResult updateSelfRet = Updater.UpdateSelf(tmpDir);
-                Console.WriteLine($"Update self return: {updateSelfRet}.");
+                Log.LogEvent($"Update self return: {updateSelfRet}.", "MainThread");
+
+                if (updateSelfRet == Updater.UpdateResult.Failed_Version_Check || updateSelfRet == Updater.UpdateResult.Failed_Extraction || updateSelfRet == Updater.UpdateResult.Failed_Download)
+                    Exit();
             }
 
             if (updatePrimes)
             {
-                Updater.UpdateResult updatePrimesRet = Updater.UpdatePrimes(tmpDir);
-                Console.WriteLine($"Update primes return: {updatePrimesRet}.");
+                Updater.UpdateResult updatePrimesRet = Updater.UpdatePrimes(tmpDir, installDir);
+                Log.LogEvent($"Update primes return: {updatePrimesRet}.", "MainThread");
+
+                if (updatePrimesRet == Updater.UpdateResult.Failed_Version_Check || updatePrimesRet == Updater.UpdateResult.Failed_Extraction || updatePrimesRet == Updater.UpdateResult.Failed_Download)
+                    Exit();
             }
 
             CleanUp();
@@ -99,6 +105,7 @@ namespace Primes.Updater
                         Log.Print("Arguments:");
                         Log.Print("'-ns' - Disables self update.");
                         Log.Print("'-np' - Disables primes update.");
+                        Log.Print("'-p P' - Specifies install path.");
                         Environment.Exit(0);
                         break;
 
@@ -109,6 +116,28 @@ namespace Primes.Updater
                     case "-np":
                         updatePrimes = false;
                         break;
+
+                    case "-p":
+                        if (args.Length >= i)
+                        {
+                            try
+                            {
+                                if (Directory.Exists(args[i++]))
+                                {
+                                    installDir = args[i];
+                                    continue;
+                                }
+                            }
+                            catch { }
+
+                            Log.Print("'-p' must be followed by a valid path.");
+                            return false;
+                        }
+                        else
+                        {
+                            Log.Print("'-p' must be followed by a valid path.");
+                            return false;
+                        }
 
                     default:
                         Console.WriteLine("Invalid argument: " + args[i]);

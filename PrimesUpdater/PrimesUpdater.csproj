@@ -74,6 +74,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Updater.cs" />
+    <Compile Include="CmdHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="App.config" />
@@ -85,8 +86,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ExternalResources\ExternalResources.xml" />
     <Content Include="icon.ico" />
-    <Content Include="Access\Access.xml" />
+    <Content Include="Access\access.xml" />
     <Content Include="Versions\versions.xml" />
   </ItemGroup>
   <ItemGroup>
