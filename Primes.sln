@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesUpdater", "PrimesUpda
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BatchDistributer", "BatchDistributer\BatchDistributer.csproj", "{35E43D89-F5ED-40B8-A7BE-2867CD32377E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesTools", "PrimesTools\PrimesTools.csproj", "{DD05A858-F9AC-4E13-B85B-A1025230DCF1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +81,14 @@ Global
 		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Release|x64.ActiveCfg = Release|Any CPU
 		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Release|x64.Build.0 = Release|Any CPU
+		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Debug|x64.Build.0 = Debug|Any CPU
+		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Release|x64.ActiveCfg = Release|Any CPU
+		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

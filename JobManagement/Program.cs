@@ -262,7 +262,6 @@ namespace JobManagement
             bool fresh = true;
 
             ulong current, last = job.Primes[0];
-            int corrIndex = 0;
             White($"First: {job.Primes[0]}");
 
             if (last % 2 == 0)
@@ -280,7 +279,6 @@ namespace JobManagement
                     if (fresh)
                     {
                         fresh = false;
-                        corrIndex = i;
                         Red($"Even at {i} of {job.Primes.Count}");
 
                         for (ulong v = last + 1; v < current + (ulong)uint.MaxValue; v++)
@@ -289,7 +287,7 @@ namespace JobManagement
                             {
                                 Red($"Previous is {last}");
                                 Red($"Value should be {v} and is {current}");
-                                Red($"Next value is {job.Primes[i+1]}");
+                                Red($"Next value is {job.Primes[i + 1]}");
                                 return;
                                 break;
                             }
