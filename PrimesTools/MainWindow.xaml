@@ -8,18 +8,23 @@
         Title="Primes Tools" Height="440" Width="800" ResizeMode="CanMinimize">
     <Grid>
         <StatusBar HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" VerticalAlignment="Bottom" Width="792">
-            <TextBlock Name="txtStatus" TextWrapping="Wrap" Text="Status" HorizontalAlignment="Left" VerticalAlignment="Center" Width="150"/>
-            <ProgressBar Name="prgBar" Height="10" Width="100" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+            <TextBlock x:Name="txtStatus" TextWrapping="Wrap" Text="Status" HorizontalAlignment="Left" VerticalAlignment="Top" Width="200"/>
+            <ProgressBar x:Name="prgBar" Height="10" Width="100" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,3,0,0"/>
+            <TextBlock x:Name="txtUsage" TextWrapping="Wrap" Text="Memory usage: Calculating..." Width="180"/>
         </StatusBar>
 
         <Menu x:Name="ToolBar" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="792">
             <MenuItem x:Name="FileMenu" Header="File">
-                <Button x:Name="BtnOpenFile" Content="Open" Click="BtnOpenFile_Click"/>
-                <Button x:Name="BtnCloseFile" Content="Close" Click="BtnCloseFile_Click"/>
+                <MenuItem Header="Open" Click="BtnOpenFile_Click"/>
+                <MenuItem Header="Close" Click="BtnCloseFile_Click"/>
+                <MenuItem Header="Save" Click="BtnSaveFile_Click"/>
             </MenuItem>
-            <MenuItem x:Name="ToolsMenu" Header="Tools"/>
+            <MenuItem x:Name="ToolsMenu" Header="Tools">
+                <MenuItem Header="Check (Read Only)" Click="ROCheck_Click"/>
+                <MenuItem Header="Check (Remove Duplicates)" Click="RDCheck_Click"/>
+            </MenuItem>
         </Menu>
-        
+
         <Expander x:Name="ExpHeader" Header="Header" Margin="0,20,0,0" IsExpanded="True" HorizontalAlignment="Left" VerticalAlignment="Top" Width="300" Height="180">
             <ListView x:Name="LstHeader" Height="160" Width="298" HorizontalAlignment="Left" VerticalAlignment="Top"  Margin="0,0,0,-3">
                 <ListView.View>
@@ -35,19 +40,26 @@
                 <ListView x:Name="LstBinary" Height="160" Width="298" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,0,-33">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="Address" DisplayMemberBinding="{Binding Address}" Width="60"/>
-                            <GridViewColumn Header="Values" DisplayMemberBinding="{Binding Values}" Width="238"/>
+                            <GridViewColumn Header="Address" DisplayMemberBinding="{Binding Address}"/>
+                            <GridViewColumn Header="0x00" DisplayMemberBinding="{Binding Value0, StringFormat=\{0:X2\}}"/>
+                            <GridViewColumn Header="0x01" DisplayMemberBinding="{Binding Value1, StringFormat=\{0:X2\}}"/>
+                            <GridViewColumn Header="0x02" DisplayMemberBinding="{Binding Value2, StringFormat=\{0:X2\}}"/>
+                            <GridViewColumn Header="0x03" DisplayMemberBinding="{Binding Value3, StringFormat=\{0:X2\}}"/>
+                            <GridViewColumn Header="0x04" DisplayMemberBinding="{Binding Value4, StringFormat=\{0:X2\}}"/>
+                            <GridViewColumn Header="0x05" DisplayMemberBinding="{Binding Value5, StringFormat=\{0:X2\}}"/>
+                            <GridViewColumn Header="0x06" DisplayMemberBinding="{Binding Value6, StringFormat=\{0:X2\}}"/>
+                            <GridViewColumn Header="0x07" DisplayMemberBinding="{Binding Value7, StringFormat=\{0:X2\}}"/>
                         </GridView>
                     </ListView.View>
                 </ListView>
             </Grid>
         </Expander>
         <Expander x:Name="ExpPrimes" Header="Primes" Margin="300,20,0,0" IsExpanded="True" HorizontalAlignment="Left" VerticalAlignment="Top" Width="300" Height="365">
-            <ListView x:Name="LstPrimes" Height="345" Width="298" HorizontalAlignment="Left" VerticalAlignment="Top"  Margin="0,0,0,-3">
+            <ListView x:Name="LstPrimes" Height="345" Width="298" HorizontalAlignment="Left" VerticalAlignment="Top"  Margin="0,0,0,-3" PreviewMouseLeftButtonUp="LstPrimes_Selected">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150"/>
-                        <GridViewColumn Header="Value" DisplayMemberBinding="{Binding Value}" Width="150"/>
+                        <GridViewColumn Header="Index" DisplayMemberBinding="{Binding Name}" Width="100"/>
+                        <GridViewColumn Header="Value" DisplayMemberBinding="{Binding Value}" Width="200"/>
                     </GridView>
                 </ListView.View>
             </ListView>

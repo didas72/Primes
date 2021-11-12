@@ -18,7 +18,7 @@ namespace JobManagement
 {
     class Program
     {
-        public const string basePath = "E:\\Documents\\primes\\working\\";
+        public const string basePath = "E:\\Documents\\working\\";
         public const ulong perJob = 10000000;
 
         public static List<string> prints = new List<string>();

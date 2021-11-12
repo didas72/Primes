@@ -197,11 +197,25 @@ namespace Primes.Common.Files
         /// <exception cref="System.Security.SecurityException"></exception>
         public static PrimeJob Deserialize(string path)
         {
+            FileStream fs = File.OpenRead(path);
+            PrimeJob job = Deserialize(fs);
+            fs.Dispose();
+            return job;
+        }
+        /// <summary>
+        /// Reads a <see cref="PrimeJob"/> from a stream.
+        /// </summary>
+        /// <param name="s">The stream to read from.</param>
+        /// <returns><see cref="PrimeJob"/> read from the given path.</returns>
+        public static PrimeJob Deserialize(Stream s)
+        {
             PrimeJob job = new PrimeJob(Version.Zero, 0, 0);
 
-            byte[] bytes = File.ReadAllBytes(path);
+            s.Seek(0, SeekOrigin.Begin);
 
-            Version ver = new Version(bytes[0], bytes[1], bytes[2]);
+            byte[] version = new byte[3];
+            s.Read(version, 0, 3);
+            Version ver = new Version(version[0], version[1], version[2]);
 
             if (!ver.IsCompatible())
             {
@@ -211,14 +225,20 @@ namespace Primes.Common.Files
             {
                 if (ver.IsEqual(new Version(1, 2, 0)))
                 {
-                    job = PrimeJobSerializer.Deserializev1_2_0(bytes);
+                    job = PrimeJobSerializer.Deserializev1_2_0(s);
                 }
                 else if (ver.IsEqual(new Version(1, 1, 0)))
                 {
+                    byte[] bytes = new byte[s.Length];
+                    s.Seek(0, SeekOrigin.Begin);
+                    s.Read(bytes, 0, bytes.Length);
                     job = PrimeJobSerializer.Deserializev1_1_0(bytes);
                 }
                 else if (ver.IsEqual(new Version(1, 0, 0)))
                 {
+                    byte[] bytes = new byte[s.Length];
+                    s.Seek(0, SeekOrigin.Begin);
+                    s.Read(bytes, 0, bytes.Length);
                     job = PrimeJobSerializer.Deserializev1_0_0(bytes);
                 }
             }
@@ -226,64 +246,25 @@ namespace Primes.Common.Files
             return job;
         }
         /// <summary>
-        /// Checks what the status of a certain <see cref="PrimeJob"/> file is.
-        /// </summary>
-        /// <param name="path">The path to the file to read from.</param>
-        /// <returns><see cref="Status"/> representing the status of the checked <see cref="PrimeJob"/> file.</returns>
-        /// <exception cref="IncompatibleVersionException">Thrown when attempting to peek status from a <see cref="PrimeJob"/> of an incompatible version.</exception>
-        /// <exception cref="ArgumentException"></exception>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="PathTooLongException"></exception>
-        /// <exception cref="DirectoryNotFoundException"></exception>
-        /// <exception cref="IOException"></exception>
-        /// <exception cref="UnauthorizedAccessException"></exception>
-        /// <exception cref="FileNotFoundException"></exception>
-        /// <exception cref="NotSupportedException"></exception>
-        /// <exception cref="System.Security.SecurityException"></exception>
-        public static Status PeekStatusFromFile(string path)
-        {
-            byte[] bytes = File.ReadAllBytes(path);
-
-            Version ver = new Version(bytes[0], bytes[1], bytes[2]);
-
-            if (!ver.IsCompatible())
-            {
-                throw new IncompatibleVersionException($"Attempted to peek progress from job of version {ver} but no serialization method was implemented for such version.");
-            }
-            else if (!ver.IsLatest())
-            {
-                if (ver.IsEqual(new Version(1, 0, 0)))
-                {
-                    return PrimeJobSerializer.PeekStatusv1_0_0(ref bytes);
-                }
-                else if (ver.IsEqual(new Version(1, 1, 0)))
-                {
-                    return PrimeJobSerializer.PeekStatusv1_1_0(ref bytes);
-                }
-            }
-            else //it is latest
-            {
-                return PrimeJobSerializer.PeekStatusv1_2_0(ref bytes);
-            }
-
-            return Status.None;
-        }
-        /// <summary>
         /// Writes a <see cref="PrimeJob"/> to a file.
         /// </summary>
         /// <param name="job">The job to serialize.</param>
         /// <param name="path">The path to write to.</param>
-        /// <exception cref="IncompatibleVersionException">Thrown when attempting to write a <see cref="PrimeJob"/> of an incompatible version.</exception>
-        /// <exception cref="ArgumentException"></exception>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="PathTooLongException"></exception>
-        /// <exception cref="DirectoryNotFoundException"></exception>
-        /// <exception cref="IOException"></exception>
-        /// <exception cref="UnauthorizedAccessException"></exception>
-        /// <exception cref="FileNotFoundException"></exception>
-        /// <exception cref="NotSupportedException"></exception>
-        /// <exception cref="System.Security.SecurityException"></exception>
         public static void Serialize(PrimeJob job, string path)
+        {
+            FileStream fs = File.OpenWrite(path);
+
+            Serialize(job, fs);
+
+            fs.Flush();
+            fs.Close();
+        }
+        /// <summary>
+        /// Writes a <see cref="PrimeJob"/> to a stream.
+        /// </summary>
+        /// <param name="job">The job to serialize.</param>
+        /// <param name="s">The stream to write to.</param>
+        public static void Serialize(PrimeJob job, Stream s)
         {
             if (!job.FileVersion.IsCompatible())
             {
@@ -293,29 +274,28 @@ namespace Primes.Common.Files
             {
                 if (job.FileVersion.Equals(new Version(1, 2, 0)))
                 {
-                    byte[] bytes = PrimeJobSerializer.Serializev1_2_0(job);
-
-                    File.WriteAllBytes(path, bytes);
+                    PrimeJobSerializer.Serializev1_2_0(job, s);
                 }
                 else if (job.FileVersion.Equals(new Version(1, 1, 0)))
                 {
                     byte[] bytes = PrimeJobSerializer.Serializev1_1_0(job);
 
-                    File.WriteAllBytes(path, bytes);
+                    s.Write(bytes, 0, bytes.Length);
                 }
                 else if (job.FileVersion.Equals(new Version(1, 0, 0)))
                 {
                     byte[] bytes = PrimeJobSerializer.Serializev1_0_0(job);
 
-                    File.WriteAllBytes(path, bytes);
+                    s.Write(bytes, 0, bytes.Length);
                 }
             }
+
+            s.Flush();
         }
         /// <summary>
         /// Checks what the status of a certain <see cref="PrimeJob"/> is.
         /// </summary>
         /// <returns><see cref="Status"/> representing the status of the checked <see cref="PrimeJob"/> file.</returns>
-        /// <exception cref="IncompatibleVersionException">Thrown when attempting to peek status from a <see cref="PrimeJob"/> of an incompatible version.</exception>
         public Status PeekStatus()
         {
             Status status = Status.None;
@@ -347,6 +327,39 @@ namespace Primes.Common.Files
             }
 
             return status;
+        }
+        /// <summary>
+        /// Checks what the status of a certain <see cref="PrimeJob"/> file is.
+        /// </summary>
+        /// <param name="path">The path to the file to read from.</param>
+        /// <returns><see cref="Status"/> representing the status of the checked <see cref="PrimeJob"/> file.</returns>
+        public static Status PeekStatusFromFile(string path)
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+
+            Version ver = new Version(bytes[0], bytes[1], bytes[2]);
+
+            if (!ver.IsCompatible())
+            {
+                throw new IncompatibleVersionException($"Attempted to peek progress from job of version {ver} but no serialization method was implemented for such version.");
+            }
+            else if (!ver.IsLatest())
+            {
+                if (ver.IsEqual(new Version(1, 0, 0)))
+                {
+                    return PrimeJobSerializer.PeekStatusv1_0_0(ref bytes);
+                }
+                else if (ver.IsEqual(new Version(1, 1, 0)))
+                {
+                    return PrimeJobSerializer.PeekStatusv1_1_0(ref bytes);
+                }
+            }
+            else //it is latest
+            {
+                return PrimeJobSerializer.PeekStatusv1_2_0(ref bytes);
+            }
+
+            return Status.None;
         }
 
 
@@ -513,12 +526,12 @@ namespace Primes.Common.Files
         /// </summary>
         /// <param name="job"></param>
         /// <returns></returns>
-        public static int RawFileSize(PrimeJob job)
+        public static long RawFileSize(PrimeJob job)
         {
             if (!Version.IsCompatible(job.FileVersion))
                 throw new IncompatibleVersionException();
 
-            int size = job.Primes.Count * sizeof(ulong);
+            long size = job.Primes.Count * sizeof(ulong);
 
             if (job.FileVersion.IsEqual(new Version(1, 2, 0)))
                 size += 32;
@@ -528,6 +541,19 @@ namespace Primes.Common.Files
                 size += 31;
 
             return size;
+        }
+        /// <summary>
+        /// Calculates the size of the header for a given PrimeJob.
+        /// </summary>
+        /// <param name="job"></param>
+        /// <returns></returns>
+        public static long HeaderSize(PrimeJob job)
+        {
+            if (job.FileVersion.Equals(new Version(1, 2, 0))) return 32;
+            if (job.FileVersion.Equals(new Version(1, 1, 0))) return 35;
+            if (job.FileVersion.Equals(new Version(1, 0, 0))) return 31;
+
+            return -1;
         }
 
 

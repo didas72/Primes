@@ -295,5 +295,24 @@ namespace Primes.Common
         {
             Console.ReadKey(true);
         }
+
+
+
+        /// <summary>
+        /// Formats a size, in bytes, to a smaller, humanely readable value with two decimal places.
+        /// </summary>
+        /// <param name="size">The size, in bytes, to format.</param>
+        public static string FormatSize(long size)
+        {
+            if (size < 1024) return $"{size}B";
+
+            if (size < 1048576) return $"{(size / 1024f):N2}kB";
+
+            if (size < 1073741824) return $"{(size / 1048576f):N2}MB";
+
+            if (size < 1099511627776) return $"{(size / 1073741824f):N2}GB";
+
+            return $"{(size / 1099511627776):N2}TB";
+        }
     }
 }

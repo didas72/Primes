@@ -117,6 +117,45 @@ namespace Primes.Common.Files
             return new PrimeJob(new PrimeJob.Version(1, 2, 0), comp, batch, start, count, progress, ref primes);
         }
         /// <summary>
+        /// Deserializes a <see cref="PrimeJob"/> of version 1.2.0 from a stream.
+        /// </summary>
+        /// <param name="stream">The stream to deserialize from.</param>
+        /// <returns></returns>
+        public static PrimeJob Deserializev1_2_0(Stream stream)
+        {
+            stream.Seek(0, SeekOrigin.Begin);
+            byte[] header = new byte[32];
+            stream.Read(header, 0, header.Length);
+
+            PrimeJob.Comp comp = new PrimeJob.Comp(header[3]);
+
+            uint batch = BitConverter.ToUInt32(header, 4);
+            ulong start = BitConverter.ToUInt64(header, 8);
+            ulong count = BitConverter.ToUInt64(header, 16);
+            ulong progress = BitConverter.ToUInt64(header, 24);
+
+            if (comp.NCC)
+            {
+                List<ulong> primes = new List<ulong>();
+                Compression.NCC.StreamUncompress(stream, primes);
+                return new PrimeJob(new PrimeJob.Version(1, 2, 0), comp, batch, start, count, progress, primes);
+            }  
+            else if (comp.ONSS)
+            {
+                byte[] primesBytes = new byte[stream.Length - 32];
+                stream.Read(primesBytes, 0, primesBytes.Length);
+                ulong[] primes = Compression.ONSS.Uncompress(primesBytes);
+                return new PrimeJob(new PrimeJob.Version(1, 2, 0), comp, batch, start, count, progress, ref primes);
+            }
+            else
+            {
+                byte[] primesBytes = new byte[stream.Length - 32];
+                stream.Read(primesBytes, 0, primesBytes.Length);
+                ulong[] primes = GetRawPrimes(primesBytes);
+                return new PrimeJob(new PrimeJob.Version(1, 2, 0), comp, batch, start, count, progress, ref primes);
+            }
+        }
+        /// <summary>
         /// Deserializes a <see cref="PrimeJob"/> of version 1.3.0 from a byte array.
         /// </summary>
         /// <param name="bytes">Byte array contaning the serialized <see cref="PrimeJob"/>.</param>
@@ -312,6 +351,48 @@ namespace Primes.Common.Files
             bytes.AddRange(primeBytes);
 
             return bytes.ToArray();
+        }
+        /// <summary>
+        /// Serializes a <see cref="PrimeJob"/> of version 1.2.0 to a stream.
+        /// </summary>
+        /// <param name="job"><see cref="PrimeJob"/> to serialize.</param>
+        /// <param name="stream">The stream to serialize to.</param>
+        /// <returns></returns>
+        public static void Serializev1_2_0(PrimeJob job, Stream stream)
+        {
+            stream.Write(BitConverter.GetBytes(job.Batch), 0, sizeof(uint));
+            stream.Write(BitConverter.GetBytes(job.Start), 0, sizeof(ulong));
+            stream.Write(BitConverter.GetBytes(job.Count), 0, sizeof(ulong));
+            stream.Write(BitConverter.GetBytes(job.Progress), 0, sizeof(ulong));
+
+            byte[] primeBytes;
+
+            if (job.FileCompression.IsCompressed())
+            {
+                if (job.FileCompression.ONSS)
+                {
+                    primeBytes = Compression.ONSS.Compress(job.Primes.ToArray());
+
+                    stream.Write(primeBytes, 0, primeBytes.Length);
+                }
+                else if (job.FileCompression.NCC)
+                {
+                    ulong last = 0;
+                    Compression.NCC.StreamCompress(stream, job.Primes.ToArray(), ref last);
+                }
+                else
+                    throw new Compression.InvalidCompressionMethodException();
+            }
+            else
+            {
+                primeBytes = new byte[job.Primes.Count * 8];
+
+                Buffer.BlockCopy(job.Primes.ToArray(), 0, primeBytes, 0, job.Primes.Count * 8);
+
+                stream.Write(primeBytes, 0, primeBytes.Length);
+            }
+
+            stream.Flush();
         }
         /// <summary>
         /// Serializes a <see cref="PrimeJob"/> of version 1.3.0 to a byte array.

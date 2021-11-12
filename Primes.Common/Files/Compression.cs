@@ -323,6 +323,70 @@ namespace Primes.Common.Files
                 if (pendingBlockRead)
                     goto loadBlock;
             }
+            /// <summary>
+            /// Reads an list of compressed ulongs from a stream.
+            /// </summary>
+            /// <param name="stream">The stream to read from.</param>
+            /// <param name="uncompress">The uncompressed ulong list.</param>
+            /// <remarks>Useful when dealing with large data sets.</remarks>
+            public static void StreamUncompress(Stream stream, List<ulong> uncompress)
+            {
+                if (stream.RemainingBytes() == 0)
+                    return;
+
+                ushort delta;
+                byte[] block = new byte[BlockSize];
+                ulong value, last = 0;
+                int blockHeader;
+                bool pendingBlockRead = true;
+
+
+            loadBlock:
+                LoadBlock(ref stream, ref block, ref pendingBlockRead, 0);
+
+                blockHeader = 0;
+
+                if (last == 0)
+                {
+                    uncompress.Add(BitConverter.ToUInt64(block, blockHeader));
+                    blockHeader += 8;
+                    last = uncompress[uncompress.Count - 1];
+                }
+
+                while (blockHeader < block.Length - 1)
+                {
+                    delta = BitConverter.ToUInt16(block, blockHeader);
+                    blockHeader += 2;
+
+                    if (delta == 0)
+                    {
+                        if (blockHeader >= block.Length)
+                        {
+                            if (!pendingBlockRead)
+                                throw new Exception("Out of blocks.");
+
+                            LoadBlock(ref stream, ref block, ref pendingBlockRead, block.Length - blockHeader);
+                            blockHeader -= BlockSize;
+                        }
+
+                        value = BitConverter.ToUInt64(block, blockHeader);
+                        blockHeader += 8;
+
+                        uncompress.Add(value);
+                        last = value;
+                    }
+                    else
+                    {
+                        value = last + delta;
+
+                        uncompress.Add(value);
+                        last = value;
+                    }
+                }
+
+                if (pendingBlockRead)
+                    goto loadBlock;
+            }
 
 
 

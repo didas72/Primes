@@ -10,7 +10,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
+using System.Windows.Threading;
 using System.IO;
 
 namespace PrimesTools
@@ -22,14 +22,39 @@ namespace PrimesTools
     {
         public MainWindow()
         {
+            Loaded += MainWindow_Loaded;
+
             InitializeComponent();
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e) => UIControl.Init(LstHeader, LstPrimes, LstBinary, LstStats, txtStatus, prgBar);
+
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            DispatcherTimer timer = new DispatcherTimer();
+            timer.Tick += Timer_Tick;
+            timer.Interval = new TimeSpan(0, 0, 5);
+            timer.Start();
+
+            UIControl.Init(LstHeader, LstPrimes, LstBinary, LstStats, txtStatus, prgBar, txtUsage);
+        }
 
 
 
         private void BtnOpenFile_Click(object sender, RoutedEventArgs e) => UIControl.OpenFile();
         private void BtnCloseFile_Click(object sender, RoutedEventArgs e) => UIControl.CloseFile();
+        private void BtnSaveFile_Click(object sender, RoutedEventArgs e) => UIControl.SaveFile();
+        private void LstPrimes_Selected(object sender, RoutedEventArgs e) => UIControl.SelectedPrime(LstPrimes.SelectedIndex);
+        private void ROCheck_Click(object sender, RoutedEventArgs e) => UIControl.ROCheck();
+        private void RDCheck_Click(object sender, RoutedEventArgs e) => UIControl.RDCheck();
+
+
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            UIControl.Update();
+        }
+
+        
     }
 }
