@@ -251,6 +251,38 @@ namespace PrimesTools
                 return;
             }
         }
+        public static void FindPrime()
+        {
+            string resp = Interaction.InputBox("Prime index:", "Jump to prime", "-1");
+
+            if (!ulong.TryParse(resp, out ulong prime))
+            {
+                SetStatus("Invalid index.");
+                return;
+            }
+
+            int bot = 0, top = job.Primes.Count, i;
+
+            while (true)
+            {
+                i = (bot + top) / 2;
+
+                if (prime < job.Primes[i])
+                    top = i;
+                else if (prime > job.Primes[i])
+                    bot = i;
+                else if (prime == job.Primes[i])
+                    break;
+
+                if (top - bot <= 1)
+                    break;
+            }
+
+            Primes.SelectedIndex = i;
+            Primes.ScrollIntoView(Primes.Items[i]);
+
+            SelectedPrime(i);
+        }
         public static void Update()
         {
             UpdateMemoryUsage();

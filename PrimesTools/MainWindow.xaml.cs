@@ -49,6 +49,7 @@ namespace PrimesTools
         private void RDCheck_Click(object sender, RoutedEventArgs e) => UIControl.RDCheck();
         private void JumpToPrime_Click(object sender, RoutedEventArgs e) => UIControl.JumpToPrime();
         private void JumpToBinary_Click(object sender, RoutedEventArgs e) => UIControl.JumpToBinary();
+        private void FindPrime_Click(object sedner, RoutedEventArgs e) => UIControl.FindPrime();
 
 
 

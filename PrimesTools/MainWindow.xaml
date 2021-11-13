@@ -24,6 +24,9 @@
                     <MenuItem Header="To Prime" Click="JumpToPrime_Click"/>
                     <MenuItem Header="To Binary" Click="JumpToBinary_Click"/>
                 </MenuItem>
+                <MenuItem Header="Find">
+                    <MenuItem Header="Prime" Click="FindPrime_Click"/>
+                </MenuItem>
                 <MenuItem Header="Check Job">
                     <MenuItem Header="Read Only" Click="ROCheck_Click"/>
                     <MenuItem Header="Remove Duplicates" Click="RDCheck_Click"/>
