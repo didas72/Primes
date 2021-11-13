@@ -47,6 +47,8 @@ namespace PrimesTools
         private void LstPrimes_Selected(object sender, RoutedEventArgs e) => UIControl.SelectedPrime(LstPrimes.SelectedIndex);
         private void ROCheck_Click(object sender, RoutedEventArgs e) => UIControl.ROCheck();
         private void RDCheck_Click(object sender, RoutedEventArgs e) => UIControl.RDCheck();
+        private void JumpToPrime_Click(object sender, RoutedEventArgs e) => UIControl.JumpToPrime();
+        private void JumpToBinary_Click(object sender, RoutedEventArgs e) => UIControl.JumpToBinary();
 
 
 
@@ -54,7 +56,5 @@ namespace PrimesTools
         {
             UIControl.Update();
         }
-
-        
     }
 }

@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Diagnostics;
 
 using Microsoft.Win32;
+using Microsoft.VisualBasic;
 
 using Primes.Common;
 using Primes.Common.Files;
@@ -204,6 +205,50 @@ namespace PrimesTools
             catch
             {
                 SetStatus("Error checking file.");
+            }
+        }
+        public static void JumpToPrime()
+        {
+            string resp = Interaction.InputBox("Prime index:", "Jump to prime", "-1");
+
+            if (!int.TryParse(resp, out int index))
+            {
+                SetStatus("Invalid index.");
+                return;
+            }
+
+            if (index < 0 || index >= Primes.Items.Count)
+            {
+                SetStatus("Index out of range.");
+                return;
+            }
+
+            Primes.SelectedIndex = index;
+            Primes.ScrollIntoView(Primes.Items[index]);
+
+            SelectedPrime(index);
+        }
+        public static void JumpToBinary()
+        {
+            string resp = Interaction.InputBox("Binary address (hex):", "Jump to binary", "-1");
+
+            try
+            {
+                int index = int.Parse(resp, System.Globalization.NumberStyles.HexNumber) / 8;
+
+                if (index < 0 || index >= Primes.Items.Count)
+                {
+                    SetStatus("Address out of range.");
+                    return;
+                }
+
+                Binary.SelectedIndex = index;
+                Binary.ScrollIntoView(Binary.Items[index]);
+            }
+            catch
+            {
+                SetStatus("Invalid address.");
+                return;
             }
         }
         public static void Update()

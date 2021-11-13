@@ -20,8 +20,14 @@
                 <MenuItem Header="Save" Click="BtnSaveFile_Click"/>
             </MenuItem>
             <MenuItem x:Name="ToolsMenu" Header="Tools">
-                <MenuItem Header="Check (Read Only)" Click="ROCheck_Click"/>
-                <MenuItem Header="Check (Remove Duplicates)" Click="RDCheck_Click"/>
+                <MenuItem Header="Jump">
+                    <MenuItem Header="To Prime" Click="JumpToPrime_Click"/>
+                    <MenuItem Header="To Binary" Click="JumpToBinary_Click"/>
+                </MenuItem>
+                <MenuItem Header="Check Job">
+                    <MenuItem Header="Read Only" Click="ROCheck_Click"/>
+                    <MenuItem Header="Remove Duplicates" Click="RDCheck_Click"/>
+                </MenuItem>
             </MenuItem>
         </Menu>
 
