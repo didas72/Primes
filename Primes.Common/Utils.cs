@@ -20,13 +20,8 @@ namespace Primes.Common
         /// </summary>
         /// <param name="path">The full path of the directory to be checked.</param>
         /// <param name="maxCount">The maximum number of jobs to add to the queue.</param>
+        /// <param name="sort">Wether or not to sort the jobs by number.</param>
         /// <returns><see cref="Queue{T}"/> with paths of all incomplete jobs in the given directory.</returns>
-        /// <exception cref="IOException"></exception>
-        /// <exception cref="UnauthorizedAccessException"></exception>
-        /// <exception cref="ArgumentException"></exception>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="PathTooLongException"></exception>
-        /// <exception cref="DirectoryNotFoundException"></exception>
         public static Queue<string> GetDoableJobs(string path, uint maxCount, bool sort)
         {
             string[] files;

@@ -41,15 +41,17 @@ namespace PrimesTools
 
 
 
-        private void BtnOpenFile_Click(object sender, RoutedEventArgs e) => UIControl.OpenFile();
-        private void BtnCloseFile_Click(object sender, RoutedEventArgs e) => UIControl.CloseFile();
-        private void BtnSaveFile_Click(object sender, RoutedEventArgs e) => UIControl.SaveFile();
+        private void OpenFile_Click(object sender, RoutedEventArgs e) => UIControl.OpenFile();
+        private void CloseFile_Click(object sender, RoutedEventArgs e) => UIControl.CloseFile();
+        private void SaveFile_Click(object sender, RoutedEventArgs e) => UIControl.SaveFile();
         private void LstPrimes_Selected(object sender, RoutedEventArgs e) => UIControl.SelectedPrime(LstPrimes.SelectedIndex);
         private void ROCheck_Click(object sender, RoutedEventArgs e) => UIControl.ROCheck();
         private void RDCheck_Click(object sender, RoutedEventArgs e) => UIControl.RDCheck();
         private void JumpToPrime_Click(object sender, RoutedEventArgs e) => UIControl.JumpToPrime();
         private void JumpToBinary_Click(object sender, RoutedEventArgs e) => UIControl.JumpToBinary();
         private void FindPrime_Click(object sedner, RoutedEventArgs e) => UIControl.FindPrime();
+        private void FindNCCBigJump_Click(object sender, RoutedEventArgs e) => UIControl.FindNCCBigJump();
+        private void IsPrime_Click(object sender, RoutedEventArgs e) => UIControl.IsPrime();
 
 
 

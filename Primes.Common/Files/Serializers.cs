@@ -165,7 +165,7 @@ namespace Primes.Common.Files
         {
             throw new NotImplementedException();
 
-            PrimeJob.Comp comp = new PrimeJob.Comp(bytes[3]);
+            /*PrimeJob.Comp comp = new PrimeJob.Comp(bytes[3]);
 
             uint batch = BitConverter.ToUInt32(bytes, 4);
             ulong start = BitConverter.ToUInt64(bytes, 8);
@@ -189,9 +189,7 @@ namespace Primes.Common.Files
                 //(streams ofc)
 
                 break;
-            }
-
-            throw new NotImplementedException();
+            }*/
         }
 
 
@@ -404,7 +402,7 @@ namespace Primes.Common.Files
         {
             throw new NotImplementedException();
 
-            const int EPB_DataSize = 4096;
+            /*const int EPB_DataSize = 4096;
 
             List<byte> bytes = new List<byte>(new byte[] { job.FileVersion.major, job.FileVersion.minor, job.FileVersion.patch, job.FileCompression.GetByte() });
 
@@ -447,7 +445,7 @@ namespace Primes.Common.Files
                 blocks[i] = new ErrorProtectedBlock(ErrorProtectedBlock.ErrorProtectionType.Fletcher16, buffer, BitConverter.GetBytes(Fletcher.Fletcher16(buffer)));
             }
 
-            return bytes.ToArray();
+            return bytes.ToArray();*/
         }
 
 

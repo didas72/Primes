@@ -46,9 +46,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConsoleLock.cs" />
-    <Compile Include="ErrorCorrection\CheckSum.cs" />
-    <Compile Include="ErrorCorrection\ErrorProtectedBlock.cs" />
-    <Compile Include="ErrorCorrection\Fletcher.cs" />
     <Compile Include="Files\Compression.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Files\KnownPrimesResourceFile.cs" />
@@ -57,7 +54,6 @@
     <Compile Include="Files\SevenZip.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Mathf.cs" />
-    <Compile Include="MyBitArray.cs" />
     <Compile Include="Net\Client.cs" />
     <Compile Include="Net\Messages\Message.cs" />
     <Compile Include="Net\Messages\Message_ClientBatchReceived.cs" />

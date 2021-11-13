@@ -25,9 +25,9 @@ namespace JobManagement
 
         private static ScanResults results;
 
-        private readonly static Task todo = Task.TestCorrection;
+        private readonly static Task todo = Task.Temporary;
 
-        static void Main()
+        private static void Main()
         {
             //Here goes code that will only get executed a few times for testing purpose and will never be used again.
             //Please ignore this project.
@@ -181,80 +181,9 @@ namespace JobManagement
         }
         public static void Temporary()
         {
-            ulong[] knownPrimes = KnownPrimesResourceFile.Deserialize("E:\\Documents\\primes\\resources\\knownPrimes.rsrc").Primes;
+            PrimeJob job = new PrimeJob(PrimeJob.Version.Latest, PrimeJob.Comp.Default, 0, 0, 0, 0, new List<ulong>() { 0, 67000 });
 
-            Stopwatch s = new Stopwatch();
-
-            Thread a, b, c;
-
-            ulong start;
-            ulong end;
-
-            Green("10^6");
-            start = 1000000;
-            end = 1010000;
-
-            a = new Thread(() => BenchFuckingMarkAntS(start, end)); a.Start();
-            b = new Thread(() => BenchFuckingMarkSimple(start, end)); b.Start();
-            c = new Thread(() => BenchFuckingMarkResource(start, end, ref knownPrimes)); c.Start();
-
-            a.Join(); b.Join(); c.Join();
-
-
-
-            Green("10^12");
-            start = 1000000000000;
-            end = 1000000010000;
-
-            a = new Thread(() => BenchFuckingMarkAntS(start, end)); a.Start();
-            b = new Thread(() => BenchFuckingMarkSimple(start, end)); b.Start();
-            c = new Thread(() => BenchFuckingMarkResource(start, end, ref knownPrimes)); c.Start();
-
-            a.Join(); b.Join(); c.Join();
-
-
-
-            Green("10^15");
-            start = 1000000000000000;
-            end = 1000000000010000;
-
-            a = new Thread(() => BenchFuckingMarkAntS(start, end)); a.Start();
-            b = new Thread(() => BenchFuckingMarkSimple(start, end)); b.Start();
-            c = new Thread(() => BenchFuckingMarkResource(start, end, ref knownPrimes)); c.Start();
-
-            a.Join(); b.Join(); c.Join();
-
-
-
-            Green("10^16");
-            start = 100000000000000000;
-            end = 100000000000010000;
-
-            a = new Thread(() => BenchFuckingMarkAntS(start, end)); a.Start();
-            b = new Thread(() => BenchFuckingMarkSimple(start, end)); b.Start();
-            c = new Thread(() => BenchFuckingMarkResource(start, end, ref knownPrimes)); c.Start();
-
-            a.Join(); b.Join(); c.Join();
-
-            Green("10^17");
-            start = 1000000000000000000;
-            end = 1000000000000010000;
-
-            a = new Thread(() => BenchFuckingMarkAntS(start, end)); a.Start();
-            b = new Thread(() => BenchFuckingMarkSimple(start, end)); b.Start();
-            c = new Thread(() => BenchFuckingMarkResource(start, end, ref knownPrimes)); c.Start();
-
-            a.Join(); b.Join(); c.Join();
-
-            Green("10^18");
-            start = 1000000000000000000;
-            end = 1000000000000010000;
-
-            a = new Thread(() => BenchFuckingMarkAntS(start, end)); a.Start();
-            b = new Thread(() => BenchFuckingMarkSimple(start, end)); b.Start();
-            c = new Thread(() => BenchFuckingMarkResource(start, end, ref knownPrimes)); c.Start();
-
-            a.Join(); b.Join(); c.Join();
+            PrimeJob.Serialize(job, Path.Combine(basePath, "TEST.primejob"));
         }
         public static void TestCorrection()
         {

@@ -130,7 +130,8 @@ namespace PrimesTools
                 SetStatus("No file chosen.");
             }
         }
-        public static void SelectedPrime(int selIndex)
+        public static void SelectedPrime(int selIndex) => SelectedPrime(selIndex, true);
+        public static void SelectedPrime(int selIndex, bool showAddr)
         {
             if (selIndex == -1)
                 return;
@@ -138,15 +139,18 @@ namespace PrimesTools
             if (selIndex >= job.Primes.Count)
                 return;
 
-            long address = PrimeJob.HeaderSize(job);
-            address += Compression.NCC.Compress(new ArraySegment<ulong>(job.Primes.ToArray(), 0, selIndex).ToArray()).LongLength;
+            long address = CalculateBinaryAddress(selIndex);
 
-            SetStatus($"Addr: {address:X8}");
+            if (showAddr)
+                SetStatus($"Addr: {address:X8}");
 
             int index = (int)address / 8;
 
             Binary.SelectedIndex = index;
             Binary.ScrollIntoView(Binary.Items[index]);
+
+            Primes.SelectedIndex = selIndex;
+            Primes.ScrollIntoView(Primes.Items[selIndex]);
         }
         public static void ROCheck()
         {
@@ -159,6 +163,8 @@ namespace PrimesTools
                 {
                     File.WriteAllText($"check_{job.Start}.log.txt", msg);
                     SetStatus("File failed check.");
+
+                    ProcessCheckLog(msg);
                 }
                 else
                     SetStatus("File passed check.");
@@ -183,6 +189,8 @@ namespace PrimesTools
                     {
                         File.WriteAllText($"check_{job.Start}_second_pass.log.txt", msg2);
                         SetStatus("Severe corruption.");
+
+                        ProcessCheckLog(msg);
                     }
                     else
                     {
@@ -222,9 +230,6 @@ namespace PrimesTools
                 SetStatus("Index out of range.");
                 return;
             }
-
-            Primes.SelectedIndex = index;
-            Primes.ScrollIntoView(Primes.Items[index]);
 
             SelectedPrime(index);
         }
@@ -278,10 +283,41 @@ namespace PrimesTools
                     break;
             }
 
-            Primes.SelectedIndex = i;
-            Primes.ScrollIntoView(Primes.Items[i]);
-
             SelectedPrime(i);
+        }
+        public static void FindNCCBigJump()
+        {
+            for (int i = 40; i + 1 < bytes.Length; i += 2)
+            {
+                if (bytes[i] == 0 && bytes[i + 1] == 0)
+                {
+                    int index = i / 8;
+
+                    Binary.SelectedIndex = index;
+                    Binary.ScrollIntoView(Binary.Items[index]);
+
+                    SetStatus($"First address {i:X8}");
+                    return;
+                }
+            }
+
+            SetStatus("No big jumps found.");
+        }
+        public static void IsPrime()
+        {
+            string resp = Interaction.InputBox("Number to check:", "Is prime", "0");
+
+            if (!ulong.TryParse(resp, out ulong value))
+            {
+                SetStatus("Invalid value.");
+                return;
+            }
+
+            if (Mathf.IsPrime(value))
+                SetStatus($"{value} is prime.");
+            else
+                SetStatus($"{value} is not prime.");
+
         }
         public static void Update()
         {
@@ -398,12 +434,48 @@ namespace PrimesTools
                 long rawSizeB = PrimeJob.RawFileSize(job);
                 long NCCSizeB = bytes.Length;
                 float NCCRatio = NCCSizeB / (float)rawSizeB;
+                int NCCBigJumps = 0;
 
+                for (int i = 40; i + 1 < bytes.Length; i += 2)
+                {
+                    if (bytes[i] == 0 && bytes[i + 1] == 0)
+                    {
+                        NCCBigJumps++;
+                    }
+                }
+
+                Stats.Items.Add(new ValueItemPair("Total primes:", job.Primes.Count.ToString()));
                 Stats.Items.Add(new ValueItemPair("Size (raw):", Utils.FormatSize(rawSizeB)));
                 Stats.Items.Add(new ValueItemPair("Size (NCC):", Utils.FormatSize(NCCSizeB)));
                 Stats.Items.Add(new ValueItemPair("NCC ratio:", NCCRatio.ToString("0.00%")));
-                Stats.Items.Add(new ValueItemPair("Total primes:", job.Primes.Count.ToString()));
+                Stats.Items.Add(new ValueItemPair("NCC Big Jumps:", NCCBigJumps.ToString()));
             }
+        }
+
+
+
+        private static void ProcessCheckLog(string msg)
+        {
+            string line = msg.Substring(0, msg.IndexOf('\n'));
+
+            if (line.StartsWith("Prime at index "))//15
+            {
+                string indexS = msg.Substring(15);
+                indexS = indexS.Substring(0, msg.IndexOf(' ') + 1);
+
+                if (int.TryParse(indexS, out int index))
+                {
+                    SelectedPrime(index, false);
+                    SetStatus($"Log: {line}");
+                }
+            }
+        }
+        private static long CalculateBinaryAddress(int index)
+        {
+            long address = PrimeJob.HeaderSize(job);
+            address += Compression.NCC.Compress(new ArraySegment<ulong>(job.Primes.ToArray(), 0, index).ToArray()).LongLength;
+
+            return address;
         }
 
 
