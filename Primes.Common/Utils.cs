@@ -105,10 +105,7 @@ namespace Primes.Common
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="PathTooLongException"></exception>
         /// <exception cref="DirectoryNotFoundException"></exception>
-        public static string[] GetSubFiles(string directory)
-        {
-            return GetSubFiles(directory, string.Empty);
-        }
+        public static string[] GetSubFiles(string directory) => GetSubFiles(directory, string.Empty);
         /// <summary>
         /// Gets all files in the given directory and it's subdirectories that match the given search pattern.
         /// </summary>
@@ -125,10 +122,20 @@ namespace Primes.Common
         {
             List<string> files = new List<string>();
 
-            files.AddRange(Directory.GetFiles(directory, searchPattern));
+            if (string.IsNullOrEmpty(searchPattern))
+            {
+                files.AddRange(Directory.GetFiles(directory));
 
-            foreach (string d in Directory.GetDirectories(directory))
-                files.AddRange(GetSubFiles(d, searchPattern));
+                foreach (string d in Directory.GetDirectories(directory))
+                    files.AddRange(GetSubFiles(d));
+            }
+            else
+            {
+                files.AddRange(Directory.GetFiles(directory, searchPattern));
+
+                foreach (string d in Directory.GetDirectories(directory))
+                    files.AddRange(GetSubFiles(d, searchPattern));
+            }
 
             return files.ToArray();
         }

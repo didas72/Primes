@@ -32,6 +32,8 @@ namespace PrimesTools
             EmptyAllLists();
             SetStatus("Ready.");
             SetProgress(0d);
+
+            Log.InitLog(Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
         }
 
 
@@ -152,7 +154,7 @@ namespace PrimesTools
             Primes.SelectedIndex = selIndex;
             Primes.ScrollIntoView(Primes.Items[selIndex]);
         }
-        public static void ROCheck()
+        public static void ROCheckJob()
         {
             if (job == null)
                 SetStatus("No job loaded.");
@@ -161,7 +163,7 @@ namespace PrimesTools
             {
                 if (!PrimeJob.CheckJob(job, false, out string msg))
                 {
-                    File.WriteAllText($"check_{job.Start}.log.txt", msg);
+                    File.WriteAllText($"checkj_{job.Start}.log.txt", msg);
                     SetStatus("File failed check.");
 
                     ProcessCheckLog(msg);
@@ -174,7 +176,7 @@ namespace PrimesTools
                 SetStatus("Error checking file.");
             }
         }
-        public static void RDCheck()
+        public static void RDCheckJob()
         {
             if (job == null)
                 SetStatus("No job loaded.");
@@ -183,11 +185,11 @@ namespace PrimesTools
             {
                 if (!PrimeJob.CheckJob(job, true, out string msg))
                 {
-                    File.WriteAllText($"check_{job.Start}.log.txt", msg);
+                    File.WriteAllText($"checkj_{job.Start}.log.txt", msg);
 
                     if (!PrimeJob.CheckJob(job, false, out string msg2))
                     {
-                        File.WriteAllText($"check_{job.Start}_second_pass.log.txt", msg2);
+                        File.WriteAllText($"checkj_{job.Start}_second_pass.log.txt", msg2);
                         SetStatus("Severe corruption.");
 
                         ProcessCheckLog(msg);
@@ -213,6 +215,106 @@ namespace PrimesTools
             catch
             {
                 SetStatus("Error checking file.");
+            }
+        }
+        public static void ROCheckFolder()
+        {
+            System.Windows.Forms.FolderBrowserDialog dialog = new System.Windows.Forms.FolderBrowserDialog()
+            {
+                Description = "Select folder to check...",
+                RootFolder = Environment.SpecialFolder.UserProfile,
+                ShowNewFolderButton = false,
+            };
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                try
+                {
+                    string[] files = Utils.GetSubFiles(dialog.SelectedPath, "*.primejob");
+                    int good = 0;
+                    int bad = 0;
+
+                    foreach (string f in files)
+                    {
+                        PrimeJob j = PrimeJob.Deserialize(f);
+
+                        if (!PrimeJob.CheckJob(j, false, out string msg))
+                        {
+                            File.WriteAllText($"checkj_{j.Start}.log.txt", msg);
+                            bad++;
+                        }
+                        else
+                            good++;
+                    }
+
+                    if (bad != 0)
+                        SetStatus($"Folder failed {bad}/{bad + good} checks.");
+                    else
+                        SetStatus($"Folder passed check ({good}).");
+                }
+                catch (Exception e)
+                {
+                    Log.LogException("Error checking folder (RO).", "UIControls", e);
+                    SetStatus("Error checking folder.");
+                }
+            }
+            else
+            {
+                SetStatus("No folder chosen.");
+            }
+        }
+        public static void RDCheckFolder()
+        {
+            System.Windows.Forms.FolderBrowserDialog dialog = new System.Windows.Forms.FolderBrowserDialog()
+            {
+                Description = "Select folder to check...",
+                RootFolder = Environment.SpecialFolder.UserProfile,
+                ShowNewFolderButton = false,
+            };
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                try
+                {
+                    string[] files = Utils.GetSubFiles(dialog.SelectedPath, "*.primejob");
+                    int good = 0, bad = 0, fix = 0;
+
+                    foreach (string f in files)
+                    {
+                        PrimeJob j = PrimeJob.Deserialize(f);
+
+                        if (!PrimeJob.CheckJob(j, true, out string msg))
+                        {
+                            File.WriteAllText($"checkj_{j.Start}.log.txt", msg);
+
+                            if (!PrimeJob.CheckJob(j, false, out string msg2))
+                            {
+                                File.WriteAllText($"checkj_{j.Start}_second_pass.log.txt", msg2);
+                                bad++;
+                            }
+                            else
+                            {
+                                PrimeJob.Serialize(j, f);
+                                fix++;
+                            }
+                        }
+                        else
+                            good++;
+                    }
+
+                    if (bad != 0 || fix != 0)
+                        SetStatus($"Bad/Fix/Good {bad}/{fix}/{good}.");
+                    else
+                        SetStatus($"Folder passed check ({good}).");
+                }
+                catch
+                {
+                    SetStatus("Error checking folder.");
+                }
+            }
+            else
+            {
+                SetStatus("No folder chosen.");
             }
         }
         public static void JumpToPrime()

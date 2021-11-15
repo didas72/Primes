@@ -28,9 +28,17 @@
                     <MenuItem Header="Prime" Click="FindPrime_Click"/>
                     <MenuItem Header="NCC Big Jump" Click="FindNCCBigJump_Click"/>
                 </MenuItem>
-                <MenuItem Header="Check Job">
-                    <MenuItem Header="Read Only" Click="ROCheck_Click"/>
-                    <MenuItem Header="Remove Duplicates" Click="RDCheck_Click"/>
+                <MenuItem Header="Check">
+                    <MenuItem Header="Job">
+                        <MenuItem Header="Read Only" Click="ROCheckJob_Click"/>
+                        <MenuItem Header="Remove Duplicates" Click="RDCheckJob_Click"/>
+                        <MenuItem Header="Deep Fix" IsEnabled="False"/>
+                    </MenuItem>
+                    <MenuItem Header="Folder">
+                        <MenuItem Header="Read Only" Click="ROCheckFolder_Click"/>
+                        <MenuItem Header="Remove Duplicates" Click="RDCheckFolder_Click"/>
+                        <MenuItem Header="Deep Fix" IsEnabled="False"/>
+                    </MenuItem>
                 </MenuItem>
                 <MenuItem Header="Is Prime" Click="IsPrime_Click"/>
             </MenuItem>
