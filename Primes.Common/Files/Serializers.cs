@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 
-using Primes.Common.ErrorCorrection;
-
 namespace Primes.Common.Files
 {
     /// <summary>

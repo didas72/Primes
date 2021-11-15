@@ -3,16 +3,26 @@ using System.Collections.Generic;
 
 namespace Primes.Common.Files.Settings
 {
+    /// <summary>
+    /// Class that represents a settings file and contains useful methods for interaction with such files.
+    /// </summary>
     public class SettingsDocument
     {
         private readonly Dictionary<string, string> settings;
 
 
 
+        /// <summary>
+        /// Default empty constructor.
+        /// </summary>
         public SettingsDocument()
         {
             settings = new Dictionary<string, string>();
         }
+        /// <summary>
+        /// Constructor that parses a string source.
+        /// </summary>
+        /// <param name="source"></param>
         public SettingsDocument(string source)
         {
             settings = new Dictionary<string, string>();
@@ -40,15 +50,36 @@ namespace Primes.Common.Files.Settings
 
 
 
+        /// <summary>
+        /// Attempts to get a setting from the document.
+        /// </summary>
+        /// <param name="key">The name of the setting.</param>
+        /// <param name="value">The value, if it exists.</param>
+        /// <returns></returns>
         public bool TryGetValue(string key, out string value)
         {
             return settings.TryGetValue(key, out value);
         }
+        /// <summary>
+        /// Gets the setting from the document, throwing an exception if the setting is not present.
+        /// </summary>
+        /// <param name="key">The name of the setting.</param>
+        /// <returns></returns>
         public string GetValue(string key) => settings[key];
+        /// <summary>
+        /// Checks if the document contains a given setting.
+        /// </summary>
+        /// <param name="key">The name of the setting.</param>
+        /// <returns></returns>
         public bool ContainsEntry(string key)
         {
             return settings.ContainsKey(key);
         }
+        /// <summary>
+        /// Checks if the document contains all of the given settings.
+        /// </summary>
+        /// <param name="keys">Array with the setting names.</param>
+        /// <returns></returns>
         public bool ContainsEntries(string[] keys)
         {
             foreach (string key in keys)
@@ -57,6 +88,11 @@ namespace Primes.Common.Files.Settings
 
             return true;
         }
+        /// <summary>
+        /// Applies the current document to a given scheme, adding missing settings and optionally resetting all to default values.
+        /// </summary>
+        /// <param name="scheme">The scheme to apply.</param>
+        /// <param name="resetAllToDefaults">Wether or not to reset to default values.</param>
         public void ApplySettingsScheme(Dictionary<string, string> scheme, bool resetAllToDefaults)
         {
             foreach (KeyValuePair<string, string> pair in scheme)
@@ -70,6 +106,11 @@ namespace Primes.Common.Files.Settings
                     settings.Add(pair);
             }
         }
+        /// <summary>
+        /// Adds a setting to the document.
+        /// </summary>
+        /// <param name="key">The number of the setting.</param>
+        /// <param name="value">The value of the setting.</param>
         public void AddEntry(string key, string value)
         {
             settings.Add(key, value);
@@ -77,6 +118,10 @@ namespace Primes.Common.Files.Settings
 
 
 
+        /// <summary>
+        /// Converts the settings document to a string.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             string outp = string.Empty;
@@ -88,141 +133,3 @@ namespace Primes.Common.Files.Settings
         }
     }
 }
-
-/*public bool GetByte(string key, out byte value)
-        {
-            value = 0;
-
-            if (!settings.ContainsKey(key))
-                return false;
-
-            string val = settings[key];
-
-            if (!byte.TryParse(val, out value))
-                return false;
-
-            return true;
-        }
-        public bool GetSByte(string key, out sbyte value)
-        {
-            value = 0;
-
-            if (!settings.ContainsKey(key))
-                return false;
-
-            string val = settings[key];
-
-            if (!sbyte.TryParse(val, out value))
-                return false;
-
-            return true;
-        }
-        public bool GetShort(string key, out short value)
-        {
-            value = 0;
-
-            if (!settings.ContainsKey(key))
-                return false;
-
-            string val = settings[key];
-
-            if (!short.TryParse(val, out value))
-                return false;
-
-            return true;
-        }
-        public bool GetUShort(string key, out ushort value)
-        {
-            value = 0;
-
-            if (!settings.ContainsKey(key))
-                return false;
-
-            string val = settings[key];
-
-            if (!ushort.TryParse(val, out value))
-                return false;
-
-            return true;
-        }
-        public bool GetInt(string key, out int value)
-        {
-            value = 0;
-
-            if (!settings.ContainsKey(key))
-                return false;
-
-            string val = settings[key];
-
-            if (!int.TryParse(val, out value))
-                return false;
-
-            return true;
-        }
-        public bool GetUInt(string key, out uint value)
-        {
-            value = 0;
-
-            if (!settings.ContainsKey(key))
-                return false;
-
-            string val = settings[key];
-
-            if (!uint.TryParse(val, out value))
-                return false;
-
-            return true;
-        }
-        public bool GetLong(string key, out long value)
-        {
-            value = 0;
-
-            if (!settings.ContainsKey(key))
-                return false;
-
-            string val = settings[key];
-
-            if (!long.TryParse(val, out value))
-                return false;
-
-            return true;
-        }
-        public bool GetULong(string key, out ulong value)
-        {
-            value = 0;
-
-            if (!settings.ContainsKey(key))
-                return false;
-
-            string val = settings[key];
-
-            if (!ulong.TryParse(val, out value))
-                return false;
-
-            return true;
-        }
-        public bool GetBool(string key, out bool value)
-        {
-            value = false;
-
-            if (!settings.ContainsKey(key))
-                return false;
-
-            string val = settings[key];
-
-            if (!bool.TryParse(val, out value))
-                return false;
-
-            return true;
-        }
-        public bool GetString(string key, out string value)
-        {
-            value = string.Empty;
-
-            if (!settings.ContainsKey(key))
-                return false;
-
-            value = settings[key];
-
-            return true;
-        }*/

@@ -12,7 +12,6 @@ using System.Diagnostics;
 
 using Primes.Common;
 using Primes.Common.Files;
-using Primes.Common.ErrorCorrection;
 
 namespace JobManagement
 {
@@ -181,9 +180,7 @@ namespace JobManagement
         }
         public static void Temporary()
         {
-            PrimeJob job = new PrimeJob(PrimeJob.Version.Latest, PrimeJob.Comp.Default, 0, 0, 0, 0, new List<ulong>() { 0, 67000 });
-
-            PrimeJob.Serialize(job, Path.Combine(basePath, "TEST.primejob"));
+            
         }
         public static void TestCorrection()
         {

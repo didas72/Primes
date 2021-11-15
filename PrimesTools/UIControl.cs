@@ -287,21 +287,26 @@ namespace PrimesTools
         }
         public static void FindNCCBigJump()
         {
-            for (int i = 40; i + 1 < bytes.Length; i += 2)
+            if (job.FileVersion.Equals(new PrimeJob.Version(1, 3, 0)) && job.FileCompression.NCC)
             {
-                if (bytes[i] == 0 && bytes[i + 1] == 0)
+                for (int i = 40; i + 1 < bytes.Length; i += 2)
                 {
-                    int index = i / 8;
+                    if (bytes[i] == 0 && bytes[i + 1] == 0)
+                    {
+                        int index = i / 8;
 
-                    Binary.SelectedIndex = index;
-                    Binary.ScrollIntoView(Binary.Items[index]);
+                        Binary.SelectedIndex = index;
+                        Binary.ScrollIntoView(Binary.Items[index]);
 
-                    SetStatus($"First address {i:X8}");
-                    return;
+                        SetStatus($"First address {i:X8}");
+                        return;
+                    }
                 }
+
+                SetStatus("No big jumps found.");
             }
 
-            SetStatus("No big jumps found.");
+            SetStatus("File does not use/support NCC.");
         }
         public static void IsPrime()
         {
@@ -313,10 +318,10 @@ namespace PrimesTools
                 return;
             }
 
-            if (Mathf.IsPrime(value))
+            if (Mathf.IsPrime(value, out ulong divider))
                 SetStatus($"{value} is prime.");
             else
-                SetStatus($"{value} is not prime.");
+                SetStatus($"{value} is dividable by {divider}.");
 
         }
         public static void Update()
