@@ -287,7 +287,7 @@ namespace PrimesTools
         }
         public static void FindNCCBigJump()
         {
-            if (job.FileVersion.Equals(new PrimeJob.Version(1, 3, 0)) && job.FileCompression.NCC)
+            if (job.FileVersion.Equals(new PrimeJob.Version(1, 2, 0)) && job.FileCompression.NCC)
             {
                 for (int i = 40; i + 1 < bytes.Length; i += 2)
                 {

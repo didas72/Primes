@@ -17,14 +17,14 @@ namespace JobManagement
 {
     class Program
     {
-        public const string basePath = "E:\\Documents\\working\\";
+        public const string basePath = "E:\\Documents\\primes\\working\\";
         public const ulong perJob = 10000000;
 
         public static List<string> prints = new List<string>();
 
         private static ScanResults results;
 
-        private readonly static Task todo = Task.Temporary;
+        private readonly static Task todo = Task.TestCorrection;
 
         private static void Main()
         {
@@ -184,43 +184,141 @@ namespace JobManagement
         }
         public static void TestCorrection()
         {
-            PrimeJob job = PrimeJob.Deserialize(Path.Combine(basePath, "rejects\\8030000000.primejob.rejected"));
-            bool fresh = true;
+            FileStream r = File.OpenRead(Path.Combine(basePath, "rejects\\8030000000.primejob.rejected"));
+            FileStream w = File.OpenWrite(Path.Combine(basePath, "rejects\\8030000000.primejob.rejected.fix"));
 
-            ulong current, last = job.Primes[0];
-            White($"First: {job.Primes[0]}");
+            ulong last = 0, curr, test, ulDiff;
+            ushort diff, lastCorrupt = 0;
+            byte[] buff = new byte[32];
+            bool bigJump = true, prevBigJump = false;
 
-            if (last % 2 == 0)
+            r.Seek(0, SeekOrigin.Begin);
+            r.Read(buff, 0, 32);
+            w.Write(buff, 0, 32);
+
+            while (r.RemainingBytes() >= 2)
             {
-                Red("RIP");
-                return;
-            }
-
-            for (int i = 1; i < job.Primes.Count; i++)
-            {
-                current = job.Primes[i];
-
-                if (current % 2 == 0)
+                if (bigJump)
                 {
-                    if (fresh)
-                    {
-                        fresh = false;
-                        Red($"Even at {i} of {job.Primes.Count}");
+                    buff = new byte[8];
+                    r.Read(buff, 0, 8);
 
-                        for (ulong v = last + 1; v < current + (ulong)uint.MaxValue; v++)
-                        {
-                            if (Mathf.IsPrime(v))
-                            {
-                                Red($"Previous is {last}");
-                                Red($"Value should be {v} and is {current}");
-                                Red($"Next value is {job.Primes[i + 1]}");
-                                return;
-                                break;
-                            }
-                        }
-                    }
+                    curr = BitConverter.ToUInt64(buff, 0);
+
+                    bigJump = false;
                 }
+                else
+                {
+                    buff = new byte[2];
+                    r.Read(buff, 0, 2);
+
+                    diff = BitConverter.ToUInt16(buff, 0);
+
+                    if (diff == 0)
+                    {
+                        bigJump = true;
+                        w.Write(buff, 0, 2);
+                        continue;
+                    }
+
+                    curr = last + diff;
+                }
+
+                //Change after functional
+                if (lastCorrupt != 0)
+                {
+                    if (!Mathf.IsPrime(curr))
+                    {
+                        Green("==STACKED CORRUPTION==");
+
+                        FixLocalCorruption(ref last, ref curr, r, w);
+
+                        if (prevBigJump)
+                            r.Seek(-10, SeekOrigin.Current);
+                        else
+                            r.Seek(-2, SeekOrigin.Current);
+
+                        last = curr;
+                        lastCorrupt = ushort.MaxValue;
+                        continue;
+                    }
+
+                    lastCorrupt--;
+                }
+                //EOC
+
+                if (last >= curr || curr % 2 == 0)
+                {
+                    lastCorrupt = ushort.MaxValue;
+                    test = last + (last % 2 == 0 ? 1ul : 2ul);
+
+                    while (true)
+                    {
+                        if (Mathf.IsPrime(test)) break;
+
+                        test += 2;
+                    }
+
+                    ulDiff = test - last;
+
+                    Blue("==ERROR START==");
+                    Red($"Error at {r.Position:X8}");
+                    Red($"Value {curr} should be {test}");
+                    Red($"Long offset is {ulDiff}");
+
+                    if (ulDiff > (ulong)ushort.MaxValue)
+                    {
+                        w.Write(BitConverter.GetBytes(test), 0, 8);
+                    }
+                    else
+                    {
+                        w.Seek(-2, SeekOrigin.Current);
+                        w.Write(BitConverter.GetBytes((ushort)ulDiff), 0, 2);
+                    }
+
+                    curr = test;
+                }
+                else
+                {
+                    w.Write(buff, 0, buff.Length);
+                }
+
+                last = curr;
+                prevBigJump = bigJump;
             }
+
+            r.Close();
+            w.Flush();
+            w.Close();
+        }
+        private static void FixLocalCorruption(ref ulong last, ref ulong curr, Stream r, Stream w)
+        {
+            ulong test = last + (last % 2 == 0 ? 1ul : 2ul);
+
+            while (true)
+            {
+                if (Mathf.IsPrime(test)) break;
+
+                test += 2;
+            }
+
+            ulong ulDiff = test - last;
+
+            Red($"Error at {r.Position:X8}");
+            Red($"Value {curr} should be {test}");
+            Red($"Long offset is {ulDiff}");
+
+            if (ulDiff > (ulong)ushort.MaxValue)
+            {
+                w.Write(BitConverter.GetBytes(test), 0, 8);
+            }
+            else
+            {
+                w.Seek(-2, SeekOrigin.Current);
+                w.Write(BitConverter.GetBytes((ushort)ulDiff), 0, 2);
+            }
+
+            curr = test;
         }
 
 

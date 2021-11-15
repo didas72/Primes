@@ -234,7 +234,7 @@ namespace Primes.Common.Files
                 {
                     delta = append[header] - last;
 
-                    if (delta > (ulong)0xFFFF)
+                    if (delta > (ulong)ushort.MaxValue)
                     {
                         block.AddRange(new byte[] { 0, 0 });
                         block.AddRange(BitConverter.GetBytes(append[header]));
