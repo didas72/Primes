@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <StartupObject>BatchServer.Program</StartupObject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MySql.Data" Version="8.0.27" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="DidasUtils">
+      <HintPath>..\..\DidasUtils\DidasUtils\bin\Release\net5.0\DidasUtils.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
