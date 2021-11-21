@@ -59,10 +59,10 @@ namespace BatchServer
 
             int reply;
 
-            reply = Globals.Db.SendCommandNonQuery("CREATE DATABASE IF NOT EXISTS 'batchServer';");
+            reply = Globals.Db.SendCommandNonQuery("CREATE DATABASE IF NOT EXISTS batchServer;");
             if (reply != 0) Log.LogEvent("Database 'batchServer' did not exists and was created.", "InitDB");
 
-            Globals.Db.SendCommandNonQuery("USE 'batchServer';");
+            Globals.Db.SendCommandNonQuery("USE batchServer;");
 
             Globals.Db.SendCommandNonQuery("CREATE TABLE IF NOT EXISTS users(user_id INT AUTO_INCREMENT PRIMARY KEY, last_ip INT, last_contacted DATETIME, last_requested DATETIME, last_submitted DATETIME);");
             Globals.Db.SendCommandNonQuery("CREATE TABLE IF NOT EXISTS jobs(job_start BIGINT UNIQUE NOT NULL PRIMARY KEY, status TINYINT DEFAULT 0, added DATETIME NOT NULL, assigned_user INT, last_sent DATETIME, last_received DATETIME);");
