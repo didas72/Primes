@@ -2,6 +2,8 @@
 
 using DidasUtils.Files;
 
+using BatchServer.Modules;
+
 namespace BatchServer
 {
     public static class Globals
@@ -13,5 +15,10 @@ namespace BatchServer
         public static DbWrapper Db;
 
         public static SettingsDocument settings;
+
+        public static ClientHandler clHandle;
+        public static ControlHandler ctlHandle;
+        public static ConnectionListener conListener;
+        public static Server server;
     }
 }

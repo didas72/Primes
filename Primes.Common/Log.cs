@@ -205,13 +205,6 @@ Start time {now.Hour}:{now.Minute}:{now.Second}
         /// <param name="e">The exception to log.</param>
         public static void LogException(string msg, string sender, Exception e)
         {
-            string data = string.Empty;
-
-            foreach (KeyValuePair<object, object> obj in e.Data)
-            {
-                data += $"[{obj.Key}:{obj.Value}]\n";
-            }
-
             LogEvent(EventType.Error, $"{msg}\nException details:\n{e}", sender, false);
         }
 
