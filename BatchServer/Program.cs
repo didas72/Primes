@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Threading;
 
 using DidasUtils;
 using DidasUtils.Logging;
+using DidasUtils.Files;
 
 namespace BatchServer
 {
@@ -26,6 +28,8 @@ namespace BatchServer
 
             InitLog();
 
+            InitSettings();
+
             InitDB();
         }
 
@@ -43,6 +47,11 @@ namespace BatchServer
             Directory.CreateDirectory("/var/log/didas72/batchServer/");
 
             Globals.logPath = "/var/log/didas72/batchServer/";
+
+            Directory.CreateDirectory("/etc/didas72/");
+            Directory.CreateDirectory("/etc/didas72/batchServer/");
+
+            Globals.settingsPath = "/etc/didas72/batchServer/";
         }
 
         static void InitLog()
@@ -51,11 +60,26 @@ namespace BatchServer
             Log.LogEvent($"OS: {Environment.OSVersion.VersionString}", "Init");
         }
 
+        static void InitSettings()
+        {
+            if (File.Exists(Globals.settingsPath + "settings.set"))
+            {
+                Globals.settings = new SettingsDocument(File.ReadAllText(Globals.settingsPath + "settings.set"));
+            }
+            else
+            {
+                Log.LogEvent(Log.EventType.Warning, "No settings file present.", "InitSettings");
+
+                Globals.settings = new SettingsDocument();
+                Globals.settings.ApplySettingsScheme(new Dictionary<string, string>() { { "server", "localhost" }, { "user", "root" }, { "password", "" } }, false);
+            }
+        }
+
         static void InitDB()
         {
             Globals.Db = new DbWrapper();
 
-            Globals.Db.Connect();
+            Globals.Db.Connect(Globals.settings.GetValue("server"), Globals.settings.GetValue("user"), Globals.settings.GetValue("password"));
 
             int reply;
 

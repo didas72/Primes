@@ -13,11 +13,10 @@ namespace BatchServer
         MySqlConnection connection;
 
 
-        [Obsolete("Man add a damn password system that does not need it hard coded (so it's not on github lol).")]
-        public void Connect()
+
+        public void Connect(string server, string user, string password)
         {
-            //load pass from file?
-            string connectionStr = "server=localhost;user=batchServer;port=3306;password=server"; //FIXME: add a proper password??
+            string connectionStr = $"server={server};user={user};port=3306;password={password}";
             connection = new(connectionStr);
             
             try
