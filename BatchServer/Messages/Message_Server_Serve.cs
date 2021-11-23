@@ -1,16 +1,41 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BatchServer.Messages
 {
     public class Message_Server_Serve : Message
     {
+        public int userId;
+        public Status status;
+
+
+
         public Message_Server_Serve(int id, Status stat)
         {
+            MessageType = Type.Server_Serve;
+            userId = id;
+            status = stat;
+        }
 
+
+
+        public override byte[] Serialize()
+        {
+            byte[] ret = new byte[6];
+
+            ret[0] = (byte)MessageType;
+            Array.Copy(BitConverter.GetBytes(userId), 0, ret, 1, 4);
+            ret[5] = (byte)status;
+
+            return ret;
+        }
+
+
+
+        public static Message_Server_Serve InternalDeserialize(byte[] bytes)
+        {
+            int id = BitConverter.ToInt32(bytes, 1);
+
+            return new Message_Server_Serve(id, (Status)bytes[5]);
         }
 
 

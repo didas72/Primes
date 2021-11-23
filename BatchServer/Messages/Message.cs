@@ -22,26 +22,21 @@ namespace BatchServer.Messages
 
         public static Message Deserialize(byte[] bytes)
         {
-            switch ((Type)bytes[0])
+            return (Type)bytes[0] switch
             {
-                case Type.Identifier:
-                    return Message_Identifier.InternalDeserialize(bytes);
-
-                case Type.Server_StateControl:
-                    return new Message_Server_StateControl();
-
-                case Type.Control_Control:
-                    return Message_Control_Control.InternalDeserialize(bytes);
-
-                case Type.Server_StateRequest:
-                    return new Message_Server_StateRequest();
-
-                case Type.Client_StateRequest:
-                    return Message_Client_StateRequest.InternalDeserialize(bytes);
-
-                default:
-                    throw new Exception("Invalid message type.");
-            }
+                Type.Identifier => Message_Identifier.InternalDeserialize(bytes),
+                Type.Server_StateControl => new Message_Server_StateControl(),
+                Type.Control_Control => Message_Control_Control.InternalDeserialize(bytes),
+                Type.Server_StateRequest => new Message_Server_StateRequest(),
+                Type.Client_StateRequest => Message_Client_StateRequest.InternalDeserialize(bytes),
+                Type.Server_Serve => Message_Server_Serve.InternalDeserialize(bytes),
+                Type.Client_Acknowledge => Message_Client_Acknowledge.InternalDeserialize(bytes),
+                Type.Server_Data => Message_Server_Data.InternalDeserialize(bytes),
+                Type.Server_Ready => new Message_Server_Ready(),
+                Type.Client_Data => Message_Client_Data.InternalDeserialize(bytes),
+                Type.Server_Acknowledge => Message_Server_Acknowledge.InternalDeserialize(bytes),
+                _ => throw new Exception("Invalid message type."),
+            };
         }
 
 

@@ -86,7 +86,10 @@ namespace BatchServer.Modules
             catch (Exception e)
             {
                 Log.LogException("Error handling control.", "ControlHandler", e);
+                return;
             }
+
+            Log.LogEvent($"Finished handling controller.", "ControlHandler");
         }
 
         private void MessageReceived(Client sender, byte[] data) { lock (pendingHandles) pendingHandles.Enqueue(Message.Deserialize(data)); }

@@ -13,20 +13,20 @@ namespace BatchServer
 {
     /*
      TODO:
-        -Not close right away
-        -Add controls to:
-            -add new batches
-            -fetch finished batches
-            -control batch info
-            -stop server
-            -restart server
-            -get user info
-            -control user info
-        -Add handling of requests
-        -Add checking the time of last time up, if long elapsed, extend all user return to today += ?2?
-        -Add missing logging for connects and interacts
-        -Add specifiy for batch store paths
-        -Add missing messages
+        - Not close right away
+        - Add controls to:
+            - add new batches
+            - fetch finished batches
+            - control batch info
+            - stop server
+            - restart server
+            - get user info
+            - control user info
+        - Add handling of requests
+        - Add checking the time of last time up, if long elapsed, extend all user return to today += ?2?
+        - Add missing logging for connects and interacts
+        - Add specifiy for batch store paths
+        + ---Add missing messages---
      */
 
     class Program

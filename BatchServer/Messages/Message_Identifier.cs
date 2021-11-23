@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-
-using DidasUtils.Net;
 
 namespace BatchServer.Messages
 {
@@ -28,9 +25,6 @@ namespace BatchServer.Messages
 
         public static Message_Identifier InternalDeserialize(byte[] bytes)
         {
-            if (bytes.Length != 2)
-                throw new ArgumentException();
-
             return new Message_Identifier((Identifier)bytes[1]);
         }
 

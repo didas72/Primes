@@ -37,41 +37,56 @@ namespace BatchServer.Modules
 
         private void MessageReceived(Client sender, byte[] data)
         {
-            var pair = queuedClients.Find(((Client, System.Timers.Timer) a) => a.Item1 == sender);
-
-            lock (pair.Item1)
+            try
             {
-                pair.Item2.Dispose();
+                var pair = queuedClients.Find(((Client, System.Timers.Timer) a) => a.Item1 == sender);
+
+                lock (pair.Item1)
+                {
+                    pair.Item2.Dispose();
+                }
+
+                queuedClients.Remove(pair);
+
+                Client cl = pair.Item1;
+
+                Message msg = Message.Deserialize(data);
+
+                if (msg is not Message_Identifier ident) { cl.Disconnect(); return; }
+
+                if (ident.identifier == Message_Identifier.Identifier.Control)
+                {
+                    Log.LogEvent($"Client '{cl.socket.Client.RemoteEndPoint}' successfully identified as a controller.", "ClientHandler");
+
+                    cl.messageReceived -= MessageReceived;
+                    Globals.ctlHandle.Handle(cl);
+                }
+                else if (ident.identifier == Message_Identifier.Identifier.Client)
+                {
+                    Log.LogEvent($"Client '{cl.socket.Client.RemoteEndPoint}' successfully identified as a client.", "ClientHandler");
+
+                    cl.messageReceived -= MessageReceived;
+                    Globals.server.Handle(cl);
+                }
+                else
+                {
+                    Log.LogEvent($"Client '{cl.socket.Client.RemoteEndPoint}' failed to identify. Disconnecting.", "ClientHandler");
+
+                    cl.Disconnect();
+                    return;
+                }
             }
-
-            queuedClients.Remove(pair);
-
-            Client cl = pair.Item1;
-
-            Message msg = Message.Deserialize(data);
-
-            if (msg is not Message_Identifier ident) { cl.Disconnect(); return; }
-
-            if (ident.identifier == Message_Identifier.Identifier.Control)
+            catch (Exception e)
             {
-                cl.messageReceived -= MessageReceived;
-                Globals.ctlHandle.Handle(cl);
-            }
-            else if (ident.identifier == Message_Identifier.Identifier.Client)
-            {
-                cl.messageReceived -= MessageReceived;
-                Globals.server.Handle(cl);
-            }
-            else 
-            { 
-                cl.Disconnect();
-                return;
+                Log.LogException("Error hanlding received message.", "ClientHandler", e);
             }
         }
 
         private void ExpireTimer(object sender, EventArgs e)
         {
             var pair = queuedClients.Find(((Client, System.Timers.Timer) a) => a.Item2 == sender);
+
+            Log.LogEvent($"Client '{pair.Item1.socket.Client.RemoteEndPoint}' took to long to identify. Disconnecting.", "ClientHandler");
 
             lock (pair.Item1)
             {

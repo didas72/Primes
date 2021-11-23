@@ -30,6 +30,8 @@ namespace BatchServer.Modules
         {
             if (IsRunning) return;
 
+            Log.LogEvent("Starting listener.", "ConnectionListener");
+
             run = true;
             thread = new Thread(() => ListenLoop(port));
             thread.Start();
@@ -37,8 +39,10 @@ namespace BatchServer.Modules
 
         public void StopListener()
         {
+            Log.LogEvent("Stopping listener.", "ConnectionListener");
+
             run = false;
-            thread.Join();
+            thread?.Join();
         }
 
 
@@ -50,11 +54,13 @@ namespace BatchServer.Modules
 
             while (run)
             {
-                if (!listener.Pending()) Thread.Sleep(10);
+                if (!listener.Pending()) { Thread.Sleep(10); continue; }
 
                 TcpClient soc = listener.AcceptTcpClient();
-                Client client = new (soc);
 
+                Log.LogEvent($"Client '{soc.Client.RemoteEndPoint}' connected.", "ConnectionListener");
+
+                Client client = new (soc);
                 Globals.clHandle.DistributeClient(client);
             }
         }

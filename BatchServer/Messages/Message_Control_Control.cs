@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BatchServer.Messages
 {
@@ -29,9 +25,6 @@ namespace BatchServer.Messages
 
         public static Message_Control_Control InternalDeserialize(byte[] bytes)
         {
-            if (bytes.Length != 2)
-                throw new ArgumentException();
-
             return new Message_Control_Control((Control)bytes[1]);
         }
 
