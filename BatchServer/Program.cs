@@ -14,6 +14,7 @@ namespace BatchServer
     /*
      TODO:
         - Not close right away
+        + Add icon
         - Add controls to:
             - add new batches
             - fetch finished batches
@@ -25,7 +26,7 @@ namespace BatchServer
         - Add handling of requests
         - Add checking the time of last time up, if long elapsed, extend all user return to today += ?2?
         - Add missing logging for connects and interacts
-        - Add specifiy for batch store paths
+        +-Add specifiy of batch store paths
         + ---Add missing messages---
      */
 
@@ -102,6 +103,10 @@ namespace BatchServer
                 Directory.CreateDirectory("/etc/didas72/batchServer/");
 
                 Globals.settingsPath = "/etc/didas72/batchServer/";
+
+                if (!Directory.Exists("/media/usb/")) return false;
+
+                Globals.batchesPath = "/media/usb/";
             }
             catch (Exception e)
             {

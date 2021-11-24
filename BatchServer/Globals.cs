@@ -11,6 +11,7 @@ namespace BatchServer
         public static string dataPath;
         public static string logPath;
         public static string settingsPath;
+        public static string batchesPath;
 
         public static DbWrapper Db;
 
