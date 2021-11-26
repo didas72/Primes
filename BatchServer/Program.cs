@@ -27,6 +27,7 @@ namespace BatchServer
         - Add checking the time of last time up, if long elapsed, extend all user return to today += ?2?
         - Add missing logging for connects and interacts
         +-Add specifiy of batch store paths
+        + Test!
         + ---Add missing messages---
      */
 

@@ -16,6 +16,7 @@ namespace BatchServer
         public static DbWrapper Db;
 
         public static SettingsDocument settings;
+        public static int maxPerClient;
 
         public static ClientHandler clHandle;
         public static ControlHandler ctlHandle;

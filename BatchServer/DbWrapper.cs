@@ -63,5 +63,9 @@ namespace BatchServer
             MySqlCommand cmd = new(sql, connection);
             return cmd.ExecuteScalar();
         }
+
+
+
+        public static string DateTimeToMySql(DateTime dateTime) => dateTime.ToString("yyyy-MM-dd HH:mm:ss");
     }
 }
