@@ -3,25 +3,31 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Primes", "Primes\Primes.csproj", "{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Primes", "Primes\Primes.csproj", "{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Primes.Common", "Primes.Common\Primes.Common.csproj", "{8765A43E-8C86-48FD-8525-4948536B5F08}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Primes.Common", "Primes.Common\Primes.Common.csproj", "{8765A43E-8C86-48FD-8525-4948536B5F08}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobManagement", "JobManagement\JobManagement.csproj", "{F8C30429-B143-43BE-879A-39671121ADCC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobManagement", "JobManagement\JobManagement.csproj", "{F8C30429-B143-43BE-879A-39671121ADCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesTester", "PrimesTester\PrimesTester.csproj", "{EF685B51-E2D5-46FC-B51C-923CB9283940}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesUpdater", "PrimesUpdater\PrimesUpdater.csproj", "{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BatchDistributer", "BatchDistributer\BatchDistributer.csproj", "{35E43D89-F5ED-40B8-A7BE-2867CD32377E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimesTester", "PrimesTester\PrimesTester.csproj", "{EF685B51-E2D5-46FC-B51C-923CB9283940}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesTools", "PrimesTools\PrimesTools.csproj", "{DD05A858-F9AC-4E13-B85B-A1025230DCF1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BatchServer", "BatchServer\BatchServer.csproj", "{B5F23AFA-DA3C-46A5-A1D6-9C72031D6301}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesInstaller", "PrimesInstaller\PrimesInstaller.csproj", "{4867EE03-21B3-4179-959E-BE8E5391668C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimesInstaller", "PrimesInstaller\PrimesInstaller.csproj", "{4867EE03-21B3-4179-959E-BE8E5391668C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DidasUtils", "DidasUtils\DidasUtils\DidasUtils.csproj", "{A3536456-4A04-4CF8-AAF8-D0B97F4AB534}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9CB2A753-F6C5-487B-A5BC-19597F1E80D5}"
+	ProjectSection(SolutionItems) = preProject
+		Resources\versions.xml = Resources\versions.xml
+	EndProjectSection
 EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		DidasUtils\DidasUtilsShared\DidasUtilsShared.projitems*{a3536456-4a04-4cf8-aaf8-d0b97f4ab534}*SharedItemsImports = 5
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
@@ -29,8 +35,8 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}.Debug|x64.Build.0 = Debug|Any CPU
 		{18D37FA6-4BFA-45F9-B88B-B2CB5894E009}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -61,22 +67,6 @@ Global
 		{EF685B51-E2D5-46FC-B51C-923CB9283940}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EF685B51-E2D5-46FC-B51C-923CB9283940}.Release|x64.ActiveCfg = Release|Any CPU
 		{EF685B51-E2D5-46FC-B51C-923CB9283940}.Release|x64.Build.0 = Release|Any CPU
-		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Debug|x64.Build.0 = Debug|Any CPU
-		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Release|x64.ActiveCfg = Release|Any CPU
-		{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}.Release|x64.Build.0 = Release|Any CPU
-		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Debug|x64.Build.0 = Debug|Any CPU
-		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Release|x64.ActiveCfg = Release|Any CPU
-		{35E43D89-F5ED-40B8-A7BE-2867CD32377E}.Release|x64.Build.0 = Release|Any CPU
 		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD05A858-F9AC-4E13-B85B-A1025230DCF1}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -101,6 +91,14 @@ Global
 		{4867EE03-21B3-4179-959E-BE8E5391668C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4867EE03-21B3-4179-959E-BE8E5391668C}.Release|x64.ActiveCfg = Release|Any CPU
 		{4867EE03-21B3-4179-959E-BE8E5391668C}.Release|x64.Build.0 = Release|Any CPU
+		{A3536456-4A04-4CF8-AAF8-D0B97F4AB534}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3536456-4A04-4CF8-AAF8-D0B97F4AB534}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3536456-4A04-4CF8-AAF8-D0B97F4AB534}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A3536456-4A04-4CF8-AAF8-D0B97F4AB534}.Debug|x64.Build.0 = Debug|Any CPU
+		{A3536456-4A04-4CF8-AAF8-D0B97F4AB534}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3536456-4A04-4CF8-AAF8-D0B97F4AB534}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3536456-4A04-4CF8-AAF8-D0B97F4AB534}.Release|x64.ActiveCfg = Release|Any CPU
+		{A3536456-4A04-4CF8-AAF8-D0B97F4AB534}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -2,18 +2,19 @@
 using System.IO;
 using System.Threading;
 
-using Primes.Common;
+using DidasUtils;
+using DidasUtils.Logging;
 
-namespace Primes.Updater
+namespace Primes.Installer
 {
-    class Program
+    internal class Program
     {
         public static string tmpDir, homeDir, installDir;
 
         private static bool updateSelf;
         private static bool updatePrimes;
 
-        private static volatile bool exiting = false;
+        private static volatile bool exiting;
 
 
 
@@ -78,7 +79,7 @@ namespace Primes.Updater
             Directory.CreateDirectory(homeDir);
 
             tmpDir = Path.Combine(homeDir, "tmp");
-            Utils.DeleteDirectory(tmpDir);
+            Directory.Delete(tmpDir, true);
             Directory.CreateDirectory(tmpDir);
 
             Console.WriteLine("Directories set up.");
@@ -154,7 +155,7 @@ namespace Primes.Updater
         {
             Log.LogEvent("Cleaning up...", "MainThread");
 
-            Utils.DeleteDirectory(tmpDir);
+            Directory.Delete(tmpDir, true);
         }
         private static void Exit()
         {

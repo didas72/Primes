@@ -19,7 +19,7 @@ namespace Primes.Tester
             for (ulong i = start; i < max; i++)
             {
                 if (!last)
-                    last = Mathf.IsPrime(i);
+                    last = PrimesMath.IsPrime(i);
             }
 
             s.Stop();
@@ -74,7 +74,7 @@ namespace Primes.Tester
             for (ulong i = start; i < max; i++)
             {
                 if (!last)
-                    last = Mathf.IsPrime(i);
+                    last = PrimesMath.IsPrime(i);
             }
 
             s.Stop();

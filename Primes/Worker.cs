@@ -3,8 +3,13 @@ using System.IO;
 using System.Threading;
 using System.Collections.Generic;
 
+using DidasUtils;
+using DidasUtils.Logging;
+using DidasUtils.Files;
+
 using Primes.Common;
 using Primes.Common.Files;
+using DidasUtils.Extensions;
 
 namespace Primes.Exec
 {
@@ -81,9 +86,9 @@ namespace Primes.Exec
 
 
                     if (Program.resourcesLoaded)
-                        result = Mathf.IsPrime(current, ref Program.knowPrimes);
+                        result = PrimesMath.IsPrime(current, ref Program.knowPrimes);
                     else
-                        result = Mathf.IsPrime(current);
+                        result = PrimesMath.IsPrime(current);
 
 
 

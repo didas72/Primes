@@ -1,14 +1,13 @@
 ﻿using System;
 using System.IO;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using System.Text;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
+
+using DidasUtils;
+using DidasUtils.Logging;
+using DidasUtils.Files;
+using DidasUtils.Extensions;
 
 using Primes.Common;
 using Primes.Common.Files;
@@ -20,7 +19,7 @@ namespace JobManagement
         public const string basePath = "E:\\Documents\\primes\\working\\";
         public const ulong perJob = 10000000;
 
-        public static List<string> prints = new List<string>();
+        public static List<string> prints = new();
 
         private static ScanResults results;
 
@@ -76,7 +75,7 @@ namespace JobManagement
 
             //setup log
             Log.InitLog(basePath, "scan_log.txt");
-            Log.PrintByDefault = false;
+            Log.UsePrint = false;
 
 
 
@@ -90,9 +89,9 @@ namespace JobManagement
 
 
             //run scan async
-            Scanner scanner = new Scanner(9);
+            Scanner scanner = new(9);
 
-            Thread thread = new Thread(() => results = scanner.RunScan(sourcePath, tmpPath, destPath, rejectsPath));
+            Thread thread = new(() => results = scanner.RunScan(sourcePath, tmpPath, destPath, rejectsPath));
             thread.Start();
 
 
@@ -130,7 +129,7 @@ namespace JobManagement
 
             //clean up
             Log.LogEvent("Cleaning up...", "Main");
-            Utils.DeleteDirectory(tmpPath);
+            Directory.Delete(tmpPath, true);
             Log.LogEvent("Done.", "Main");
 
 
@@ -227,7 +226,7 @@ namespace JobManagement
                 //Change after functional
                 if (lastCorrupt != 0)
                 {
-                    if (!Mathf.IsPrime(curr))
+                    if (!PrimesMath.IsPrime(curr))
                     {
                         Green("==STACKED CORRUPTION==");
 
@@ -254,7 +253,7 @@ namespace JobManagement
 
                     while (true)
                     {
-                        if (Mathf.IsPrime(test)) break;
+                        if (PrimesMath.IsPrime(test)) break;
 
                         test += 2;
                     }
@@ -297,7 +296,7 @@ namespace JobManagement
 
             while (true)
             {
-                if (Mathf.IsPrime(test)) break;
+                if (PrimesMath.IsPrime(test)) break;
 
                 test += 2;
             }
@@ -326,7 +325,7 @@ namespace JobManagement
         #region Benchmarking
         private static void BenchFuckingMarkAntS(ulong start, ulong end)
         {
-            Stopwatch s = new Stopwatch();
+            Stopwatch s = new();
             s.Start();
             for (ulong i = start; i < end; i++)
                 IsPrime_AntunesSenior(i);
@@ -335,19 +334,19 @@ namespace JobManagement
         }
         private static void BenchFuckingMarkSimple(ulong start, ulong end)
         {
-            Stopwatch s = new Stopwatch();
+            Stopwatch s = new();
             s.Start();
             for (ulong i = start; i < end; i++)
-                Mathf.IsPrime(i);
+                PrimesMath.IsPrime(i);
             s.Stop();
             White($"Ours (simple):   {s.ElapsedMilliseconds}ms");
         }
         private static void BenchFuckingMarkResource(ulong start, ulong end, ref ulong[] knownPrimes)
         {
-            Stopwatch s = new Stopwatch();
+            Stopwatch s = new();
             s.Start();
             for (ulong i = start; i < end; i++)
-                Mathf.IsPrime(i, ref knownPrimes);
+                PrimesMath.IsPrime(i, ref knownPrimes);
             s.Stop();
             White($"Ours (reosurce): {s.ElapsedMilliseconds}ms");
         }
@@ -362,7 +361,7 @@ namespace JobManagement
                 return false;
 
             ulong n, j = 1;
-            ulong sqrt = Mathf.UlongSqrtHigh(value);
+            ulong sqrt = PrimesMath.UlongSqrtHigh(value);
 
             while (true)
             {

@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 
+using DidasUtils;
+using DidasUtils.Logging;
+using DidasUtils.Extensions;
+
 using Primes.Common;
 
 namespace Primes.Exec
@@ -27,7 +31,7 @@ namespace Primes.Exec
 
         private const string percentageFormat = "000.0";
 
-        public static int frameTime = Mathf.Clamp(PrimesSettings.FrameTimeMillis, 200, 60000);
+        public static int frameTime = Mathf.Clamp(Program.settings.GetInt("FrameTimeMillis"), 200, 60000);
 
 
 
@@ -37,7 +41,7 @@ namespace Primes.Exec
             {
                 doUI = true;
 
-                lastJobSeconds = new ushort[PrimesSettings.Threads];
+                lastJobSeconds = new ushort[Program.settings.GetUShort("Threads")];
 
                 CalculateGraphicMetrics();
 
@@ -137,7 +141,7 @@ namespace Primes.Exec
                 int filledBarChars = (int)Math.Round(progress * progressBarMultiplier);
 
                 ushort avgJobSeconds = CalculateAverageJobSeconds();
-                ulong ETRSeconds = (avgJobSeconds * (ulong)left) / PrimesSettings.Threads;
+                ulong ETRSeconds = (avgJobSeconds * (ulong)left) / Program.settings.GetUShort("Threads");
 
                 ui += $"Gbl [{"=".Loop(filledBarChars)}{" ".Loop(progressBarWidth - filledBarChars)}] {progress.ToString(percentageFormat)}% ETR: {(ETRSeconds / 3600):D2}h{((ETRSeconds / 60) % 60):D2}\n";
             }
@@ -203,7 +207,7 @@ namespace Primes.Exec
             progressBarWidth = (ushort)Mathf.Clamp((Console.WindowWidth - 27), 0, 200); //2 for [] to enclose bar; 3 for worker number (#XX); 1 ' '; 6 for percentage (XXX.X%); 1 ' '; 10 for batch (Batch: XXX); 4 ' ' for looks and to fit ETR
             progressBarMultiplier = progressBarWidth / 100f;
 
-            maxLogLines = (ushort)Mathf.Clamp(Console.WindowHeight - PrimesSettings.Threads - 5, 0, 50); //1 for title (Primes.exe by Didas72 and PeakRead); 1 for batch progress; 2 for divider + 'Logs:'; 1 for last line (always empty)
+            maxLogLines = (ushort)Mathf.Clamp(Console.WindowHeight - Program.settings.GetUInt("Threads") - 5, 0, 50); //1 for title (Primes.exe by Didas72 and PeakRead); 1 for batch progress; 2 for divider + 'Logs:'; 1 for last line (always empty)
         }
 
 

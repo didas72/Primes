@@ -2,6 +2,10 @@
 using System.IO;
 using System.Threading;
 
+using DidasUtils;
+using DidasUtils.Logging;
+using DidasUtils.Files;
+
 using Primes.Common;
 using Primes.Common.Files;
 
@@ -18,6 +22,8 @@ namespace Primes.Exec
         public static ulong[] knowPrimes;
 
         public static JobDistributer jobDistributer;
+
+        public static SettingsDocument settings;
 
 
 
@@ -65,35 +71,34 @@ namespace Primes.Exec
 
                 if (!InitSettings())
                     return false;
-
                 LogExtension.LogEvent("Settings initialized.", "MainThread");
+
 
                 if (!ParseArguments(ref args))
                     return false;
-
                 LogExtension.LogEvent("Arguments parsed.", "MainThread");
+
 
                 if (!LoadResources())
                     return false;
-
                 LogExtension.LogEvent("Resources loaded.", "MainThread");
+
 
                 if (!resourcesLoaded)
                     LogExtension.LogEvent(Log.EventType.Warning, "Some resource files were found. This could make prime search significantly slower.", "MainThread", true);
 
+
                 if (!InitDistributer())
                     return false;
-
                 LogExtension.LogEvent("Distributer initialized.", "MainThread");
 
+
                 InitUI();
-
                 Thread.Sleep(2000); //allow time for UI to init
-
                 LogExtension.LogEvent("UI initialized.", "MainThread");
 
-                PrimesSettings.SaveSettings();
 
+                SettingsDocument.Serialize(settings, Path.Combine(homePath, "settings.set"));
                 LogExtension.LogEvent("Initialization complete.", "MainThread");
 
                 return true;
@@ -135,7 +140,7 @@ namespace Primes.Exec
                     {
                         if (ushort.TryParse(args[i + 1], out ushort tArg))
                         {
-                            PrimesSettings.Threads = tArg;
+                            settings.SetValue("Threads", tArg);
                         }
                         else
                         {
@@ -155,7 +160,7 @@ namespace Primes.Exec
                     {
                         if (uint.TryParse(args[i + 1], out uint bArg))
                         {
-                            PrimesSettings.PrimeBufferSize = bArg;
+                            settings.SetValue("PrimeBufferSize", bArg);
                         }
                         else
                         {
@@ -175,7 +180,7 @@ namespace Primes.Exec
                     {
                         if (uint.TryParse(args[i + 1], out uint qArg))
                         {
-                            PrimesSettings.MaxJobQueue = qArg;
+                            settings.SetValue("MaxJobQueue", qArg);
                         }
                         else
                         {
@@ -195,7 +200,7 @@ namespace Primes.Exec
                     {
                         if (int.TryParse(args[i + 1], out int fArg))
                         {
-                            PrimesSettings.FrameTimeMillis = fArg;
+                            settings.SetValue("FrameTimeMillis", fArg);
                         }
                         else
                         {
@@ -214,9 +219,9 @@ namespace Primes.Exec
                     if (args.Length >= i)
                     {
                         if (args[i + 1].ToLowerInvariant() == "x")
-                            PrimesSettings.UseUI = false;
+                            settings.SetValue("UseUI", false);
                         else
-                            PrimesSettings.UseUI = true;
+                            settings.SetValue("UseUI", true);
                     }
                     else
                     {
@@ -268,7 +273,7 @@ namespace Primes.Exec
         }
         private static bool InitSettings()
         {
-            PrimesSettings.InitSettings(Path.Combine(homePath, "settings.set"));
+            settings = new SettingsDocument(File.ReadAllText(Path.Combine(homePath, "settings.set")));
 
             return true;
         }
@@ -312,13 +317,13 @@ namespace Primes.Exec
         }
         private static bool InitDistributer()
         {
-            jobDistributer = new JobDistributer(PrimesSettings.Threads == 0 ? PrimesSettings.Threads : (ushort)Environment.ProcessorCount, jobsPath, completePath);
+            jobDistributer = new JobDistributer(settings.GetUShort("Threads") == 0 ? settings.GetUShort("Threads") : (ushort)Environment.ProcessorCount, jobsPath, completePath);
 
             return true;
         }
         private static void InitUI()
         {
-            if (PrimesSettings.UseUI)
+            if (settings.GetBool("UseUI"))
                 ConsoleUI.StartUI();
             else
                 LogExtension.InitConsole();
@@ -344,7 +349,7 @@ namespace Primes.Exec
             if (ConsoleUI.UIEnabled)
                 ConsoleUI.StopUI();
 
-            PrimesSettings.SaveSettings();
+            SettingsDocument.Serialize(settings, Path.Combine(homePath, "settings.set"));
 
             LogExtension.LogEvent(Log.EventType.Info, "Exiting.", "MainThread", false);
 
@@ -366,10 +371,10 @@ namespace Primes.Exec
 
             try
             {
-                if (!Utils.HasDoableJobs(jobsPath))
+                if (!PrimesUtils.HasDoableJobs(jobsPath))
                 {
                     LogExtension.LogEvent(Log.EventType.Warning, "No jobs to be executed.", "MainThread", true);
-                    Thread.Sleep(PrimesSettings.FrameTimeMillis + 20);//wait for possible UI to refresh
+                    Thread.Sleep(settings.GetInt("FrameTimeMillis") + 20);//wait for possible UI to refresh
                     Exit(true);
                 }
                 else

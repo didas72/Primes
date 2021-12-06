@@ -8,7 +8,6 @@ using System.Threading;
 using Primes.Common;
 using Primes.Common.Files;
 using Primes.Common.Net;
-using Primes.Common.Net.Messages;
 
 namespace Primes.Exec.Net
 {

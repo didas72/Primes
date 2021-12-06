@@ -5,6 +5,7 @@ namespace Primes.Exec
     class SafeExit
     {
         [DllImport("Kernel32")]
+        //FIXME: Windows only
         private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
 
         private delegate bool EventHandler(CtrlType sig);

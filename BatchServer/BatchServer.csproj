@@ -9,6 +9,12 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,9 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="DidasUtils">
-      <HintPath>..\..\DidasUtils\DidasUtils\bin\Release\net5.0\DidasUtils.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\DidasUtils\DidasUtils\DidasUtils.csproj" />
   </ItemGroup>
 
 </Project>

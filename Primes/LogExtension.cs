@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-using Primes.Common;
+using DidasUtils.Logging;
 
 namespace Primes.Exec
 {

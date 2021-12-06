@@ -45,7 +45,7 @@ namespace BatchServer.Modules
         {
             CheckUserId(msg.userId, client, out int user_id);
 
-            throw new NotImplementedException();            
+            throw new NotImplementedException();//FIXME      
 
             switch (msg.request)
             {

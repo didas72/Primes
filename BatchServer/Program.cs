@@ -157,7 +157,7 @@ namespace BatchServer
             {
                 Globals.Db = new DbWrapper();
 
-                Globals.Db.Connect(Globals.settings.GetValue("server"), Globals.settings.GetValue("user"), Globals.settings.GetValue("password"));
+                Globals.Db.Connect(Globals.settings.GetString("server"), Globals.settings.GetString("user"), Globals.settings.GetString("password"));
 
                 int reply;
 
@@ -187,7 +187,7 @@ namespace BatchServer
                 Globals.ctlHandle = new();
                 Globals.server = new();
 
-                Globals.conListener.StartListener(int.Parse(Globals.settings.GetValue("port")));
+                Globals.conListener.StartListener(Globals.settings.GetInt("port"));
             }
             catch (Exception e)
             {

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Windows.Controls;
@@ -7,6 +6,9 @@ using System.Diagnostics;
 
 using Microsoft.Win32;
 using Microsoft.VisualBasic;
+
+using DidasUtils;
+using DidasUtils.Logging;
 
 using Primes.Common;
 using Primes.Common.Files;
@@ -420,7 +422,7 @@ namespace PrimesTools
                 return;
             }
 
-            if (Mathf.IsPrime(value, out ulong divider))
+            if (PrimesMath.IsPrime(value, out ulong divider))
                 SetStatus($"{value} is prime.");
             else
                 SetStatus($"{value} is dividable by {divider}.");

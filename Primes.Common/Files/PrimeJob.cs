@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 
+using DidasUtils;
+
 namespace Primes.Common.Files
 {
     /// <summary>

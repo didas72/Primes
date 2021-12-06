@@ -7,19 +7,19 @@ namespace JobManagement
     public class ScanResults
     {
         //compression and file sizes
-        public List<long> ZippedSizes = new List<long>();
-        public List<long> NCCSizes = new List<long>();
-        public List<long> RawSizes = new List<long>();
+        public List<long> ZippedSizes = new();
+        public List<long> NCCSizes = new();
+        public List<long> RawSizes = new();
 
 
         //primes in files
-        public List<long> PrimesPerFiles = new List<long>();
+        public List<long> PrimesPerFiles = new();
 
 
         //primes statistics
-        public List<PrimeDensity> PrimeDensities = new List<PrimeDensity>();
-        //public List<ulong> primeGaps = new List<ulong>();
-        public List<TwinPrimes> TwinPrimes = new List<TwinPrimes>();
+        public List<PrimeDensity> PrimeDensities = new();
+        //public List<ulong> primeGaps = new();
+        public List<TwinPrimes> TwinPrimes = new();
 
 
 
@@ -161,7 +161,7 @@ namespace JobManagement
         public static ScanResults Deserialize(Stream stream)
         {
             byte[] buffer;
-            ScanResults ret = new ScanResults();
+            ScanResults ret = new();
 
             buffer = new byte[4];
             stream.Read(buffer, 0, 4);

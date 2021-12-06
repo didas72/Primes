@@ -9,7 +9,8 @@
     <AssemblyVersion>1.1.0.0</AssemblyVersion>
     <FileVersion>1.1.0.0</FileVersion>
     <ApplicationIcon>icon.ico</ApplicationIcon>
-    <StartupObject>Primes.Updater.Program</StartupObject>
+    <StartupObject>Primes.Installer.Program</StartupObject>
+    <RootNamespace>Primes.Installer</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -36,8 +37,12 @@
     <Content Include="icon.ico" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DidasUtils\DidasUtils\DidasUtils.csproj" />
+  </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy $(SolutionDir)Primes.Common\inc\7za.exe $(TargetPath)7za.exe" />
+    <Exec Command="xcopy $(SolutionDir)DidasUtils\DidasUtilsShared\inc\7za.exe $(TargetDir)7za.exe" />
   </Target>
 
 </Project>

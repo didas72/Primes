@@ -2,14 +2,17 @@
 using System.IO;
 using System.Threading;
 
-using Primes.Common;
+using DidasUtils;
+using DidasUtils.Logging;
+using DidasUtils.Files;
+
 using Primes.Common.Files;
 
 namespace JobManagement
 {
     public class Scanner
     {
-        public TimeSpan lastScanTime = new TimeSpan();
+        public TimeSpan lastScanTime = new();
         public volatile int currentBatch = 0, batchCount = 0;
 
 
@@ -22,7 +25,7 @@ namespace JobManagement
         private bool batchNeedsRepacking = false;
         private bool batchNeedsRejecting = false;
 
-        private Thread[] threads;
+        private readonly Thread[] threads;
 
 
 
@@ -56,9 +59,9 @@ namespace JobManagement
 
             //clear and create dirs if needed
             Log.LogEvent("Creating directories...", "Scanner");
-            try { Utils.DeleteDirectory(tmpDirectory); } catch { }
-            try { Utils.DeleteDirectory(destinationDirectory); } catch { }
-            try { Utils.DeleteDirectory(rejectsDirectory); } catch { }
+            try { Directory.Delete(tmpDirectory, true); } catch { }
+            try { Directory.Delete(destinationDirectory, true); } catch { }
+            try { Directory.Delete(rejectsDirectory, true); } catch { }
             Directory.CreateDirectory(tmpDirectory);
             Directory.CreateDirectory(destinationDirectory);
             Directory.CreateDirectory(rejectsDirectory);
@@ -169,7 +172,7 @@ namespace JobManagement
 
                 Program.Print("Batch scan complete");
 
-                Utils.DeleteDirectory(tmpDirectory);
+                Directory.Delete(tmpDirectory, true);
                 Directory.CreateDirectory(tmpDirectory);
             }
 

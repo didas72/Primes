@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 
+using DidasUtils.Logging;
+
 using Primes.Common;
 using Primes.Common.Files;
 
@@ -24,7 +26,7 @@ namespace Primes.Exec
             Workers = new Worker[workerCount];
 
             for (int i = 0; i < workerCount; i++)
-                Workers[i] = new Worker(dumpPath, jobPath, i) { primeBufferSize = PrimesSettings.PrimeBufferSize };
+                Workers[i] = new Worker(dumpPath, jobPath, i) { primeBufferSize = Program.settings.GetUInt("PrimeBufferSize") };
         }
 
 
@@ -118,18 +120,19 @@ namespace Primes.Exec
 
         private Queue<string> TryGetSorted()
         {
-            Log.LogEvent($"Loading {PrimesSettings.MaxJobQueue} jobs for processing.", "DistributingThread");
+            uint maxJobQueue = Program.settings.GetUInt("MaxJobQueue");
+            Log.LogEvent($"Loading {maxJobQueue} jobs for processing.", "DistributingThread");
 
             try
             {
-                return Utils.GetDoableJobs(jobPath, PrimesSettings.MaxJobQueue, true);
+                return PrimesUtils.GetDoableJobs(jobPath, maxJobQueue, true);
             }
             catch (Exception e)
             {
                 LogExtension.LogEvent(Log.EventType.Warning, "Failed to sort files for execution.", "DistributingThread", true, false);
                 Log.LogException("Failed to sort files for execution.", "DistributingThread", e);
 
-                return Utils.GetDoableJobs(jobPath, PrimesSettings.MaxJobQueue, false);
+                return PrimesUtils.GetDoableJobs(jobPath, maxJobQueue, false);
             }
         }
 

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.IO;
 
-using Primes;
-using Primes.Common;
+using DidasUtils;
+using DidasUtils.Logging;
 
 namespace Primes.Tester
 {
@@ -97,7 +97,7 @@ namespace Primes.Tester
 
                         if (args[i].StartsWith("-threads-"))
                         {
-                            if (!int.TryParse(args[i].Substring(9), out RunOptions.Threads))
+                            if (!int.TryParse(args[i][9..], out RunOptions.Threads))
                             {
                                 Log.Print("Invalid thread count!");
                                 Thread.Sleep(2000);

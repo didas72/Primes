@@ -11,6 +11,8 @@ namespace Primes.Tester
             string outp = "CPU Details\n";
             outp += "==============================\n";
 
+            //FIXME: Windows only RIP
+
             foreach (var info in new ManagementObjectSearcher("Select * from Win32_Processor").Get())
             {
                 outp += $"Name: {info["Name"]}\n";

@@ -2,7 +2,7 @@
 
 namespace Primes.Tester
 {
-    public static class RunOptions
+    static class RunOptions
     {
         public static bool RunBenchmark = false;
         public static bool RunStressTest = false;

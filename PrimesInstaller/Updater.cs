@@ -4,15 +4,17 @@ using System.Threading;
 using System.Xml;
 using System.Diagnostics;
 
-using Primes.Common;
-using Primes.Common.Files;
-using Primes.Common.Net;
+using DidasUtils.Extensions;
+using DidasUtils.Logging;
+using DidasUtils.Files;
+using DidasUtils.Net;
+using DidasUtils;
 
-namespace Primes.Updater
+namespace Primes.Installer
 {
     public static class Updater
     {
-        private const string versionsURL = "https://raw.githubusercontent.com/didas72/Primes/master/PrimesUpdater/Versions/versions.xml";
+        private const string versionsURL = "https://raw.githubusercontent.com/didas72/Primes/master/Resources/versions.xml";
         private const string releaseLinkBase = "https://github.com/didas72/Primes/releases/download/";
         private const string NET472Ending = ".NET.Framework.4.7.2.7z";
 
@@ -130,7 +132,7 @@ namespace Primes.Updater
 
 
 
-            XmlDocument doc = new XmlDocument();
+            XmlDocument doc = new();
             doc.Load(versionsPath);
             var versions = doc.LastChild;
 
@@ -159,31 +161,21 @@ namespace Primes.Updater
 
         public static string GetProductXMLCode(Product product)
         {
-            switch (product)
+            return product switch
             {
-                case Product.Primes_Updater:
-                    return "primes.updater";
-
-                case Product.Primes_Exec:
-                    return "primes.exec";
-
-                default:
-                    return "";
-            }
+                Product.Primes_Updater => "primes.updater",
+                Product.Primes_Exec => "primes.exec",
+                _ => "",
+            };
         }
         public static string GetProductURLCode(Product product)
         {
-            switch (product)
+            return product switch
             {
-                case Product.Primes_Updater:
-                    return "PrimesUpdater.";
-
-                case Product.Primes_Exec:
-                    return "Primes.";
-
-                default:
-                    return "";
-            }
+                Product.Primes_Updater => "PrimesUpdater.",
+                Product.Primes_Exec => "Primes.",
+                _ => "",
+            };
         }
 
 
@@ -244,7 +236,7 @@ namespace Primes.Updater
         public struct Version
         {
             public readonly byte major, minor, patch;
-            public static readonly Version empty = new Version(0, 0, 0);
+            public static readonly Version empty = new(0, 0, 0);
 
 
 
@@ -286,15 +278,11 @@ namespace Primes.Updater
             }
             public string ToString(Product product)
             {
-                switch (product)
+                return product switch
                 {
-                    case Product.Primes_Updater:
-                        return $"u{major}.{minor}.{patch}";
-
-                    case Product.Primes_Exec:
-                    default:
-                        return $"v{major}.{minor}.{patch}";
-                }
+                    Product.Primes_Updater => $"u{major}.{minor}.{patch}",
+                    _ => $"v{major}.{minor}.{patch}",
+                };
             }
         }
         public enum UpdateResult

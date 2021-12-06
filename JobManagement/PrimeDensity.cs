@@ -36,7 +36,7 @@ namespace JobManagement
         {
             if (bytes.Length != size) throw new ArgumentException($"Byte array must be {size} bytes long.");
 
-            PrimeDensity ret = new PrimeDensity();
+            PrimeDensity ret = new();
 
             ret.start = BitConverter.ToUInt64(bytes, 0);
             ret.length = BitConverter.ToUInt64(bytes, 8);
