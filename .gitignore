@@ -1,7 +1,7 @@
 **/bin
 **/obj
-**/v16
 **/x64
+.vs
 PrimesSVC
 TestResults
 
