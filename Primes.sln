@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Primes.Common", "Primes.Com
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobManagement", "JobManagement\JobManagement.csproj", "{F8C30429-B143-43BE-879A-39671121ADCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesSVC", "PrimesSVC\PrimesSVC.csproj", "{CCFB8628-8B37-435E-9637-6B27A89D01D3}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesTester", "PrimesTester\PrimesTester.csproj", "{EF685B51-E2D5-46FC-B51C-923CB9283940}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesUpdater", "PrimesUpdater\PrimesUpdater.csproj", "{444AEB4C-C360-4FF4-A027-16AF5EA3BD1D}"
@@ -19,7 +17,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BatchDistributer", "BatchDi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesTools", "PrimesTools\PrimesTools.csproj", "{DD05A858-F9AC-4E13-B85B-A1025230DCF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BatchServer", "BatchServer\BatchServer.csproj", "{B5F23AFA-DA3C-46A5-A1D6-9C72031D6301}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BatchServer", "BatchServer\BatchServer.csproj", "{B5F23AFA-DA3C-46A5-A1D6-9C72031D6301}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesInstaller", "PrimesInstaller\PrimesInstaller.csproj", "{4867EE03-21B3-4179-959E-BE8E5391668C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,12 +53,6 @@ Global
 		{F8C30429-B143-43BE-879A-39671121ADCC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F8C30429-B143-43BE-879A-39671121ADCC}.Release|x64.ActiveCfg = Release|Any CPU
 		{F8C30429-B143-43BE-879A-39671121ADCC}.Release|x64.Build.0 = Release|Any CPU
-		{CCFB8628-8B37-435E-9637-6B27A89D01D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CCFB8628-8B37-435E-9637-6B27A89D01D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CCFB8628-8B37-435E-9637-6B27A89D01D3}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{CCFB8628-8B37-435E-9637-6B27A89D01D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CCFB8628-8B37-435E-9637-6B27A89D01D3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CCFB8628-8B37-435E-9637-6B27A89D01D3}.Release|x64.ActiveCfg = Release|Any CPU
 		{EF685B51-E2D5-46FC-B51C-923CB9283940}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EF685B51-E2D5-46FC-B51C-923CB9283940}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EF685B51-E2D5-46FC-B51C-923CB9283940}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -99,6 +93,14 @@ Global
 		{B5F23AFA-DA3C-46A5-A1D6-9C72031D6301}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B5F23AFA-DA3C-46A5-A1D6-9C72031D6301}.Release|x64.ActiveCfg = Release|Any CPU
 		{B5F23AFA-DA3C-46A5-A1D6-9C72031D6301}.Release|x64.Build.0 = Release|Any CPU
+		{4867EE03-21B3-4179-959E-BE8E5391668C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4867EE03-21B3-4179-959E-BE8E5391668C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4867EE03-21B3-4179-959E-BE8E5391668C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4867EE03-21B3-4179-959E-BE8E5391668C}.Debug|x64.Build.0 = Debug|Any CPU
+		{4867EE03-21B3-4179-959E-BE8E5391668C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4867EE03-21B3-4179-959E-BE8E5391668C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4867EE03-21B3-4179-959E-BE8E5391668C}.Release|x64.ActiveCfg = Release|Any CPU
+		{4867EE03-21B3-4179-959E-BE8E5391668C}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

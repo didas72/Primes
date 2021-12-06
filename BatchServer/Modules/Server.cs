@@ -134,7 +134,7 @@ namespace BatchServer.Modules
             foreach (string s in batches)
                 indices += $" OR job_start={Path.GetFileNameWithoutExtension(s)}";
 
-            Globals.Db.SendCommandNonQuery($"UPDATE jobs SET status=2, assigned_user={userId} WHERE {indices.Substring(4)};");//index 4 = end of " OR " at the beggining
+            Globals.Db.SendCommandNonQuery($"UPDATE jobs SET status=2, assigned_user={userId} WHERE {indices[4..]};");//index 4 = end of " OR " at the beggining
 
             return true;
         }

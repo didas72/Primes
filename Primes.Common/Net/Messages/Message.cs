@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Primes.Common.Net.Messages
+namespace Primes.Common.Net.Messages.Old
 {
     /// <summary>
     /// Interface to hold minimum Methods and Properties a Message type class should implement.

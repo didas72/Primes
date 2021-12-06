@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Primes.Common.Net.Messages
+namespace Primes.Common.Net.Messages.Old
 {
     /// <summary>
     /// Message used to tranfer pending batches from the server to the client.

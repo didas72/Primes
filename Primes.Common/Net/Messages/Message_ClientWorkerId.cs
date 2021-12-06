@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace Primes.Common.Net.Messages
+namespace Primes.Common.Net.Messages.Old
 {
     /// <summary>
     /// Message used to inform the server what workerId the client has in storage.

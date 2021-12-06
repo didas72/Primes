@@ -1,4 +1,4 @@
-﻿namespace Primes.Common.Net.Messages
+﻿namespace Primes.Common.Net.Messages.Old
 {
     /// <summary>
     /// Message used to inform the client that the server is listening for returning batches.

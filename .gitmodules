@@ -1,0 +1,3 @@
+[submodule "DidasUtils"]
+	path = DidasUtils
+	url = https://github.com/didas72/DidasUtils.git

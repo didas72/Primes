@@ -1,4 +1,4 @@
-﻿namespace Primes.Common.Net.Messages
+﻿namespace Primes.Common.Net.Messages.Old
 {
     /// <summary>
     /// Message used to inform the client that the server did receive the batches but they are either corrupted, invalid, rejected or incomplete.

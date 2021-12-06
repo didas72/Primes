@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace Primes.Common.Net.Messages
+namespace Primes.Common.Net.Messages.Old
 {
     /// <summary>
     /// Message used to inform the client that it should state it's request and provide the workerId to be used.

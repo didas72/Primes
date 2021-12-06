@@ -24,7 +24,7 @@ namespace JobManagement
 
         private static ScanResults results;
 
-        private readonly static Task todo = Task.TestCorrection;
+        private readonly static Task todo = Task.Temporary;
 
         private static void Main()
         {
