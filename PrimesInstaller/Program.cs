@@ -7,7 +7,7 @@ using DidasUtils.Logging;
 
 namespace Primes.Installer
 {
-    internal class Program
+    class Program
     {
         public static string tmpDir, homeDir, installDir;
 

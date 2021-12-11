@@ -8,6 +8,8 @@ using MySql.Data.Types;
 using DidasUtils;
 using DidasUtils.Net;
 using DidasUtils.Logging;
+using DidasUtils.Files;
+using DidasUtils.ErrorCorrection;
 
 using BatchServer;
 using BatchServer.Messages;
@@ -45,19 +47,22 @@ namespace BatchServer.Modules
         {
             CheckUserId(msg.userId, client, out int user_id);
 
-            throw new NotImplementedException();//FIXME      
-
             switch (msg.request)
             {
                 case Message_Client_StateRequest.Request.RequestBatches:
 
-                    GetBatches(user_id, msg.amount, out string[] batches, out Message_Server_Serve.Status status);
+                    bool allocSuccess = AllocateBatches(user_id, msg.amount, out string[] batches, out Message_Server_Serve.Status status);
+
                     lock (handling)
                     {
                         handling[client].allocatedBatches = batches;
                         handling[client].status = 2;
                     }
+
                     client.SendMessage(new Message_Server_Serve(user_id, status).Serialize());
+
+                    if (!allocSuccess) SafeDisconnect(client);
+
                     break;
 
                     //FIXME: Add missing
@@ -65,8 +70,56 @@ namespace BatchServer.Modules
                 default:
                     Log.LogEvent(Log.EventType.Warning, $"Client '{client.socket.Client.RemoteEndPoint}' stated invalid request '{(byte)msg.request}'.", "Server");
                     SafeDisconnect(client);
-                    break;
+                    return;
             }
+
+            handling[client].request = msg.request;
+
+            throw new NotImplementedException(); //FIXME 
+            return;
+        }
+        private void ClientAcknowledgedServe(Client client, Message_Client_Acknowledge msg)
+        {
+            Message_Client_StateRequest.Request request;
+
+            lock (handling)
+            {
+                request = handling[client].request;
+            }
+
+            switch (request)
+            {
+                case Message_Client_StateRequest.Request.RequestBatches:
+
+                    string[] batches;
+                    lock (handling)
+                    {
+                        batches = handling[client].allocatedBatches;
+                    }
+
+                    List<byte> bytes = new();
+
+                    foreach (string b in batches)
+                        bytes.AddRange(File.ReadAllBytes(b));
+
+                    lock (handling)
+                    {
+                        handling[client].status = 4;
+                    }
+                    client.SendMessage(new Message_Server_Data(ErrorProtectedBlock.ProtectDataToArray(bytes.ToArray(), ErrorProtectedBlock.ErrorProtectionType.Fletcher32, 16384)).Serialize());
+
+                    break;
+
+                //FIXME: Add missing
+
+                default:
+                    Log.LogEvent(Log.EventType.Warning, $"Client '{client.socket.Client.RemoteEndPoint}' had an invalid request '{(byte)request}'.", "Server");
+                    SafeDisconnect(client);
+                    return;
+            }
+
+            throw new NotImplementedException(); //FIXME 
+            return;
         }
         private bool CheckUserId(int userId, Client client, out int user_id)
         {
@@ -104,7 +157,7 @@ namespace BatchServer.Modules
 
             return ret;
         }
-        private bool GetBatches(int userId, int amount, out string[] batches, out Message_Server_Serve.Status status)
+        private bool AllocateBatches(int userId, int amount, out string[] batches, out Message_Server_Serve.Status status)
         {
             batches = null;
 
@@ -143,7 +196,7 @@ namespace BatchServer.Modules
 
         private void Message_Received(Client sender, byte[] data)
         {
-            byte status = 255;
+            byte status = 255; 
 
             try
             {
@@ -159,6 +212,11 @@ namespace BatchServer.Modules
                     case 0:
                         if (msg is not Message_Client_StateRequest req) SafeDisconnect(sender);
                         else HandleRequest(sender, req);
+                        break;
+
+                    case 2:
+                        if (msg is not Message_Client_Acknowledge ack) SafeDisconnect(sender);
+                        else ClientAcknowledgedServe(sender, ack);
                         break;
 
                         //FIXME: Add missing ones
@@ -192,6 +250,7 @@ namespace BatchServer.Modules
         {
             public byte status;
             public string[] allocatedBatches;
+            public Message_Client_StateRequest.Request request;
 
 
 
