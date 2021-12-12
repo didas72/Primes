@@ -31,7 +31,7 @@ namespace Primes.Exec
 
         private const string percentageFormat = "000.0";
 
-        public static int frameTime = Mathf.Clamp(Program.settings.GetInt("FrameTimeMillis"), 200, 60000);
+        public static int frameTime;
 
 
 
@@ -40,6 +40,8 @@ namespace Primes.Exec
             try
             {
                 doUI = true;
+
+                frameTime = Math.Clamp(Program.settings.GetInt("FrameTimeMillis"), 200, 60000);
 
                 lastJobSeconds = new ushort[Program.settings.GetUShort("Threads")];
 

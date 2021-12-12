@@ -5,6 +5,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <StartupObject>Primes.Exec.Program</StartupObject>
     <ApplicationIcon>icon.ico</ApplicationIcon>
+    <RootNamespace>Primes.Exec</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
+using System.Collections.Generic;
 
 using DidasUtils;
 using DidasUtils.Logging;
@@ -274,6 +275,12 @@ namespace Primes.Exec
         private static bool InitSettings()
         {
             settings = new SettingsDocument(File.ReadAllText(Path.Combine(homePath, "settings.set")));
+            Dictionary<string, string> scheme = new() { { "Threads", "4" }, { "PrimeBufferSize", "500" }, { "MaxJobQueue", "40" }, { "FrameTimeMillis", "2000" }, { "UseUI", true.ToString() }, { "UseOpenCL", "true" }, { "TestMode", false.ToString() } };
+
+            settings.ApplySettingsScheme(scheme, false);
+
+            if (settings.GetBool("TestMode"))
+                Log.LogEvent("TEST MODE", "InitSettings");
 
             return true;
         }

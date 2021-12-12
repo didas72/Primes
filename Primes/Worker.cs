@@ -3,30 +3,28 @@ using System.IO;
 using System.Threading;
 using System.Collections.Generic;
 
-using DidasUtils;
 using DidasUtils.Logging;
-using DidasUtils.Files;
+using DidasUtils.Extensions;
 
 using Primes.Common;
 using Primes.Common.Files;
-using DidasUtils.Extensions;
 
 namespace Primes.Exec
 {
     public class Worker
     {
-        public Thread WThread { get; private set; }
-        public float Progress { get; private set; }
-        public uint CurrentBatch { get; private set; } = 0;
+        public Thread WThread { get; protected set; }
+        public float Progress { get; protected set; }
+        public uint CurrentBatch { get; protected set; } = 0;
         public bool IsWorking { get {
                 if (WThread == null) return false;
                 else return WThread.IsAlive;
             }  }
-        private volatile bool doWork = false;
-        private readonly string dumpPath;
-        private readonly string jobPath;
-        private readonly int workerId;
-        private uint updatesFrame;
+        protected volatile bool doWork = false;
+        protected readonly string dumpPath;
+        protected readonly string jobPath;
+        protected readonly int workerId;
+        protected uint updatesFrame;
         public uint primeBufferSize = 500;
         public uint maxNoUpdates = 10000;
 
@@ -39,28 +37,26 @@ namespace Primes.Exec
 
 
 
-        public void StartWork(PrimeJob job)
+        public virtual void StartWork(PrimeJob job)
         {
             doWork = true;
             
             WThread = new Thread(() => DoWork(job));
             WThread.Start();
         }
-        public void StopWork()
+        public virtual void StopWork()
         {
             doWork = false;
         }
 
 
 
-        public void DoWork(PrimeJob job)
+        public virtual void DoWork(PrimeJob job)
         {
             try
             {
                 updatesFrame = 0;
-
                 CurrentBatch = job.Batch;
-
                 DateTime startingTime = DateTime.Now;
 
                 ulong current = Math.Max(job.Start + job.Progress, 2);
@@ -157,7 +153,7 @@ namespace Primes.Exec
 
 
 
-        private void SaveJob(PrimeJob job, ulong current)
+        protected virtual void SaveJob(PrimeJob job, ulong current)
         {
             if (job.Progress != job.Count)
             {
@@ -170,7 +166,7 @@ namespace Primes.Exec
                 SaveFinishedJob(job);
             }
         }
-        private void SaveFinishedJob(PrimeJob job)
+        protected virtual void SaveFinishedJob(PrimeJob job)
         {
             try
             {
@@ -190,7 +186,7 @@ namespace Primes.Exec
                 SaveJob_Crash(job);
             }
         }
-        private void SavePausedJob(PrimeJob job)
+        protected virtual void SavePausedJob(PrimeJob job)
         {
             try
             {
@@ -204,11 +200,11 @@ namespace Primes.Exec
                 SaveJob_Crash(job);
             }
         }
-        private void SaveJob_Crash(PrimeJob job)
+        protected virtual void SaveJob_Crash(PrimeJob job)
         {
             try
             {
-                PrimeJob save = new PrimeJob(job.FileVersion, job.FileCompression, job.Batch, job.Start, job.Count, 0, new List<ulong>());
+                PrimeJob save = new(job.FileVersion, job.FileCompression, job.Batch, job.Start, job.Count, 0, new List<ulong>());
                 PrimeJob.Serialize(save, Path.Combine(jobPath, $"{job.Start}.FAILED"));
             }
             catch (Exception e)

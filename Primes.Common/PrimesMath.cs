@@ -52,7 +52,7 @@ namespace Primes.Common
 				return false;
 			}
 
-			current = Mathf.Clamp(current, 5, ulong.MaxValue);
+			current = Math.Clamp(current, 5, ulong.MaxValue);
 			ulong sqrt = UlongSqrtHigh(number);
 
 			while (current <= sqrt)

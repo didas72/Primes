@@ -93,7 +93,7 @@ namespace Primes.Common.Files
         /// <returns></returns>
         public static PrimeJob Deserializev1_2_0(byte[] bytes)
         {
-            PrimeJob.Comp comp = new PrimeJob.Comp(bytes[3]);
+            PrimeJob.Comp comp = new(bytes[3]);
 
             uint batch = BitConverter.ToUInt32(bytes, 4);
             ulong start = BitConverter.ToUInt64(bytes, 8);
@@ -125,7 +125,7 @@ namespace Primes.Common.Files
             byte[] header = new byte[32];
             stream.Read(header, 0, header.Length);
 
-            PrimeJob.Comp comp = new PrimeJob.Comp(header[3]);
+            PrimeJob.Comp comp = new(header[3]);
 
             uint batch = BitConverter.ToUInt32(header, 4);
             ulong start = BitConverter.ToUInt64(header, 8);
@@ -134,7 +134,7 @@ namespace Primes.Common.Files
 
             if (comp.NCC)
             {
-                List<ulong> primes = new List<ulong>();
+                List<ulong> primes = new();
                 Compression.NCC.StreamUncompress(stream, primes);
                 return new PrimeJob(new PrimeJob.Version(1, 2, 0), comp, batch, start, count, progress, primes);
             }  
@@ -315,7 +315,7 @@ namespace Primes.Common.Files
         /// <returns></returns>
         public static byte[] Serializev1_2_0(PrimeJob job)
         {
-            List<byte> bytes = new List<byte>(new byte[] { job.FileVersion.major, job.FileVersion.minor, job.FileVersion.patch, job.FileCompression.GetByte() });
+            List<byte> bytes = new(new byte[] { job.FileVersion.major, job.FileVersion.minor, job.FileVersion.patch, job.FileCompression.GetByte() });
 
             bytes.AddRange(BitConverter.GetBytes(job.Batch));
             bytes.AddRange(BitConverter.GetBytes(job.Start));
@@ -438,7 +438,7 @@ namespace Primes.Common.Files
 
             for (int i = 0; i < blocks.Length; i++)
             {
-                int dataInBlock = Mathf.Clamp(primeBytes.Length - (i * (EPB_DataSize)), 1, EPB_DataSize);
+                int dataInBlock = Math.Clamp(primeBytes.Length - (i * (EPB_DataSize)), 1, EPB_DataSize);
                 Array.Copy(primeBytes, i * (EPB_DataSize), buffer, 0, dataInBlock);
                 blocks[i] = new ErrorProtectedBlock(ErrorProtectedBlock.ErrorProtectionType.Fletcher16, buffer, BitConverter.GetBytes(Fletcher.Fletcher16(buffer)));
             }
@@ -525,10 +525,10 @@ namespace Primes.Common.Files
         /// <returns></returns>
         public static KnownPrimesResourceFile Deserializev1_2_0(byte[] bytes)
         {
-            KnownPrimesResourceFile.Comp comp = new KnownPrimesResourceFile.Comp(bytes[4]);
+            KnownPrimesResourceFile.Comp comp = new(bytes[4]);
 
             byte[] primeBytes = new byte[bytes.Length - 4];
-            KnownPrimesResourceFile file = new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 2, 0), comp, new ulong[BitConverter.ToInt32(bytes, 4)]);
+            KnownPrimesResourceFile file = new(new(1, 2, 0), comp, new ulong[BitConverter.ToInt32(bytes, 4)]);
 
             Array.Copy(bytes, 8, primeBytes, 0, primeBytes.Length);
 
@@ -554,8 +554,8 @@ namespace Primes.Common.Files
             stream.Seek(3, SeekOrigin.Begin);
             stream.Read(buffer, 0, 5);
 
-            KnownPrimesResourceFile.Comp comp = new KnownPrimesResourceFile.Comp(buffer[0]);
-            KnownPrimesResourceFile file = new KnownPrimesResourceFile(new KnownPrimesResourceFile.Version(1, 2, 0), comp, new ulong[BitConverter.ToInt32(buffer, 1)]);
+            KnownPrimesResourceFile.Comp comp = new(buffer[0]);
+            KnownPrimesResourceFile file = new(new(1, 2, 0), comp, new ulong[BitConverter.ToInt32(buffer, 1)]);
 
             if (comp.NCC)
                 Compression.NCC.StreamUncompress(stream, file.Primes);
@@ -621,7 +621,7 @@ namespace Primes.Common.Files
         /// <returns></returns>
         public static byte[] Serializev1_2_0(KnownPrimesResourceFile file)
         {
-            MemoryStream stream = new MemoryStream();
+            MemoryStream stream = new();
 
             stream.Write(new byte[] { file.FileVersion.major, file.FileVersion.minor, file.FileVersion.patch, file.FileCompression.GetByte() }, 0, 4);
             stream.Write(BitConverter.GetBytes(file.Primes.Length), 0, 4);
