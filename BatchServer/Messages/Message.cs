@@ -35,6 +35,8 @@ namespace BatchServer.Messages
                 Type.Server_Ready => new Message_Server_Ready(),
                 Type.Client_Data => Message_Client_Data.InternalDeserialize(bytes),
                 Type.Server_Acknowledge => Message_Server_Acknowledge.InternalDeserialize(bytes),
+                Type.Server_Abort => new Message_Server_Abort(),
+                Type.Server_Confirm => new Message_Server_Confirm(),
                 _ => throw new Exception("Invalid message type."),
             };
         }
@@ -58,6 +60,9 @@ namespace BatchServer.Messages
             Server_Ready = 9,
             Client_Data = 10,
             Server_Acknowledge = 11,
+
+            Server_Confirm = 12,
+            Server_Abort = 13,
         }
     }
 }
