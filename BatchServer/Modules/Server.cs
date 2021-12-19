@@ -12,7 +12,8 @@ using DidasUtils.Files;
 using DidasUtils.ErrorCorrection;
 
 using BatchServer;
-using BatchServer.Messages;
+
+using Primes.Common.Net.Messages;
 
 namespace BatchServer.Modules
 {

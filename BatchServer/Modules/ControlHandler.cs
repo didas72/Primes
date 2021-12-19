@@ -8,7 +8,7 @@ using DidasUtils.ErrorCorrection;
 using DidasUtils.Net;
 using DidasUtils.Logging;
 
-using BatchServer.Messages;
+using Primes.Common.Net.Messages;
 
 namespace BatchServer.Modules
 {

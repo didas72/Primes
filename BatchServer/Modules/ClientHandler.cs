@@ -5,7 +5,7 @@ using DidasUtils;
 using DidasUtils.Logging;
 using DidasUtils.Net;
 
-using BatchServer.Messages;
+using Primes.Common.Net.Messages;
 
 namespace BatchServer.Modules
 {

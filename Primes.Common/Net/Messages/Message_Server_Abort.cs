@@ -1,12 +1,12 @@
 ﻿using System;
 
-namespace BatchServer.Messages
+namespace Primes.Common.Net.Messages
 {
-    public class Message_Server_Confirm : Message
+    public class Message_Server_Abort : Message
     {
-        public Message_Server_Confirm()
+        public Message_Server_Abort()
         {
-            MessageType = Type.Server_Confirm;
+            MessageType = Type.Server_Abort;
         }
 
         public override byte[] Serialize()

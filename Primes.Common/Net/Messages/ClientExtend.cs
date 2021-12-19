@@ -1,6 +1,6 @@
 ﻿using DidasUtils.Net;
 
-namespace BatchServer.Messages
+namespace Primes.Common.Net.Messages
 {
     public static class ClientExtend
     {

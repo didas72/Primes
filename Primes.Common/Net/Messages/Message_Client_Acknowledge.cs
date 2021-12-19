@@ -1,16 +1,16 @@
 ﻿using System;
 
-namespace BatchServer.Messages
+namespace Primes.Common.Net.Messages
 {
-    public class Message_Server_Acknowledge : Message
+    public class Message_Client_Acknowledge : Message
     {
         public byte[] data;
 
 
 
-        public Message_Server_Acknowledge(byte[] data)
+        public Message_Client_Acknowledge(byte[] data)
         {
-            MessageType = Type.Server_Acknowledge;
+            MessageType = Type.Client_Acknowledge;
             this.data = data;
         }
 
@@ -28,12 +28,12 @@ namespace BatchServer.Messages
 
 
 
-        public static Message_Server_Acknowledge InternalDeserialize(byte[] bytes)
+        public static Message_Client_Acknowledge InternalDeserialize(byte[] bytes)
         {
             byte[] data = new byte[bytes.Length - 1];
             Array.Copy(bytes, 1, data, 0, data.Length);
 
-            return new Message_Server_Acknowledge(data);
+            return new Message_Client_Acknowledge(data);
         }
     }
 }

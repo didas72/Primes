@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BatchServer.Messages
+namespace Primes.Common.Net.Messages
 {
     public class Message_Server_StateRequest : Message
     {

@@ -1,12 +1,12 @@
 ﻿using System;
 
-namespace BatchServer.Messages
+namespace Primes.Common.Net.Messages
 {
-    public class Message_Server_Abort : Message
+    public class Message_Server_Ready : Message
     {
-        public Message_Server_Abort()
+        public Message_Server_Ready()
         {
-            MessageType = Type.Server_Abort;
+            MessageType = Type.Server_Ready;
         }
 
         public override byte[] Serialize()
