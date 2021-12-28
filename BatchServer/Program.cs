@@ -33,11 +33,18 @@ namespace BatchServer
 
     class Program
     {
+        private static volatile bool running = false;
+
         static void Main(string[] args)
         {
             if (!Init()) Exit();
 
-            //code
+            running = false;
+
+            while (running)
+            {
+                Thread.Sleep(50);
+            }
 
             Exit();
         }

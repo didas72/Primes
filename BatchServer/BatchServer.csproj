@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DidasUtils\DidasUtils\DidasUtils.csproj" />
+    <ProjectReference Include="..\Primes.Common\Primes.Common.csproj" />
   </ItemGroup>
 
 </Project>
