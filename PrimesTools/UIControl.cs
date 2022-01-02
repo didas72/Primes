@@ -17,9 +17,9 @@ namespace PrimesTools
 {
     public static class UIControl
     {
-        public static ListView Header, Primes, Binary, Stats;
-        public static TextBlock Status, Usage;
-        public static ProgressBar Progress;
+        private static ListView Header, Primes, Binary, Stats;
+        private static TextBlock Status, Usage;
+        private static ProgressBar Progress;
 
 
         private static PrimeJob job;
@@ -42,7 +42,7 @@ namespace PrimesTools
 
         public static void OpenFile()
         {
-            OpenFileDialog dialog = new OpenFileDialog
+            OpenFileDialog dialog = new()
             {
                 Title = "Choose prime job file",
                 DefaultExt = "primejob",
@@ -105,7 +105,7 @@ namespace PrimesTools
             if (job == null)
                 SetStatus("No job loaded.");
 
-            SaveFileDialog dialog = new SaveFileDialog
+            SaveFileDialog dialog = new()
             {
                 Title = "Choose save location",
                 DefaultExt = "primejob",
@@ -198,7 +198,7 @@ namespace PrimesTools
                     }
                     else
                     {
-                        MemoryStream s = new MemoryStream();
+                        MemoryStream s = new();
                         PrimeJob.Serialize(job, s);
                         LoadJob(s);
                         DrawHeader();
@@ -221,7 +221,7 @@ namespace PrimesTools
         }
         public static void ROCheckFolder()
         {
-            System.Windows.Forms.FolderBrowserDialog dialog = new System.Windows.Forms.FolderBrowserDialog()
+            System.Windows.Forms.FolderBrowserDialog dialog = new()
             {
                 Description = "Select folder to check...",
                 RootFolder = Environment.SpecialFolder.UserProfile,
@@ -267,7 +267,7 @@ namespace PrimesTools
         }
         public static void RDCheckFolder()
         {
-            System.Windows.Forms.FolderBrowserDialog dialog = new System.Windows.Forms.FolderBrowserDialog()
+            System.Windows.Forms.FolderBrowserDialog dialog = new()
             {
                 Description = "Select folder to check...",
                 RootFolder = Environment.SpecialFolder.UserProfile,
@@ -569,7 +569,7 @@ namespace PrimesTools
 
             if (line.StartsWith("Prime at index "))//15
             {
-                string indexS = msg.Substring(15);
+                string indexS = msg[15..];
                 indexS = indexS.Substring(0, msg.IndexOf(' ') + 1);
 
                 if (int.TryParse(indexS, out int index))
