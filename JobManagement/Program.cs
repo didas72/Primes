@@ -179,7 +179,24 @@ namespace JobManagement
         }
         public static void Temporary()
         {
-            
+            /*ULong32 a = new(3, 2), b = new(2, 1);
+
+            Green(ULong32.Greater(a, b).ToString());*/
+
+            ulong ul = ((ulong)uint.MaxValue + 3) * 4096;
+            Green($"{ul:X16}");
+
+            ULong32 t = new(ul);
+            Green($"{t.ToUlong():X16}");
+
+            ul /= 145;
+            t = ULong32.Divide(t, new(0));
+            ulong outp = t.ToUlong();
+
+            Green($"{ul:X16}");
+            Green($"{outp:X16}");
+            Green($"l{t.low:X8}");
+            Green($"h{t.high:X8}");
         }
         public static void TestCorrection()
         {
