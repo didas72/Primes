@@ -175,7 +175,7 @@ namespace Primes.Common
 
 			while (true)
 			{
-				c = (max + min) / 2;
+				c = (max + min) >> 1;
 				c2 = c * c;
 
 				if (c2 < number)

@@ -201,7 +201,7 @@ namespace Primes.Common.Files
         {
             FileStream fs = File.OpenRead(path);
             PrimeJob job = Deserialize(fs);
-            fs.Dispose();
+            fs.Close();
             return job;
         }
         /// <summary>
@@ -211,13 +211,13 @@ namespace Primes.Common.Files
         /// <returns><see cref="PrimeJob"/> read from the given path.</returns>
         public static PrimeJob Deserialize(Stream s)
         {
-            PrimeJob job = new PrimeJob(Version.Zero, 0, 0);
+            PrimeJob job = new(Version.Zero, 0, 0);
 
             s.Seek(0, SeekOrigin.Begin);
 
             byte[] version = new byte[3];
             s.Read(version, 0, 3);
-            Version ver = new Version(version[0], version[1], version[2]);
+            Version ver = new(version[0], version[1], version[2]);
 
             if (!ver.IsCompatible())
             {
@@ -225,18 +225,18 @@ namespace Primes.Common.Files
             }
             else
             {
-                if (ver.IsEqual(new Version(1, 2, 0)))
+                if (ver == new Version(1, 2, 0))
                 {
                     job = PrimeJobSerializer.Deserializev1_2_0(s);
                 }
-                else if (ver.IsEqual(new Version(1, 1, 0)))
+                else if (ver == new Version(1, 1, 0))
                 {
                     byte[] bytes = new byte[s.Length];
                     s.Seek(0, SeekOrigin.Begin);
                     s.Read(bytes, 0, bytes.Length);
                     job = PrimeJobSerializer.Deserializev1_1_0(bytes);
                 }
-                else if (ver.IsEqual(new Version(1, 0, 0)))
+                else if (ver == new Version(1, 0, 0))
                 {
                     byte[] bytes = new byte[s.Length];
                     s.Seek(0, SeekOrigin.Begin);
@@ -308,7 +308,7 @@ namespace Primes.Common.Files
             }
             else if (!FileVersion.IsLatest())
             {
-                if (FileVersion.IsEqual(new Version(1, 0, 0)))
+                if (FileVersion == new Version(1, 0, 0))
                 {
                     if (Progress == 0)
                         status = Status.Not_started;
@@ -339,7 +339,7 @@ namespace Primes.Common.Files
         {
             byte[] bytes = File.ReadAllBytes(path);
 
-            Version ver = new Version(bytes[0], bytes[1], bytes[2]);
+            Version ver = new(bytes[0], bytes[1], bytes[2]);
 
             if (!ver.IsCompatible())
             {
@@ -347,11 +347,11 @@ namespace Primes.Common.Files
             }
             else if (!ver.IsLatest())
             {
-                if (ver.IsEqual(new Version(1, 0, 0)))
+                if (ver == new Version(1, 0, 0))
                 {
                     return PrimeJobSerializer.PeekStatusv1_0_0(ref bytes);
                 }
-                else if (ver.IsEqual(new Version(1, 1, 0)))
+                else if (ver == new Version(1, 1, 0))
                 {
                     return PrimeJobSerializer.PeekStatusv1_1_0(ref bytes);
                 }
@@ -535,11 +535,11 @@ namespace Primes.Common.Files
 
             long size = job.Primes.Count * sizeof(ulong);
 
-            if (job.FileVersion.IsEqual(new Version(1, 2, 0)))
+            if (job.FileVersion == new Version(1, 2, 0))
                 size += 32;
-            else if (job.FileVersion.IsEqual(new Version(1, 1, 0)))
+            else if (job.FileVersion == new Version(1, 1, 0))
                 size += 35;
-            else if (job.FileVersion.IsEqual(new Version(1, 0, 0)))
+            else if (job.FileVersion == new Version(1, 0, 0))
                 size += 31;
 
             return size;
@@ -563,7 +563,7 @@ namespace Primes.Common.Files
         /// <summary>
         /// Struct that represents a file verion.
         /// </summary>
-        public readonly struct Version
+        public readonly struct Version: IEquatable<Version>
         {
             /// <summary>
             /// Major increment of the version.
@@ -583,11 +583,11 @@ namespace Primes.Common.Files
             /// <summary>
             /// Default zero instance.
             /// </summary>
-            public static Version Zero { get; } = new Version(0, 0, 0);
+            public static Version Zero { get; } = new(0, 0, 0);
             /// <summary>
             /// Default latest instance.
             /// </summary>
-            public static Version Latest { get; } = new Version(1, 2, 0);
+            public static Version Latest { get; } = new(1, 2, 0);
             /// <summary>
             /// Array containing all compatible versions.
             /// </summary>
@@ -617,34 +617,13 @@ namespace Primes.Common.Files
                 return $"v{major}.{minor}.{patch}";
             }
             /// <summary>
-            /// Checks wether or not two instances of <see cref="Version"/> have the same value.
-            /// </summary>
-            /// <param name="a"></param>
-            /// <param name="b"></param>
-            /// <returns>True if the instances have the same value, false otherwise.</returns>
-            public static bool IsEqual(Version a, Version b)
-            {
-                if (a.major == b.major && a.minor == b.minor && a.patch == b.patch)
-                    return true;
-                return false;
-            }
-            /// <summary>
-            /// Checks wether or not the given <see cref="Version"/> has the same value as the current instance.
-            /// </summary>
-            /// <param name="a"></param>
-            /// <returns>True if the instance has the same value, false otherwise.</returns>
-            public bool IsEqual(Version a)
-            {
-                return IsEqual(this, a);
-            }
-            /// <summary>
             /// Checks if the given <see cref="Version"/> is the latest one.
             /// </summary>
             /// <param name="ver"></param>
             /// <returns>True if the given instance is the latest, false otherwise.</returns>
             public static bool IsLatest(Version ver)
             {
-                return IsEqual(Latest, ver);
+                return Latest == ver;
             }
             /// <summary>
             /// Checks if the current instance of <see cref="Version"/> is the latest one.
@@ -652,7 +631,7 @@ namespace Primes.Common.Files
             /// <returns>True if the current instance is the latest, false otherwise.</returns>
             public bool IsLatest()
             {
-                return IsEqual(Latest, this);
+                return Latest == this;
             }
             /// <summary>
             /// Checks if the given <see cref="Version"/> is compatible.
@@ -670,6 +649,36 @@ namespace Primes.Common.Files
             public bool IsCompatible()
             {
                 return Compatible.Contains(this);
+            }
+            /// <summary>
+            /// Checks if two versions are equal.
+            /// </summary>
+            /// <param name="other"></param>
+            /// <returns></returns>
+            public bool Equals(Version other)
+            {
+                if (major == other.major && minor == other.minor && patch == other.patch)
+                    return true;
+                return false;
+            }
+            /// <summary>
+            /// Checks if and object is an equal version.
+            /// </summary>
+            /// <param name="other"></param>
+            /// <returns></returns>
+            public override bool Equals(object obj)
+            {
+                return obj is Version version && Equals(version);
+            }
+
+
+            public static bool operator ==(Version left, Version right)
+            {
+                return left.Equals(right);
+            }
+            public static bool operator !=(Version left, Version right)
+            {
+                return !(left == right);
             }
         }
 
