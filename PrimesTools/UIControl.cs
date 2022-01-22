@@ -18,7 +18,7 @@ namespace PrimesTools
     public static class UIControl
     {
         private static ListView Header, Primes, Binary, Stats;
-        private static TextBlock Status, Usage;
+        private static TextBlock Status, Usage, FileT;
         private static ProgressBar Progress;
 
 
@@ -27,9 +27,9 @@ namespace PrimesTools
 
 
 
-        public static void Init(ListView header, ListView primes, ListView binary, ListView stats, TextBlock status, ProgressBar progress, TextBlock usage)
+        public static void Init(ListView header, ListView primes, ListView binary, ListView stats, TextBlock status, ProgressBar progress, TextBlock usage, TextBlock file)
         {
-            Header = header; Primes = primes; Binary = binary; Stats = stats; Status = status; Progress = progress; Usage = usage;
+            Header = header; Primes = primes; Binary = binary; Stats = stats; Status = status; Progress = progress; Usage = usage; FileT = file;
 
             EmptyAllLists();
             SetStatus("Ready.");
@@ -63,6 +63,7 @@ namespace PrimesTools
 
                     SetProgress(0d);
                     LoadJob(dialog.FileName);
+                    FileT.Text = "File: " + Path.GetFileName(dialog.FileName);
                     SetStatus("Drawing header...");
 
                     SetProgress(0.2d);
@@ -98,6 +99,7 @@ namespace PrimesTools
             EmptyAllLists();
             job = null;
             bytes = null;
+            FileT.Text = "File: ";
             SetStatus("File closed.");
         }
         public static void SaveFile()
@@ -565,12 +567,12 @@ namespace PrimesTools
 
         private static void ProcessCheckLog(string msg)
         {
-            string line = msg.Substring(0, msg.IndexOf('\n'));
+            string line = msg[..msg.IndexOf('\n')];
 
             if (line.StartsWith("Prime at index "))//15
             {
                 string indexS = msg[15..];
-                indexS = indexS.Substring(0, msg.IndexOf(' ') + 1);
+                indexS = indexS[..(msg.IndexOf(' ') + 1)];
 
                 if (int.TryParse(indexS, out int index))
                 {

@@ -455,7 +455,7 @@ namespace Primes.Common.Files
 
             ulong[] ulongs = new ulong[bytes.Length / 8];
 
-            Buffer.BlockCopy(bytes, 0, ulongs, 0, ulongs.Length);
+            Buffer.BlockCopy(bytes, 0, ulongs, 0, bytes.Length);
 
             return ulongs;
         }
@@ -641,7 +641,7 @@ namespace Primes.Common.Files
 
             ulong[] ulongs = new ulong[bytes.Length / 8];
 
-            Buffer.BlockCopy(bytes, 0, ulongs, 0, ulongs.Length);
+            Buffer.BlockCopy(bytes, 0, ulongs, 0, bytes.Length);
 
             return ulongs;
         }

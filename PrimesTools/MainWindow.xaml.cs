@@ -23,7 +23,7 @@ namespace PrimesTools
             timer.Interval = new TimeSpan(0, 0, 5);
             timer.Start();
 
-            UIControl.Init(LstHeader, LstPrimes, LstBinary, LstStats, txtStatus, prgBar, txtUsage);
+            UIControl.Init(LstHeader, LstPrimes, LstBinary, LstStats, txtStatus, prgBar, txtUsage, txtFile);
         }
 
 

@@ -11,6 +11,7 @@
             <TextBlock x:Name="txtStatus" TextWrapping="Wrap" Text="Status" HorizontalAlignment="Left" VerticalAlignment="Top" Width="200"/>
             <ProgressBar x:Name="prgBar" Height="10" Width="100" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,3,0,0"/>
             <TextBlock x:Name="txtUsage" TextWrapping="Wrap" Text="Memory usage: Calculating..." Width="180"/>
+            <TextBlock x:Name="txtFile" TextWrapping="Wrap" Text="File: " HorizontalAlignment="Right" VerticalAlignment="Top" Width="200"/>
         </StatusBar>
 
         <Menu x:Name="ToolBar" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="792">
