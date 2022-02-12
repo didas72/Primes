@@ -27,9 +27,9 @@ namespace Primes.Common.Files
             public static byte[] Compress(ulong[] ulongs)
             {
                 if (ulongs.Length < 2)
-                    throw new ArgumentException();
+                    throw new ArgumentException(nameof(ulongs));
 
-                List<byte> bytes = new List<byte>();
+                List<byte> bytes = new();
 
                 //first is always raw
 
@@ -72,9 +72,9 @@ namespace Primes.Common.Files
             public static ulong[] Uncompress(byte[] bytes)
             {
                 if (bytes.Length < 8)
-                    throw new ArgumentException();
+                    throw new ArgumentException(nameof(bytes));
 
-                List<ulong> ulongs = new List<ulong>();
+                List<ulong> ulongs = new();
 
                 //first 8 bytes always first value
 
@@ -127,7 +127,7 @@ namespace Primes.Common.Files
             /// <returns>Byte array with the compressed ulongs</returns>
             public static byte[] Compress(ulong[] ulongs)
             {
-                List<byte> bytes = new List<byte>();
+                List<byte> bytes = new();
 
                 //first is always raw
 
@@ -168,9 +168,9 @@ namespace Primes.Common.Files
             public static ulong[] Uncompress(byte[] bytes)
             {
                 if (bytes.Length == 0)
-                    return new ulong[0];
+                    return Array.Empty<ulong>();
 
-                List<ulong> ulongs = new List<ulong>();
+                List<ulong> ulongs = new();
 
                 //first 8 bytes always first value
 
@@ -223,7 +223,7 @@ namespace Primes.Common.Files
             {
                 int header = 0;
                 ulong delta;
-                List<byte> block = new List<byte>();
+                List<byte> block = new();
 
                 if (last == 0)
                 {
@@ -351,7 +351,7 @@ namespace Primes.Common.Files
                 {
                     uncompress.Add(BitConverter.ToUInt64(block, blockHeader));
                     blockHeader += 8;
-                    last = uncompress[uncompress.Count - 1];
+                    last = uncompress[^1];
                 }
 
                 while (blockHeader < block.Length - 1)
