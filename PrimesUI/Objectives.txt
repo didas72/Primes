@@ -1,0 +1,92 @@
+﻿Objectives with PrimesUI
+
+Merge all tools into one user-friendly, intuitive app.
+
+Musts:
+-Control Primes.Exec (which will become a background serviced, launch on user request/boot if configured)
+-Control benchmarking/stress testing
+-Visualize file contents
+-Convert files to new/old versions/compressions
+-Create files (jobs/resources)
+-Export primes to text, csv, etc
+-Collection of other tools (check if a number is prime, find in file, repair files, jobs=>resources, etc)
+-Analyze jobs/batches for stats
+
+Menu pages:
+-Control (Controls Primes.Exec, may be remote controlled since plan is to do it via TCP sockets)
+-Testing (Benchmarking/Stresstesting)
+-Files (Create/Open/Edit/Convert/Export/Validate files)
+-Stats (Analyze for stats)
+-Tools (Random tools)
+-Settings (Setts for this app, Setts for Primes.Exec, Check for updates)
+-[[Exit]]
+
+
+
+Global contents:
+	Pop-ups:
+	-Unhandled Exception:
+		-'An unhandled exception occurred!' text //further details may be added
+		-Close button
+
+
+
+
+Menu contents:
+
+	Control:
+		Controls Primes.Exec and related files
+
+		-Must be able to connect to local and remote machines
+		-Start and stop primes
+		-View status and progress
+		-Manually add/remove local jobs
+		-Manually check for updated resources files (Needs batch server to be completed AND EXTENDED)
+		-[Maybe] Check for online jobs (Needs batch server to be completed)
+
+		Interfaces:
+		-Connect local button
+		-Connect remote button (POP-UP)
+		-Start/Stop button
+		-Status text (Running + worker count / stopped)
+		-Batch progress bar
+		-Batch number text
+		-Open primes folder button
+		-Check resource update button
+
+		Pop-ups:
+		-Connect remote:
+			-IP input field
+			-Port input field
+			-Connect button
+			-Cancel button
+
+	Testing:
+		Controls benchmarks and stress tests.
+
+		-Must be able to run benchmarks
+		-Select and configure stress tests
+		-Start and stop stress tests
+		-View score of benchmark
+		-View progress of stress test
+		-View history of benchmarks
+
+		Interfaces: (Split screen for benchmark/stress test)
+		//Benchmark side
+		-Benchmark text
+		-Single-threaded button
+		-Multi-threaded button
+		-Benchmark status text
+		-Benchmark progress bar
+		-Benchmark score text
+		-Benchmark history text-list
+
+		//Middle
+		-Divider panel
+
+		//Stress test side
+		-Thread count input field
+		-Multi-threaded button
+		-Test status text
+		-Test progress bar
+		-CPU temperature text (OpenHardwareMonitor has a .dll for this, search it up)
