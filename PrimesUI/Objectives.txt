@@ -23,6 +23,7 @@ Menu pages:
 
 
 
+
 Global contents:
 	Pop-ups:
 	-Unhandled Exception:
@@ -85,8 +86,26 @@ Menu contents:
 		-Divider panel
 
 		//Stress test side
+		-Stress Test text
 		-Thread count input field
-		-Multi-threaded button
+		-Start/Stop button
 		-Test status text
 		-Test progress bar
 		-CPU temperature text (OpenHardwareMonitor has a .dll for this, search it up)
+
+	Files:
+		Tool collection that allows visualization of file contents, editing, exporting, convertion and creation.
+
+		-Must be able to open both jobs and resources (can just load parts at a time for memory)
+		-View contents as actual values and as hexdump
+		-Find values (or nearest value)
+		-Find compression specific locations (eg NCC big jumps)
+		-Convert jobfiles into resource files
+		-Validate jobs/batches
+		-Fix (if able) jobs/batches
+		-Convert file options (compression, version)
+		-Export contents to txt and csv
+		-Generate jobs/batches
+
+		Interfaces:
+		-

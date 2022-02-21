@@ -19,6 +19,20 @@ namespace Primes.UI
         private static Menu selectedMenu = Menu.Control;
         private static List<IRenderable> UI;
 
+        #region Palette
+        /*
+         * Palette:
+         * Background   51, 51, 51
+         * Mid          77, 77, 77
+         * Foreground   102, 102, 102
+         * Text         0, 0, 0
+         * Highlights   0, 206, 255
+         */
+
+        private static Color Background = new(51, 51, 51, 255), Mid = new(77, 77, 77, 255), Foreground = new(102, 102, 102, 255), Text = new(0, 0, 0, 255), Highlights = new(0, 206, 255, 255);
+
+        #endregion
+
 
 
         static void Main(string[] args)
@@ -80,17 +94,6 @@ namespace Primes.UI
         }
         private static bool InitUI()
         {
-            /*
-             * Pallete:
-             * Background   51, 51, 51
-             * Mid          77, 77, 77
-             * Foreground   102, 102, 102
-             * Text         0, 0, 0
-             * Highlights   0, 206, 255
-             */
-
-            Color Background = new(51,51,51,255), Mid = new(77,77,77,255), Foreground = new(102,102,102,255), Text = new(0,0,0,255), Highlights = new(0,206,255,255);
-
             UI = new List<IRenderable>();
             Panel pnl; Button btn; TextBox txtBox; Holder pageHld, hld, hld1, hld2; ProgressBar prgBar; TextList txtLst;
 
@@ -191,13 +194,13 @@ namespace Primes.UI
             //btn.OnPressed += ;
             hld1.Add(btn);
 
-            txtBox = new("Benchmark status...", new(2, 82), new(296, 28));
+            txtBox = new("Benchmark status...", 20, new(2, 82), new(296, 28), Highlights);
             hld1.Add(txtBox);
 
             prgBar = new(new(2, 112), new(296, 28));
             hld1.Add(prgBar);
 
-            txtBox = new("Score: XXX,XXX.XXX", new(2, 142), new(196, 26));
+            txtBox = new("Score: XXX,XXX.XXX", 20, new(2, 142), new(196, 26), Highlights);
             hld1.Add(txtBox);
 
             txtLst = new(new(2,172), new(392, 60));
@@ -210,6 +213,19 @@ namespace Primes.UI
             hld2.Add(txtBox);
 
             //TODO: input field
+
+            btn = new("Start/Stop", new(2, 82), new(166, 28));
+            //btn.OnPressed += ;
+            hld2.Add(btn);
+
+            txtBox = new("Test status...", 20, new(2, 112), new(296, 28), Highlights);
+            hld2.Add(txtBox);
+
+            prgBar = new(new(2, 142), new(296, 28));
+            hld2.Add(prgBar);
+
+            txtBox = new("CPU temp: XXX.X ºC", 20, new(2,172), new(296, 26), Highlights);
+            hld2.Add(txtBox);
             #endregion
 
             return true;
