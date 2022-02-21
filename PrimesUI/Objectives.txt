@@ -17,7 +17,7 @@ Menu pages:
 -Testing (Benchmarking/Stresstesting)
 -Files (Create/Open/Edit/Convert/Export/Validate files)
 -Stats (Analyze for stats)
--Tools (Random tools)
+-Tools (Random tools) (is prime, )
 -Settings (Setts for this app, Setts for Primes.Exec, Check for updates)
 -[[Exit]]
 
@@ -105,7 +105,62 @@ Menu contents:
 		-Fix (if able) jobs/batches
 		-Convert file options (compression, version)
 		-Export contents to txt and csv
-		-Generate jobs/batches
+		-[MOVED TO TOOLS]Generate jobs/batches
 
 		Interfaces:
-		-
+		//Top bar (file control)
+		-Open button
+		-New job button
+		-New resource button
+		-Save button
+		-Close button
+
+		//Header area
+		-Header text
+		-Header view text-list
+		-Change version button
+		-Change compression button
+		-Change field button (for all other options)
+		-Apply button
+
+		//View area
+		-Content view text-list
+		-Switch view button (values/hex)
+		-Find button
+
+		//Tools area
+		-Tools text
+		-Validate button
+		-Fix button
+		-Convert button
+		-Export button
+
+		Pop-ups:
+		-Open file dialog (Forms)
+		-Save file dialog (Forms)
+		-Change verison:
+			-Verion dropdown
+			-Accept button
+			-Cancel button
+		-Change compression:
+			-Compression dropdown
+			-Accept button
+			-Cancel button
+		-Change field:
+			-Field name input field
+			-Field value input field
+			-Accept button
+			-Cancel button
+		-Export:
+			-Format dropdown
+			-Export button (triggers save file dialog)
+			-Cancel button
+		-Convert:
+			-Convert to %other option% text
+			-Convert button (triggers save file dialog)
+			-Cancel button
+		-Find:
+			-Value input field
+			-Find button
+			-Find hex button
+			-Cancel button

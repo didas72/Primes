@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 
 using DidasUtils.Logging;
@@ -37,20 +38,36 @@ namespace Primes.UI
 
         static void Main(string[] args)
         {
-            if (!Init()) return;
-
-            //pass args
-
-            EnableOnlyMenu(selectedMenu);
-
-            while (masterRun && !Raylib.WindowShouldClose())
+            try
             {
-                Update();
+                if (!Init()) return;
 
-                Raylib.BeginDrawing();
-                Raylib.ClearBackground(Color.BLACK);
-                Draw();
-                Raylib.EndDrawing();
+                //pass args
+
+                EnableOnlyMenu(selectedMenu);
+
+                while (masterRun && !Raylib.WindowShouldClose())
+                {
+                    try
+                    {
+                        Update();
+
+                        Raylib.BeginDrawing();
+                        Raylib.ClearBackground(Color.BLACK);
+                        Draw();
+                        Raylib.EndDrawing();
+                    }
+                    catch (Exception e)
+                    {
+                        Log.LogException("Unhandled exception.", "Main", e);
+                        PopupUnhandledException(e);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.LogException("Fatal nhandled exception.", "Main", e);
+                Environment.Exit(1);
             }
         }
 
@@ -59,6 +76,7 @@ namespace Primes.UI
         private static bool Init()
         {
             Log.InitConsole();
+            Log.UsePrint = false;
 
             try
             {
@@ -213,6 +231,8 @@ namespace Primes.UI
             hld2.Add(txtBox);
 
             //TODO: input field
+            txtBox = new("PLACEHOLDER", 20, new(2, 52), new(166, 26), Color.RED);
+            hld2.Add(txtBox);
 
             btn = new("Start/Stop", new(2, 82), new(166, 28));
             //btn.OnPressed += ;
@@ -226,6 +246,89 @@ namespace Primes.UI
 
             txtBox = new("CPU temp: XXX.X ºC", 20, new(2,172), new(296, 26), Highlights);
             hld2.Add(txtBox);
+            #endregion
+
+            #region Files Menu
+            hld = new(Vector2i.Zero, "Files");
+            pageHld.Add(hld);
+
+            //File control
+            pnl = new(new(0, 0), new(400, 30), Mid);
+            hld.Add(pnl);
+
+            btn = new("Open", new(2, 2), new(96, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+            btn = new("New job", new(102, 2), new(96, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+            btn = new("New rsrc", new(202, 2), new(96, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+            btn = new("Save", new(302, 2), new(96, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+
+            //View area
+            txtLst = new(new(2, 32), new(396, 496));
+            hld.Add(txtLst);
+
+            btn = new("Switch view", new(2, 532), new(146, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+            btn = new("Find...", new(152, 532), new(146, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+
+            //Header area
+            txtBox = new("Header", 20, new(402, 2), new(96, 26), Highlights);
+            hld.Add(txtBox);
+
+            txtLst = new(new(402, 32), new(396, 376));
+            hld.Add(txtLst);
+
+            btn = new("Change version", new(402, 412), new(176, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+            btn = new("Change compression", new(582, 412), new(216, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+            btn = new("Change field", new(402, 442), new(176, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+            btn = new("Apply changes", new(582, 442), new(216, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+
+            //Tools area
+            txtBox = new("Tools", 20, new(402, 472), new(196, 26), Highlights);
+            hld.Add(txtBox);
+
+            btn = new("Validate", new(402, 502), new(96, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+            btn = new("Fix", new(502, 502), new(96, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+            btn = new("Convert", new(402, 532), new(96, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
+
+            btn = new("Export", new(502, 532), new(96, 26));
+            //btn.OnPressed += ;
+            hld.Add(btn);
             #endregion
 
             return true;
