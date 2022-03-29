@@ -1,0 +1,28 @@
+﻿Messages for PrimesSVC
+
+l = letters (caps and no caps)
+d = digits
+s = +-*/%_\|^,.;:!?"#$&()[]{}<>@
+
+base64 is that used in DidasUtils
+
+Tasks performed by messages:
+-Start (If started into a possible paused mode, where only listener is running)
+-Stop
+-Request/Return Status
+-Request/Return Batch progress
+-Request/Return/Set settings
+
+Message types (3 letters):
+-Request (Req)
+-Return (Ret)
+-Change value (Set)
+-Action (Run)
+-Data (Dta)
+
+Possible message structure, spaces as dividers:
+-Type (Eg 'Req') (3 ld)
+-Target (Eg 'Batch_status') (1+ lds, no spaces)
+-Value length (hex, 8 digits (aka int, signed but must be positive, can be zero))
+-Value type (s = string, h = hex, exclude if Value length = 0)
+-Value (Eg '4' as a setting value or 'stop' as an action, formatted as specified in value type, exclude if Value length = 0)

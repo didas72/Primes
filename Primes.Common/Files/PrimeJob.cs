@@ -670,6 +670,14 @@ namespace Primes.Common.Files
             {
                 return obj is Version version && Equals(version);
             }
+            /// <summary>
+            /// Returns the hash code for this instance.
+            /// </summary>
+            /// <returns></returns>
+            public override int GetHashCode()
+            {
+                return (major << 16) | (minor << 8) | patch;
+            }
 
 
             public static bool operator ==(Version left, Version right)

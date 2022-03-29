@@ -28,6 +28,22 @@ namespace Primes.SVC
             Log.InitLog(Globals.startLogPath, "SVC_start_log.txt");
             Globals.startLogPath = Path.Combine(Globals.startLogPath, "SVC_start_log.txt");
 
+            GetOS();
+
+            if (!InitSettings())
+                return false;
+
+            if (!InitDirs())
+                return false;
+
+            if (!InitLog())
+                return false;
+
+            if (!ControlListener.Init())
+                return false;
+        }
+        private static void GetOS()
+        {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Globals.currentOS = OS.Windows;
@@ -47,15 +63,6 @@ namespace Primes.SVC
                 Globals.currentOS = OS.FreeBSD;
                 throw new NotImplementedException("PrimesSVC does not support FreeBSD.");
             }
-
-            if (!InitSettings())
-                return false;
-
-            if (!InitDirs())
-                return false;
-
-            if (!InitLog())
-                return false;
         }
         private static bool InitSettings()
         {
