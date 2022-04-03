@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Linq;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 
 using DidasUtils.Logging;
-
-using Microsoft.Win32;
 
 using Primes.Common;
 
@@ -40,6 +38,9 @@ namespace Primes.SVC
                 return false;
 
             if (!ControlListener.Init())
+                return false;
+
+            if (!ResourceHolder.Init())
                 return false;
         }
         private static void GetOS()

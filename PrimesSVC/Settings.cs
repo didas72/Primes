@@ -33,7 +33,7 @@ namespace Primes.SVC
         {
             try
             {
-                RegistryKey softKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\");
+                RegistryKey softKey = Registry.CurrentUser.OpenSubKey("SOFTWARE", true);
                 if (softKey == null)
                 {
                     Log.LogEvent(Log.EventType.Error, "Failed to access SOFTWARE key.", "InitSettings_WinReg");
@@ -107,7 +107,7 @@ namespace Primes.SVC
 
 
 
-        //getters and setters
+        //getters and setters (SLOW)
         public static string GetHomeDir()
         {
             if (!HasRegValue("HomeDir"))

@@ -28,12 +28,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimesUI", "PrimesUI\Primes
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ToReplace", "ToReplace", "{8A37DF04-A42E-446D-A606-EA3D46951148}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesSVC", "PrimesSVC\PrimesSVC.csproj", "{5E13B97A-EF59-4A44-825A-C7F5906930CF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimesSVC", "PrimesSVC\PrimesSVC.csproj", "{5E13B97A-EF59-4A44-825A-C7F5906930CF}"
 EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		DidasUtils\DidasUtilsShared\DidasUtilsShared.projitems*{a3536456-4a04-4cf8-aaf8-d0b97f4ab534}*SharedItemsImports = 5
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64

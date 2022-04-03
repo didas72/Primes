@@ -5,6 +5,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Linq;
 
 using DidasUtils.Logging;
 
@@ -52,6 +53,7 @@ namespace Primes.SVC
 
                     TcpClient socket = listener.AcceptTcpClient();
 
+                    //only handle one at a time
                     HandleClient(socket);
                 }
             }
@@ -63,8 +65,8 @@ namespace Primes.SVC
         private static void HandleClient(TcpClient client)
         {
             NetworkStream ns = client.GetStream();
+            List<byte> msg = new();
             byte[] buffer = new byte[1024];
-            string message = string.Empty;
             int attempts;
             bool handleDone = false;
 
@@ -83,21 +85,65 @@ namespace Primes.SVC
                     if (ns.Length > ns.Position) //has something to read
                     {
                         int trueRead = ns.Read(buffer, 0, buffer.Length);
-                        message += Encoding.Unicode.GetString(buffer, 0, trueRead);
+                        msg.AddRange(buffer.AsSpan(0, trueRead).ToArray());
 
-                        if (TryProcessMessage(message))
-                            handleDone = true;
+                        if (IsMessageComplete(msg)) break;
                     }
-
-                    attempts++;
-                    Thread.Sleep(1);
+                    else
+                    {
+                        attempts++;
+                        Thread.Sleep(1);
+                    }
                 }
+
+                if (ProcessMessage(msg.Skip(4).ToArray(), out byte[] response);
+                throw new NotImplementedException();
             }
         }
-        private static bool TryProcessMessage(string mesage)
+        private static bool IsMessageComplete(List<byte> ms)
         {
-            if (mesage.Length < 3)
-                throw new Exception($"Message '{mesage}' is too short.");
+            if (ms.Count < 4) return false;
+
+            int msgLen = BitConverter.ToInt32(ms.ToArray(), 0);
+            return ms.Count - 4 == msgLen;
+        }
+        private static bool ProcessMessage(byte[] msg, out byte[] response)
+        {
+            int head = 0;
+            string msgType = Encoding.UTF8.GetString(msg, head, 3); head += 3;
+            short targetLen = BitConverter.ToInt16(msg, head); head += 2;
+            string target = targetLen == 0 ? string.Empty : Encoding.UTF8.GetString(msg, 5, targetLen); head += targetLen;
+            int valueLength = BitConverter.ToInt32(msg, head);
+            byte valueType = 0; object value = null; response = Array.Empty<byte>();
+
+            if (valueLength != 0)
+            {
+                valueType = msg[head++];
+
+                switch (valueType)
+                {
+                    case 0:
+                        value = new byte[msg.Length - head];
+                        Array.Copy(msg, head, (byte[])value, 0, msg.Length - head);
+                        break;
+
+                    case 1:
+                        value = Encoding.UTF8.GetString(msg, head, msg.Length - head);
+                        break;
+                }
+            }
+
+            return HandleMessage(msgType, target, valueType, value, out response);
+        }
+        private static bool HandleMessage(string msgType, string target, byte valueType, object value, out byte[] response)
+        {
+            response = Array.Empty<byte>();
+
+            switch (msgType)
+            {
+                default:
+                    return false;
+            }
         }
     }
 }

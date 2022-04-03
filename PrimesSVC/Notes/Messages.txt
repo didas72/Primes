@@ -4,7 +4,7 @@ l = letters (caps and no caps)
 d = digits
 s = +-*/%_\|^,.;:!?"#$&()[]{}<>@
 
-base64 is that used in DidasUtils
+hex does NOT include 0x prefix
 
 Tasks performed by messages:
 -Start (If started into a possible paused mode, where only listener is running)
@@ -13,16 +13,17 @@ Tasks performed by messages:
 -Request/Return Batch progress
 -Request/Return/Set settings
 
-Message types (3 letters):
--Request (Req)
--Return (Ret)
--Change value (Set)
--Action (Run)
--Data (Dta)
+Message types (3 letters, capital sensitive):
+-Request value (req)
+-Return (ret)
+-Set value (set)
+-Action (run)
+-Data (dta)
 
 Possible message structure, spaces as dividers:
--Type (Eg 'Req') (3 ld)
--Target (Eg 'Batch_status') (1+ lds, no spaces)
--Value length (hex, 8 digits (aka int, signed but must be positive, can be zero))
--Value type (s = string, h = hex, exclude if Value length = 0)
+-Type (Eg 'Req') (string, 3 ld)
+-Target length (int16, 0+)
+-Target (Eg 'Batch_status') (<target length> lds)
+-Value length (int32, 0+)
+-Value type (uint8, 0 = binary, 1 = string; exclude if Value length = 0)
 -Value (Eg '4' as a setting value or 'stop' as an action, formatted as specified in value type, exclude if Value length = 0)

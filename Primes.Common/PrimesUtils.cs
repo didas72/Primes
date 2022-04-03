@@ -29,7 +29,7 @@ namespace Primes.Common
             else
                 files = Utils.GetSubFiles(path, "*.primejob");
 
-            Queue<string> doableJobs = new Queue<string>();
+            Queue<string> doableJobs = new();
 
             for (int i = 0; i < files.Length; i++)
             {
