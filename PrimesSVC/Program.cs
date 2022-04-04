@@ -5,8 +5,6 @@ using System.Runtime.InteropServices;
 
 using DidasUtils.Logging;
 
-using Primes.Common;
-
 namespace Primes.SVC
 {
     class Program
@@ -14,34 +12,66 @@ namespace Primes.SVC
         private static void Main(string[] args)
         {
             if (!Init())
+            {
                 Log.LogEvent(Log.EventType.Fatal, "Failed to init.", "Main");
+                Environment.Exit(1);
+            }
+
+            try
+            {
+                ControlListener.ListenAndJoin();
+            }
+            catch (Exception e)
+            {
+                Log.LogEvent(Log.EventType.Fatal, "Unhandled exception, see below.", "Main");
+                Log.LogException("Fatal exception.", "Main", e);
+                Environment.Exit(1);
+                return; //sanity and proper branch flow for VS
+            }
+
+            //regular exit
+            WorkCoordinator.StopWork();
+            
         }
 
 
 
         private static bool Init()
         {
-            Log.UsePrint = false;
-            Globals.startLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
-            Log.InitLog(Globals.startLogPath, "SVC_start_log.txt");
-            Globals.startLogPath = Path.Combine(Globals.startLogPath, "SVC_start_log.txt");
+            try
+            {
+                Log.UsePrint = false;
+                Globals.startLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
+                Log.InitLog(Globals.startLogPath, "SVC_start_log.txt");
+                Globals.startLogPath = Path.Combine(Globals.startLogPath, "SVC_start_log.txt");
 
-            GetOS();
+                GetOS();
 
-            if (!InitSettings())
+                if (!InitSettings())
+                    return false;
+
+                if (!InitDirs())
+                    return false;
+
+                if (!InitLog())
+                    return false;
+
+                if (!ControlListener.Init())
+                    return false;
+
+                if (!ResourceHolder.Init())
+                    return false;
+
+                if (!WorkCoordinator.InitWorkers())
+                    return false;
+            }
+            catch (Exception e)
+            {
+                Log.LogException("Failed to init.", "Init", e);
                 return false;
+            }
 
-            if (!InitDirs())
-                return false;
-
-            if (!InitLog())
-                return false;
-
-            if (!ControlListener.Init())
-                return false;
-
-            if (!ResourceHolder.Init())
-                return false;
+            return true;
         }
         private static void GetOS()
         {
@@ -84,6 +114,7 @@ namespace Primes.SVC
         {
             try
             {
+                Globals.homeDir = Settings.HomeDir;
                 Directory.CreateDirectory(Globals.homeDir);
 
                 Globals.resourcesDir = Path.Combine(Globals.homeDir, "resources");
@@ -106,6 +137,7 @@ namespace Primes.SVC
         private static bool InitLog()
         {
             Log.InitLog(Path.Combine(Globals.homeDir), "SVC_log.txt");
+            Log.UsePrint = false;
 
             try { File.Delete(Path.Combine(Globals.startLogPath)); } catch { }
 

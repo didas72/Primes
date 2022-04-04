@@ -29,7 +29,7 @@ namespace Primes.SVC
 
 
 
-        public static void ListenAndMerge()
+        public static void ListenAndJoin()
         {
             if (!initialized) throw new Exception("Attempted to start listening from an uninitialized ControlListener.");
 
@@ -52,6 +52,7 @@ namespace Primes.SVC
                         break;
 
                     TcpClient socket = listener.AcceptTcpClient();
+                    Log.LogEvent($"Client connected at {socket.Client.RemoteEndPoint}", "ListenLoop");
 
                     //only handle one at a time
                     HandleClient(socket);
@@ -64,15 +65,14 @@ namespace Primes.SVC
         }
         private static void HandleClient(TcpClient client)
         {
-            NetworkStream ns = client.GetStream();
-            List<byte> msg = new();
-            byte[] buffer = new byte[1024];
-            int attempts;
-            bool handleDone = false;
-
-            while (!handleDone)
+            try
             {
-                attempts = 0; 
+                NetworkStream ns = client.GetStream();
+                List<byte> msg = new();
+                byte[] buffer = new byte[1024];
+                int attempts;
+
+                attempts = 0;
 
                 while (attempts < 1000)
                 {
@@ -80,6 +80,7 @@ namespace Primes.SVC
                     {
                         ns.Dispose();
                         client.Close();
+                        return;
                     }
 
                     if (ns.Length > ns.Position) //has something to read
@@ -96,8 +97,26 @@ namespace Primes.SVC
                     }
                 }
 
-                if (ProcessMessage(msg.Skip(4).ToArray(), out byte[] response);
-                throw new NotImplementedException();
+                if (!ProcessMessage(msg.Skip(4).ToArray(), out byte[] response))
+                {
+                    Log.LogEvent(Log.EventType.Warning, "Something went wrong while handling a client.", "HandleClient");
+                    client.Close();
+                    return;
+                }
+
+                ns.Write(response, 0, response.Length);
+                ns.Close();
+                client.Close();
+
+                Log.LogEvent("Handle complete", "ListenLoop");
+            }
+            catch (Exception e)
+            {
+                Log.LogException("Failed to handle client.", "HandleClient", e);
+            }
+            finally
+            {
+                client.Close();
             }
         }
         private static bool IsMessageComplete(List<byte> ms)
@@ -114,7 +133,7 @@ namespace Primes.SVC
             short targetLen = BitConverter.ToInt16(msg, head); head += 2;
             string target = targetLen == 0 ? string.Empty : Encoding.UTF8.GetString(msg, 5, targetLen); head += targetLen;
             int valueLength = BitConverter.ToInt32(msg, head);
-            byte valueType = 0; object value = null; response = Array.Empty<byte>();
+            byte valueType = 0; object value = null;
 
             if (valueLength != 0)
             {
@@ -141,8 +160,94 @@ namespace Primes.SVC
 
             switch (msgType)
             {
+                case "run":
+                    if (target != string.Empty) Log.LogEvent(Log.EventType.Warning, $"Run should never have a target: '{target}' given.", "HandleMessage");
+                    if (valueType != 1) throw new Exception("Run message must always be given a string value.");
+                    return HandleRunMessage((string)value, out response);
+
+                case "req":
+                case "ret":
+                case "set":
+                case "dta":
+                    throw new NotImplementedException();
+
                 default:
                     return false;
+            }
+        }
+
+
+
+        private static bool HandleRunMessage(string value, out byte[] response)
+        {
+            switch (value)
+            {
+                case "start":
+                    WorkCoordinator.StartWork();
+                    response = ResponseBuilder.ActionSuccessResponse();
+                    return true;
+
+                case "stop":
+                    WorkCoordinator.StopWork();
+                    response = ResponseBuilder.ActionSuccessResponse();
+                    return true;
+
+                case "fstop":
+                    WorkCoordinator.StopWork();
+                    response = ResponseBuilder.ActionSuccessResponse();
+                    doListen = false;
+                    return true;
+
+                default:
+                    response = ResponseBuilder.ActionInvalidResponse();
+                    Log.LogEvent(Log.EventType.Warning, $"Received invalid or unhandled action '{value}'.", "HandleRunMessage");
+                    return true;
+            }
+        }
+
+
+        private static class ResponseBuilder
+        {
+            public static byte[] ActionSuccessResponse(string comment = "")
+            {
+                List<byte> response = new();
+                response.AddRange(Encoding.UTF8.GetBytes("ret"));
+                response.Add(0);//no target
+                response.AddRange(BitConverter.GetBytes(comment.Length + 5));//comment + 'PASS:'
+                response.Add(1);//string
+                response.AddRange(Encoding.UTF8.GetBytes("PASS:"));
+                if (!string.IsNullOrEmpty(comment))
+                    response.AddRange(Encoding.UTF8.GetBytes(comment));
+
+                return response.ToArray();
+            }
+
+            public static byte[] ActionFailResponse(string comment="")
+            {
+                List<byte> response = new();
+                response.AddRange(Encoding.UTF8.GetBytes("ret"));
+                response.Add(0);//no target
+                response.AddRange(BitConverter.GetBytes(comment.Length + 5));//comment + 'FAIL:'
+                response.Add(1);//string
+                response.AddRange(Encoding.UTF8.GetBytes("FAIL:"));
+                if (!string.IsNullOrEmpty(comment))
+                    response.AddRange(Encoding.UTF8.GetBytes(comment));
+
+                return response.ToArray();
+            }
+
+            public static byte[] ActionInvalidResponse(string comment = "")
+            {
+                List<byte> response = new();
+                response.AddRange(Encoding.UTF8.GetBytes("ret"));
+                response.Add(0);//no target
+                response.AddRange(BitConverter.GetBytes(comment.Length + 5));//comment + 'NVAL:'
+                response.Add(1);//string
+                response.AddRange(Encoding.UTF8.GetBytes("NVAL:"));
+                if (!string.IsNullOrEmpty(comment))
+                    response.AddRange(Encoding.UTF8.GetBytes(comment));
+
+                return response.ToArray();
             }
         }
     }

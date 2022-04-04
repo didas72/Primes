@@ -10,7 +10,7 @@ Settings (present or TODO):
  -MaxResourceMemory (int32) (limit krpc mem usage, in kiB, zero or negative is unlimited) (-1)
 
  //later
- -Logging options (performance, loading, saving)
+ -Logging options (performance, loading, saving, connections)
 
  //later, separate file, possibly JSON
  -UseJobServer

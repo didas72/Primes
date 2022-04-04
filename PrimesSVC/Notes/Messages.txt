@@ -27,3 +27,13 @@ Possible message structure, spaces as dividers:
 -Value length (int32, 0+)
 -Value type (uint8, 0 = binary, 1 = string; exclude if Value length = 0)
 -Value (Eg '4' as a setting value or 'stop' as an action, formatted as specified in value type, exclude if Value length = 0)
+
+
+
+Actions:
+-Start 'start'
+-Stop 'stop'
+-Full stop 'fstop' (Exit)
+
+//later
+-Reload (Exit and start again)

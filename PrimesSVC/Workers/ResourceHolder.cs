@@ -28,7 +28,12 @@ namespace Primes.SVC
 
                 string kprfPath = Path.Combine(Globals.resourcesDir, "knownPrimes.rsrc");
 
-                if (!File.Exists(kprfPath)) Log.LogEvent(Log.EventType.Warning, "Resource file not found, performance will be severly affected.", "ResourceHolder");
+                if (!File.Exists(kprfPath))
+                {
+                    Log.LogEvent(Log.EventType.Warning, "Resource file not found, performance will be severly affected.", "ResourceHolder");
+                    knownPrimes = Array.Empty<ulong>();
+                    return true;
+                }
 
                 var file = KnownPrimesResourceFile.Deserialize(kprfPath);
                 knownPrimes = file.Primes;

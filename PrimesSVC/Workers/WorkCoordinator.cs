@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -16,6 +17,55 @@ namespace Primes.SVC
         private static readonly Semaphore jobQueueAccess = new(0, 1);
         private static Queue<string> jobQueue = new();
         private static int maxJobQueue = -1;
+
+        private static Worker[] workers;
+
+
+
+        public static bool InitWorkers()
+        {
+            workers = new Worker[Settings.Threads];
+            int bufferSize = Settings.PrimeBufferSize;
+
+            for (int i = 0; i < workers.Length; i++)
+                workers[i] = new Worker(bufferSize);
+
+            return true;
+        }
+
+
+        public static void StartWork()
+        {
+            for (int i = 0; i < workers.Length; i++)
+                workers[i].Start();
+        }
+        public static void StopWork()
+        {
+            if (workers == null) return;
+
+            for (int i = 0; i < workers.Length; i++)
+                workers[i]?.Stop();
+        }
+        public static void WaitForWorkers(TimeSpan maxWait)
+        {
+            if (workers == null || workers.Length == 0) return;
+
+            Stopwatch sw = new();
+            sw.Start();
+            int i = 0;
+
+            while (sw.Elapsed < maxWait)
+            {
+                if (!workers[i].IsRunning())
+                    i++;
+
+                if (i >= workers.Length) break;
+
+                Thread.Sleep(1);
+            }
+
+            sw.Stop();
+        }
 
 
 

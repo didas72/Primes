@@ -146,14 +146,14 @@ namespace Primes.SVC
 
             GetRegValue("ControlPort", out object outp);
 
-            return (ushort)outp;
+            return (ushort)(int)outp;
         }
         public static void SetControlPort(ushort value)
         {
             if (value < 1024)
                 throw new ArgumentOutOfRangeException(nameof(value), "The port number must be greater than 1023 to avoid interference with common applications.");
 
-            SetRegValue("ControlPort", value, RegistryValueKind.Binary);
+            SetRegValue("ControlPort", value, RegistryValueKind.DWord);
         }
 
         public static bool GetAllowExternalControl()
@@ -163,7 +163,7 @@ namespace Primes.SVC
 
             GetRegValue("AllowExternalControl", out object outp);
 
-            return (bool)outp;
+            return (int)outp != 0;
         }
         public static void SetAllowExternalControl(bool value)
         {
