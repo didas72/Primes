@@ -9,6 +9,7 @@ namespace Primes.UI.Render
 {
     public class ProgressBar : IRenderable
     {
+        public string Id_Name { get; set; }
         public Vector2i Position { get; set; }
         public Vector2i Size { get; set; }
         public Color BorderColor { get; set; }

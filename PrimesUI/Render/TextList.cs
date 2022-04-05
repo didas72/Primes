@@ -11,6 +11,7 @@ namespace Primes.UI.Render
 {
     public class TextList : IRenderable, IUpdatable
     {
+        public string Id_Name { get; set; }
         public List<string> Lines { get; set; }
         public int FontSize { get; set; }
         public Vector2i Position { get; set; }

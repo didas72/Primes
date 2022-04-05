@@ -10,6 +10,7 @@ namespace Primes.UI.Render
 {
     public class Holder : IRenderable, IUpdatable
     {
+        public string Id_Name { get; set; }
         public string Id { get; }
         public Vector2i Position { get; set; }
         public List<IRenderable> Children { get; }

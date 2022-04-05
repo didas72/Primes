@@ -19,6 +19,7 @@ Message types (3 letters, capital sensitive):
 -Set value (set)
 -Action (run)
 -Data (dta)
+-Ping (png)
 
 Possible message structure, spaces as dividers:
 -Type (Eg 'Req') (string, 3 ld)

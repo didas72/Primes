@@ -10,6 +10,7 @@ namespace Primes.UI.Render
 {
     public class Button : IRenderable, IUpdatable
     {
+        public string Id_Name { get; set; }
         public string Text { get; set; }
         public int FontSize { get; set; }
         public Vector2i Position { get; set; }
@@ -59,7 +60,7 @@ namespace Primes.UI.Render
         public void Render(Vector2i localOffset)
         {
             string lText = Text;
-            while (Raylib.MeasureText(lText, FontSize) > Size.x) //trim to fit in given size
+            while (Raylib.MeasureText(lText, FontSize) > Size.x - 2) //trim to fit in given size
                 lText = lText[0..^1];
             Raylib.DrawRectangle(Position.x + localOffset.x, Position.y + localOffset.y, Size.x, Size.y, IsSelected ? SelectedColor : NormalColor);
             Raylib.DrawText(lText, Position.x + localOffset.x + 1, Position.y + localOffset.y + 1, FontSize, TextColor);

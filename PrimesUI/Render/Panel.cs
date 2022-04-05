@@ -10,6 +10,7 @@ namespace Primes.UI.Render
 {
     public class Panel : IRenderable
     {
+        public string Id_Name { get; set; }
         public Vector2i Position { get; set; }
         public Vector2i Size { get; set; }
         public Color Color { get; set; }
