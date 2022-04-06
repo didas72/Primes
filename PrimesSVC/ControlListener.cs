@@ -4,10 +4,10 @@ using System.IO;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
-using System.Linq;
 
 using DidasUtils.Logging;
+
+using Primes.Common.Net;
 
 namespace Primes.SVC
 {
@@ -68,43 +68,24 @@ namespace Primes.SVC
             try
             {
                 NetworkStream ns = client.GetStream();
-                List<byte> msg = new();
-                byte[] buffer = new byte[1024];
-                int attempts;
 
-                attempts = 0;
-
-                while (attempts < 1000)
+                if (!MessageBuilder.ReceiveMessage(ns, out byte[] msg, new TimeSpan(0, 0, 0, 0, 300)))
                 {
-                    if (!client.Connected)
-                    {
-                        ns.Dispose();
-                        client.Close();
-                        return;
-                    }
-
-                    if (ns.Length > ns.Position) //has something to read
-                    {
-                        int trueRead = ns.Read(buffer, 0, buffer.Length);
-                        msg.AddRange(buffer.AsSpan(0, trueRead).ToArray());
-
-                        if (IsMessageComplete(msg)) break;
-                    }
-                    else
-                    {
-                        attempts++;
-                        Thread.Sleep(1);
-                    }
+                    Log.LogEvent("Timed out while trying to receive message.", "HandleClient");
+                    client.Close();
+                    return;
                 }
-
-                if (!ProcessMessage(msg.Skip(4).ToArray(), out byte[] response))
+                MessageBuilder.DeserializeMessage(msg, out string messageType, out string target, out object value);
+                if (!HandleMessage(messageType, target, value, out byte[] response))
                 {
                     Log.LogEvent(Log.EventType.Warning, "Something went wrong while handling a client.", "HandleClient");
                     client.Close();
                     return;
                 }
 
-                ns.Write(response, 0, response.Length);
+                Log.LogEvent($"Sending response. len:{response.Length}", "ListenLoop");
+
+                MessageBuilder.SendMessage(response, ns);
                 ns.Close();
                 client.Close();
 
@@ -119,42 +100,7 @@ namespace Primes.SVC
                 client.Close();
             }
         }
-        private static bool IsMessageComplete(List<byte> ms)
-        {
-            if (ms.Count < 4) return false;
-
-            int msgLen = BitConverter.ToInt32(ms.ToArray(), 0);
-            return ms.Count - 4 == msgLen;
-        }
-        private static bool ProcessMessage(byte[] msg, out byte[] response)
-        {
-            int head = 0;
-            string msgType = Encoding.UTF8.GetString(msg, head, 3); head += 3;
-            short targetLen = BitConverter.ToInt16(msg, head); head += 2;
-            string target = targetLen == 0 ? string.Empty : Encoding.UTF8.GetString(msg, 5, targetLen); head += targetLen;
-            int valueLength = BitConverter.ToInt32(msg, head);
-            byte valueType = 0; object value = null;
-
-            if (valueLength != 0)
-            {
-                valueType = msg[head++];
-
-                switch (valueType)
-                {
-                    case 0:
-                        value = new byte[msg.Length - head];
-                        Array.Copy(msg, head, (byte[])value, 0, msg.Length - head);
-                        break;
-
-                    case 1:
-                        value = Encoding.UTF8.GetString(msg, head, msg.Length - head);
-                        break;
-                }
-            }
-
-            return HandleMessage(msgType, target, valueType, value, out response);
-        }
-        private static bool HandleMessage(string msgType, string target, byte valueType, object value, out byte[] response)
+        private static bool HandleMessage(string msgType, string target, object value, out byte[] response)
         {
             response = Array.Empty<byte>();
 
@@ -162,8 +108,13 @@ namespace Primes.SVC
             {
                 case "run":
                     if (target != string.Empty) Log.LogEvent(Log.EventType.Warning, $"Run should never have a target: '{target}' given.", "HandleMessage");
-                    if (valueType != 1) throw new Exception("Run message must always be given a string value.");
+                    if (value is not string) throw new Exception("Run message must always be given a string value.");
                     return HandleRunMessage((string)value, out response);
+
+                case "png":
+                    if (!string.IsNullOrEmpty(target)) Log.LogEvent(Log.EventType.Warning, $"Ping should never have a target: '{target}' given.", "HandleMessage");
+                    if (value != null) Log.LogEvent(Log.EventType.Warning, "Ping should never have a value.", "HandleMessage");
+                    return HandlePingMessage(out response);
 
                 case "req":
                 case "ret":
@@ -184,71 +135,30 @@ namespace Primes.SVC
             {
                 case "start":
                     WorkCoordinator.StartWork();
-                    response = ResponseBuilder.ActionSuccessResponse();
+                    response = MessageBuilder.ResponseActionSuccess();
                     return true;
 
                 case "stop":
                     WorkCoordinator.StopWork();
-                    response = ResponseBuilder.ActionSuccessResponse();
+                    response = MessageBuilder.ResponseActionSuccess();
                     return true;
 
                 case "fstop":
                     WorkCoordinator.StopWork();
-                    response = ResponseBuilder.ActionSuccessResponse();
+                    response = MessageBuilder.ResponseActionSuccess();
                     doListen = false;
                     return true;
 
                 default:
-                    response = ResponseBuilder.ActionInvalidResponse();
+                    response = MessageBuilder.ResponseActionInvalid();
                     Log.LogEvent(Log.EventType.Warning, $"Received invalid or unhandled action '{value}'.", "HandleRunMessage");
                     return true;
             }
         }
-
-
-        private static class ResponseBuilder
+        private static bool HandlePingMessage(out byte[] response)
         {
-            public static byte[] ActionSuccessResponse(string comment = "")
-            {
-                List<byte> response = new();
-                response.AddRange(Encoding.UTF8.GetBytes("ret"));
-                response.Add(0);//no target
-                response.AddRange(BitConverter.GetBytes(comment.Length + 5));//comment + 'PASS:'
-                response.Add(1);//string
-                response.AddRange(Encoding.UTF8.GetBytes("PASS:"));
-                if (!string.IsNullOrEmpty(comment))
-                    response.AddRange(Encoding.UTF8.GetBytes(comment));
-
-                return response.ToArray();
-            }
-
-            public static byte[] ActionFailResponse(string comment="")
-            {
-                List<byte> response = new();
-                response.AddRange(Encoding.UTF8.GetBytes("ret"));
-                response.Add(0);//no target
-                response.AddRange(BitConverter.GetBytes(comment.Length + 5));//comment + 'FAIL:'
-                response.Add(1);//string
-                response.AddRange(Encoding.UTF8.GetBytes("FAIL:"));
-                if (!string.IsNullOrEmpty(comment))
-                    response.AddRange(Encoding.UTF8.GetBytes(comment));
-
-                return response.ToArray();
-            }
-
-            public static byte[] ActionInvalidResponse(string comment = "")
-            {
-                List<byte> response = new();
-                response.AddRange(Encoding.UTF8.GetBytes("ret"));
-                response.Add(0);//no target
-                response.AddRange(BitConverter.GetBytes(comment.Length + 5));//comment + 'NVAL:'
-                response.Add(1);//string
-                response.AddRange(Encoding.UTF8.GetBytes("NVAL:"));
-                if (!string.IsNullOrEmpty(comment))
-                    response.AddRange(Encoding.UTF8.GetBytes(comment));
-
-                return response.ToArray();
-            }
+            response = MessageBuilder.ResponseActionSuccess();
+            return true;
         }
     }
 }

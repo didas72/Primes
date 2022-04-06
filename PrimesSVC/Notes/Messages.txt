@@ -31,7 +31,7 @@ Possible message structure, spaces as dividers:
 
 
 
-Actions:
+Actions (no target):
 -Start 'start'
 -Stop 'stop'
 -Full stop 'fstop' (Exit)

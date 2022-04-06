@@ -3,12 +3,14 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 
 using DidasUtils.Logging;
 using DidasUtils.Numerics;
 
 using Raylib_cs;
 
+using Primes.Common.Net;
 using Primes.UI.Render;
 
 namespace Primes.UI
@@ -214,8 +216,10 @@ namespace Primes.UI
 
             try
             {
-                //check if endpoint is responsive (png message)
-                throw new NotImplementedException();
+                if (!PingService(new TimeSpan(0, 0, 0, 0, 300)))
+                    newStatus = "Failed to connect.";
+                else
+                    newStatus = "Connected.";
             }
             catch
             {
@@ -306,6 +310,32 @@ namespace Primes.UI
             foreach (Holder hld in ((Holder)UI.First((IRenderable rend) => rend is Holder)).Children)
             {
                 hld.Enabled = menu.ToString() == hld.Id;
+            }
+        }
+
+        private static bool PingService(TimeSpan timeout)
+        {
+            byte[] ping = MessageBuilder.Ping();
+
+            try
+            {
+                TcpClient cli = new();
+                cli.Connect(ConnectionData.RemoteEndpoint);
+                Log.LogEvent($"Connected to service at {ConnectionData.RemoteEndpoint}.", "PingService");
+                NetworkStream ns = cli.GetStream();
+                MessageBuilder.SendMessage(ping, ns);
+                Log.LogEvent($"Ping sent. len:{ping.Length}", "PingService");
+
+                if (!MessageBuilder.ReceiveMessage(ns, out byte[] _, timeout))
+                    return false;
+
+                Log.LogEvent("Ping received.", "PingService");
+
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
 
