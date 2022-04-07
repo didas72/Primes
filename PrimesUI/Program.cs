@@ -121,9 +121,7 @@ namespace Primes.UI
             BuildTestingMenu(pageHld);
             BuildFilesMenu(pageHld);
 
-            #region Files Menu
-            
-            #endregion
+            ConnectionData.OnConnectionCheck += OnConnectionCheck;
 
             return true;
         }
@@ -199,37 +197,22 @@ namespace Primes.UI
         {
             PopupConnectRemote();
         }
+        private static void OnControlLocalConnectPressed(object sender, EventArgs e)
+        {
+            ConnectionData.RemoteEndpoint = new IPEndPoint(IPAddress.Loopback, 13031);
+
+            ConnectionData.EnableCheckTimer();
+            UpdateConnectionStatus();
+        }
         #endregion
 
         #region Popup Button Handles
         private static void OnConnectRemotePressed(object sender, EventArgs e)
         {
-            if (!IPEndPoint.TryParse(((InputField)openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "IP")).Text, out IPEndPoint endpoint))
-            {
-                PopupErrorMessage("Invalid IP and/or port.");
-                return;
-            }
+            if (!ValidateRemoteAddress()) return;
 
-            ConnectionData.RemoteEndpoint = endpoint;
-
-            string newStatus = string.Empty;
-
-            try
-            {
-                if (!PingService(new TimeSpan(0, 0, 0, 0, 300)))
-                    newStatus = "Failed to connect.";
-                else
-                    newStatus = "Connected.";
-            }
-            catch
-            {
-                newStatus = "Failed to connect.";
-            }
-
-            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
-            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
-            TextBox connStatus = control.Children.Find((IRenderable rend) => rend.Id_Name == "CONNECTION_STATUS") as TextBox;
-            connStatus.Text = newStatus;
+            UpdateConnectionStatus();
+            ConnectionData.EnableCheckTimer();
 
             ClosePopup();
         }
@@ -312,7 +295,54 @@ namespace Primes.UI
                 hld.Enabled = menu.ToString() == hld.Id;
             }
         }
+        private static bool ValidateRemoteAddress()
+        {
+            if (!IPEndPoint.TryParse(((InputField)openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "IP")).Text, out IPEndPoint endpoint))
+            {
+                PopupErrorMessage("Invalid IP and/or port.");
+                return false;
+            }
 
+            ConnectionData.RemoteEndpoint = endpoint;
+
+            return true;
+        }
+        private static void UpdateConnectionStatus()
+        {
+            string newStatus = string.Empty;
+
+            try
+            {
+                if (!PingService(new TimeSpan(0, 0, 0, 0, 300)))
+                    newStatus = "Failed to connect.";
+                else
+                    newStatus = "Connected.";
+            }
+            catch
+            {
+                newStatus = "Failed to connect.";
+            }
+
+            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
+            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
+            TextBox connStatus = control.Children.Find((IRenderable rend) => rend.Id_Name == "CONNECTION_STATUS") as TextBox;
+            connStatus.Text = newStatus;
+        }
+        private static void OnConnectionCheck(object sender, EventArgs e)
+        {
+            try
+            {
+                TimeSpan timeout = new(0, 0, 0, 0, 300);
+                UpdateConnectionStatus();
+                UpdateBatchNumber(timeout);
+                UpdateBatchProgress(timeout);
+                //TODO: add other needed things
+            }
+            catch
+            {
+                ConnectionData.DisableCheckTimer();
+            }
+        }
         private static bool PingService(TimeSpan timeout)
         {
             byte[] ping = MessageBuilder.Ping();
@@ -321,21 +351,84 @@ namespace Primes.UI
             {
                 TcpClient cli = new();
                 cli.Connect(ConnectionData.RemoteEndpoint);
-                Log.LogEvent($"Connected to service at {ConnectionData.RemoteEndpoint}.", "PingService");
-                NetworkStream ns = cli.GetStream();
-                MessageBuilder.SendMessage(ping, ns);
-                Log.LogEvent($"Ping sent. len:{ping.Length}", "PingService");
+                MessageBuilder.SendMessage(ping, cli);
 
-                if (!MessageBuilder.ReceiveMessage(ns, out byte[] _, timeout))
+                if (!MessageBuilder.ReceiveMessage(cli.GetStream(), out byte[] _, timeout))
                     return false;
-
-                Log.LogEvent("Ping received.", "PingService");
 
                 return true;
             }
             catch
             {
                 return false;
+            }
+        }
+        private static void UpdateBatchNumber(TimeSpan timeout)
+        {
+            byte[] message = MessageBuilder.Message("req", string.Empty, "cbnum");
+            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
+            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
+            TextBox connStatus = control.Children.Find((IRenderable rend) => rend.Id_Name == "BATCH_NUMBER") as TextBox;
+
+            try
+            {
+                TcpClient cli = new();
+                cli.Connect(ConnectionData.RemoteEndpoint);
+                MessageBuilder.SendMessage(message, cli);
+
+                if (!MessageBuilder.ReceiveMessage(cli.GetStream(), out message, timeout))
+                {
+                    connStatus.Text = "-1";
+                    return;
+                }
+
+                MessageBuilder.DeserializeMessage(message, out string messageType, out string target, out object value);
+                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
+                {
+                    connStatus.Text = "-1";
+                    return;
+                }
+
+                connStatus.Text = ((string)value)[13..];
+            }
+            catch
+            {
+                connStatus.Text = "-1";
+                return;
+            }
+        }
+        private static void UpdateBatchProgress(TimeSpan timeout)
+        {
+            byte[] message = MessageBuilder.Message("req", string.Empty, "cbprog");
+            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
+            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
+            ProgressBar batchPrg = control.Children.Find((IRenderable rend) => rend.Id_Name == "BATCH_PROGRESS") as ProgressBar;
+
+            try
+            {
+                TcpClient cli = new();
+                cli.Connect(ConnectionData.RemoteEndpoint);
+                MessageBuilder.SendMessage(message, cli);
+
+                if (!MessageBuilder.ReceiveMessage(cli.GetStream(), out message, timeout))
+                {
+                    batchPrg.Value = 0f;
+                    return;
+                }
+
+                MessageBuilder.DeserializeMessage(message, out string messageType, out string target, out object value);
+                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
+                {
+                    batchPrg.Value = 0f;
+                    return;
+                }
+
+                batchPrg.Value = float.Parse(((string)value)[13..]);
+            }
+            catch
+            {
+                batchPrg.Value = 0;
+                return;
             }
         }
 
@@ -365,7 +458,7 @@ namespace Primes.UI
             Holder hld; Button btn; TextBox txtBox; ProgressBar prgBar;
             pageHld.Add(hld = new Holder(Vector2i.Zero, "Control")); hld.Id_Name = "CONTROL";
 
-            hld.Add(btn = new("Connect local", new(2, 2), new(148, 28))); //btn.OnPressed += ;
+            hld.Add(btn = new("Connect local", new(2, 2), new(148, 28))); btn.OnPressed += OnControlLocalConnectPressed;
             hld.Add(btn = new("Connect remote", new(152, 2), new(168, 28))); btn.OnPressed += OnControlRemoteConnectPressed;
             hld.Add(btn = new("Start/Stop", new(2, 32), new(148, 28))); //btn.OnPressed += ;
             hld.Add(txtBox = new TextBox("Not connected", 20, new(2, 62), new(268, 28), Highlights)); txtBox.Id_Name = "CONNECTION_STATUS";

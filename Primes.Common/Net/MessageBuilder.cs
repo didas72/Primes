@@ -61,7 +61,8 @@ namespace Primes.Common.Net
             }
             else
             {
-                ret.AddRange(BitConverter.GetBytes(value.Length));
+                int lent = value.Length;
+                ret.AddRange(BitConverter.GetBytes(lent));
                 ret.Add(1);//this case it is a string
                 ret.AddRange(Encoding.UTF8.GetBytes(value));
             }
@@ -75,44 +76,34 @@ namespace Primes.Common.Net
 
 
 
-        public static byte[] ResponseActionSuccess(string comment = "")
-        {
-            List<byte> response = new();
-            response.AddRange(Encoding.UTF8.GetBytes("ret"));
-            response.AddRange(BitConverter.GetBytes((ushort)0));//no target
-            response.AddRange(BitConverter.GetBytes(comment.Length + 5));//comment + 'PASS:'
-            response.Add(1);//string
-            response.AddRange(Encoding.UTF8.GetBytes("PASS:"));
-            if (!string.IsNullOrEmpty(comment))
-                response.AddRange(Encoding.UTF8.GetBytes(comment));
+        public static byte[] ResponseActionSuccess(string comment = "") => Message("ret", string.Empty, "ACTION_PASS:" + comment);
+        public static byte[] ResponseActionFail(string comment = "") => Message("ret", string.Empty, "ACTION_FAIL:" + comment);
+        public static byte[] ResponseActionInvalid(string comment = "") => Message("ret", string.Empty, "ACTION_NVAL:" + comment);
 
-            return response.ToArray();
+
+        public static byte[] ResponseRequestSuccess(string comment = "") => Message("ret", string.Empty, "REQUEST_PASS:" + comment);
+        public static byte[] ResponseRequestInvalid(string comment = "") => Message("ret", string.Empty, "REQUEST_NVAL:" + comment);
+
+
+        public static bool ValidateReturnMessage(string messageType, string target, object value)
+        {
+            if (string.IsNullOrEmpty(messageType) || messageType != "ret" || !string.IsNullOrEmpty(target) || value is not string || string.IsNullOrEmpty((string)value)) return false;
+            return true;
         }
-        public static byte[] ResponseActionFail(string comment = "")
+        public static bool ValidateActionMessage(string messageType, string target, object value)
         {
-            List<byte> response = new();
-            response.AddRange(Encoding.UTF8.GetBytes("ret"));
-            response.AddRange(BitConverter.GetBytes((ushort)0));//no target
-            response.AddRange(BitConverter.GetBytes(comment.Length + 5));//comment + 'FAIL:'
-            response.Add(1);//string
-            response.AddRange(Encoding.UTF8.GetBytes("FAIL:"));
-            if (!string.IsNullOrEmpty(comment))
-                response.AddRange(Encoding.UTF8.GetBytes(comment));
-
-            return response.ToArray();
+            if (string.IsNullOrEmpty(messageType) || messageType != "run" || !string.IsNullOrEmpty(target) || value is not string || string.IsNullOrEmpty((string)value)) return false;
+            return true;
         }
-        public static byte[] ResponseActionInvalid(string comment = "")
+        public static bool ValidateRequestMessage(string messageType, string target, object value)
         {
-            List<byte> response = new();
-            response.AddRange(Encoding.UTF8.GetBytes("ret"));
-            response.AddRange(BitConverter.GetBytes((ushort)0));//no target
-            response.AddRange(BitConverter.GetBytes(comment.Length + 5));//comment + 'NVAL:'
-            response.Add(1);//string
-            response.AddRange(Encoding.UTF8.GetBytes("NVAL:"));
-            if (!string.IsNullOrEmpty(comment))
-                response.AddRange(Encoding.UTF8.GetBytes(comment));
-
-            return response.ToArray();
+            if (string.IsNullOrEmpty(messageType) || messageType != "req" || !string.IsNullOrEmpty(target) || value is not string || string.IsNullOrEmpty((string)value)) return false;
+            return true;
+        }
+        public static bool ValidatePingMessage(string messageType, string target, object value)
+        {
+            if (string.IsNullOrEmpty(messageType) || messageType != "png" || !string.IsNullOrEmpty(target) || value != null) return false;
+            return true;
         }
 
 
@@ -126,13 +117,11 @@ namespace Primes.Common.Net
         {
             if (msg == null) throw new ArgumentNullException(nameof(msg));
 
-            Log.LogEvent($"Deserializing message len:{msg.Length}", "DeserializeMessage");
-
             int head = 0;
             messageType = Encoding.UTF8.GetString(msg, head, 3); head += 3;
             short targetLen = BitConverter.ToInt16(msg, head); head += 2;
             target = targetLen == 0 ? string.Empty : Encoding.UTF8.GetString(msg, 5, targetLen); head += targetLen;
-            int valueLength = BitConverter.ToInt32(msg, head);
+            int valueLength = BitConverter.ToInt32(msg, head); head += 4;
             byte valueType; value = null;
 
             if (valueLength != 0)
@@ -151,6 +140,8 @@ namespace Primes.Common.Net
                         break;
                 }
             }
+
+            return;
         }
 
 
@@ -158,6 +149,10 @@ namespace Primes.Common.Net
         public static void SendMessage(byte[] message, NetworkStream ns)
         {
             SegmentedData.SendToStream(message, ns, 4096);
+        }
+        public static void SendMessage(byte[] message, TcpClient cli)
+        {
+            SegmentedData.SendToStream(message, cli.GetStream(), 4096);
         }
     }
 }

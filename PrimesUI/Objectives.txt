@@ -42,7 +42,7 @@ Menu contents:
 		-Start and stop primes
 		-View status and progress
 		-Manually add/remove local jobs (local machine only)
-		-Manually check for updated resources files (Needs batch server to be completed AND EXTENDED)
+		-[Maybe] Manually check for updated resources files (Needs batch server to be completed AND EXTENDED)
 		-[Maybe] Check for online jobs (Needs batch server to be completed)
 
 		Interfaces:

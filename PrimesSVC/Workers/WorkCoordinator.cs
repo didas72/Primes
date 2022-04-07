@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Threading;
+using System.Linq;
+using System.IO;
 
 using DidasUtils;
 using DidasUtils.Logging;
@@ -65,6 +67,36 @@ namespace Primes.SVC
             }
 
             sw.Stop();
+        }
+
+
+
+        public static bool IsWorkRunning()
+        {
+            if (workers == null || workers.Length == 0) return false;
+            return workers.Any((Worker w) => (w != null && w.IsRunning()));
+        }
+        public static uint GetCurrentBatchNumber()
+        {
+            if (jobQueue == null || jobQueue.Count == 0) return 0;
+
+            jobQueueAccess.WaitOne();
+            string path = jobQueue.Peek();
+            jobQueueAccess.Release();
+
+            return PrimeJob.Deserialize(path).Batch;
+        }
+        public static float GetCurrentBatchProgress()
+        {
+            if (jobQueue == null || jobQueue.Count == 0) return 0;
+
+            jobQueueAccess.WaitOne();
+            string path = jobQueue.Peek();
+            jobQueueAccess.Release();
+
+            string dir = Path.GetDirectoryName(path);
+            int left = Directory.GetFiles(dir, "*.primejob").Length;
+            return left / 1000f;
         }
 
 

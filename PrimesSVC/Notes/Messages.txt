@@ -38,3 +38,8 @@ Actions (no target):
 
 //later
 -Reload (Exit and start again)
+
+Requests (no target):
+-Run status 'rstatus'
+-Current batch number 'cbnum'
+-Current batch progress 'cbprog'

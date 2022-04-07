@@ -83,8 +83,6 @@ namespace Primes.SVC
                     return;
                 }
 
-                Log.LogEvent($"Sending response. len:{response.Length}", "ListenLoop");
-
                 MessageBuilder.SendMessage(response, ns);
                 ns.Close();
                 client.Close();
@@ -107,16 +105,17 @@ namespace Primes.SVC
             switch (msgType)
             {
                 case "run":
-                    if (target != string.Empty) Log.LogEvent(Log.EventType.Warning, $"Run should never have a target: '{target}' given.", "HandleMessage");
-                    if (value is not string) throw new Exception("Run message must always be given a string value.");
+                    if (!MessageBuilder.ValidateActionMessage(msgType, target, value)) return false;
                     return HandleRunMessage((string)value, out response);
 
                 case "png":
-                    if (!string.IsNullOrEmpty(target)) Log.LogEvent(Log.EventType.Warning, $"Ping should never have a target: '{target}' given.", "HandleMessage");
-                    if (value != null) Log.LogEvent(Log.EventType.Warning, "Ping should never have a value.", "HandleMessage");
+                    if (!MessageBuilder.ValidatePingMessage(msgType, target, value)) return false;
                     return HandlePingMessage(out response);
 
                 case "req":
+                    if (!MessageBuilder.ValidateRequestMessage(msgType, target, value)) return false;
+                    return HandleRequestMessage((string)value, out response);
+
                 case "ret":
                 case "set":
                 case "dta":
@@ -159,6 +158,28 @@ namespace Primes.SVC
         {
             response = MessageBuilder.ResponseActionSuccess();
             return true;
+        }
+        private static bool HandleRequestMessage(string value, out byte[] response)
+        {
+            switch (value)
+            {
+                case "rstatus":
+                    response = MessageBuilder.ResponseRequestSuccess(WorkCoordinator.IsWorkRunning().ToString());
+                    return true;
+
+                case "cbnum":
+                    response = MessageBuilder.ResponseRequestSuccess(WorkCoordinator.GetCurrentBatchNumber().ToString());
+                    return true;
+
+                case "cbprog":
+                    response = MessageBuilder.ResponseRequestSuccess(WorkCoordinator.GetCurrentBatchProgress().ToString());
+                    return true;
+
+                default:
+                    response = MessageBuilder.ResponseRequestInvalid();
+                    Log.LogEvent(Log.EventType.Warning, $"Received invalid or unhandled request '{value}'.", "HandleRequestMessage");
+                    return true;
+            }
         }
     }
 }
