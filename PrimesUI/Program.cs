@@ -43,7 +43,7 @@ namespace Primes.UI
             {
                 if (!Init()) return;
 
-                //pass args
+                //parse args
 
                 EnableOnlyMenu(selectedMenu);
 
@@ -67,7 +67,7 @@ namespace Primes.UI
             }
             catch (Exception e)
             {
-                Log.LogException("Fatal nhandled exception.", "Main", e);
+                Log.LogException("Fatal unhandled exception.", "Main", e);
                 Environment.Exit(1);
             }
         }
@@ -206,6 +206,16 @@ namespace Primes.UI
         }
         #endregion
 
+        #region File Menu Button Handles
+        private static void OnFilesOpenPressed(object sender, EventArgs e)
+        {
+            if (!FileHandler.Open())
+            {
+                throw new NotImplementedException(); //TODO: Error popup
+            }
+        }
+        #endregion
+
         #region Popup Button Handles
         private static void OnConnectRemotePressed(object sender, EventArgs e)
         {
@@ -287,14 +297,7 @@ namespace Primes.UI
         #endregion
 
 
-
-        private static void EnableOnlyMenu(Menu menu)
-        {
-            foreach (Holder hld in ((Holder)UI.First((IRenderable rend) => rend is Holder)).Children)
-            {
-                hld.Enabled = menu.ToString() == hld.Id;
-            }
-        }
+        #region Net Helper
         private static bool ValidateRemoteAddress()
         {
             if (!IPEndPoint.TryParse(((InputField)openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "IP")).Text, out IPEndPoint endpoint))
@@ -346,17 +349,20 @@ namespace Primes.UI
         private static bool PingService(TimeSpan timeout)
         {
             byte[] ping = MessageBuilder.Ping();
+            bool ret;
 
             try
             {
                 TcpClient cli = new();
-                cli.Connect(ConnectionData.RemoteEndpoint);
+                var result = cli.BeginConnect(ConnectionData.RemoteEndpoint.Address, ConnectionData.RemoteEndpoint.Port, null, null);
+
+                var success = result.AsyncWaitHandle.WaitOne(timeout);
                 MessageBuilder.SendMessage(ping, cli);
 
-                if (!MessageBuilder.ReceiveMessage(cli.GetStream(), out byte[] _, timeout))
-                    return false;
+                ret = MessageBuilder.ReceiveMessage(cli.GetStream(), out byte[] _, timeout);
+                cli.Close();
 
-                return true;
+                return ret;
             }
             catch
             {
@@ -429,6 +435,16 @@ namespace Primes.UI
             {
                 batchPrg.Value = 0;
                 return;
+            }
+        }
+        #endregion
+
+
+        private static void EnableOnlyMenu(Menu menu)
+        {
+            foreach (Holder hld in ((Holder)UI.First((IRenderable rend) => rend is Holder)).Children)
+            {
+                hld.Enabled = menu.ToString() == hld.Id;
             }
         }
 
@@ -508,33 +524,33 @@ namespace Primes.UI
 
             //File control
             hld.Add(new Panel(new(0, 0), new(400, 30), Mid));
-            hld.Add(btn = new("Open", new(2, 2), new(96, 26))); //btn.OnPressed += ;
-            hld.Add(btn = new("New job", new(102, 2), new(96, 26))); //btn.OnPressed += ;
-            hld.Add(btn = new("New rsrc", new(202, 2), new(96, 26))); //btn.OnPressed += ;
-            hld.Add(btn = new("Save", new(302, 2), new(96, 26))); //btn.OnPressed += ;
+            hld.Add(btn = new("Open", new(2, 2), new(96, 26))); btn.OnPressed += OnFilesOpenPressed;
+            hld.Add(btn = new("New job", new(102, 2), new(96, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.CreateNewJob();
+            hld.Add(btn = new("New rsrc", new(202, 2), new(96, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.CreateNewJob();
+            hld.Add(btn = new("Save", new(302, 2), new(96, 26))); //btn.OnPressed += ; //TODO: Save popup
 
 
             //View area
-            hld.Add(txtLst = new(new(2, 32), new(396, 496))); txtLst.Id_Name = "VIEW_LIST";
-            hld.Add(btn = new("Switch view", new(2, 532), new(146, 26))); //btn.OnPressed += ;
-            hld.Add(btn = new("Find...", new(152, 532), new(146, 26))); //btn.OnPressed += ;
+            hld.Add(txtLst = new(new(2, 32), new(396, 496))); txtLst.Id_Name = "VIEW_LIST"; FileHandler.SetContent(txtLst);
+            hld.Add(btn = new("Switch view", new(2, 532), new(146, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.SwitchView();
+            hld.Add(btn = new("Find...", new(152, 532), new(146, 26))); //btn.OnPressed += ; //TODO: Find popup
 
 
             //Header area
             hld.Add(txtBox = new("Header", 20, new(402, 2), new(96, 26), Highlights));
-            hld.Add(txtLst = new(new(402, 32), new(396, 376))); txtLst.Id_Name = "HEADER_LIST";
-            hld.Add(btn = new("Change version", new(402, 412), new(176, 26))); //btn.OnPressed += ;
-            hld.Add(btn = new("Change compression", new(582, 412), new(216, 26))); //btn.OnPressed += ;
-            hld.Add(btn = new("Change field", new(402, 442), new(176, 26))); //btn.OnPressed += ;
-            hld.Add(btn = new("Apply changes", new(582, 442), new(216, 26))); //btn.OnPressed += ;
+            hld.Add(txtLst = new(new(402, 32), new(396, 376))); txtLst.Id_Name = "HEADER_LIST"; FileHandler.SetHeader(txtLst);
+            hld.Add(btn = new("Change version", new(402, 412), new(176, 26))); //btn.OnPressed += ; //TODO: 
+            hld.Add(btn = new("Change compression", new(582, 412), new(216, 26))); //btn.OnPressed += ; //TODO: 
+            hld.Add(btn = new("Change field", new(402, 442), new(176, 26))); //btn.OnPressed += ; //TODO: 
+            hld.Add(btn = new("Apply changes", new(582, 442), new(216, 26))); //btn.OnPressed += ; //TODO: 
 
 
             //Tools area
             hld.Add(txtBox = new("Tools", 20, new(402, 472), new(196, 26), Highlights));
-            hld.Add(btn = new("Validate", new(402, 502), new(96, 26))); //btn.OnPressed += ;
-            hld.Add(btn = new("Fix", new(502, 502), new(96, 26))); //btn.OnPressed += ;
-            hld.Add(btn = new("Convert", new(402, 532), new(96, 26))); //btn.OnPressed += ;
-            hld.Add(btn = new("Export", new(502, 532), new(96, 26))); //btn.OnPressed += ;
+            hld.Add(btn = new("Validate", new(402, 502), new(96, 26))); //btn.OnPressed += ; //TODO: 
+            hld.Add(btn = new("Fix", new(502, 502), new(96, 26))); //btn.OnPressed += ; //TODO: 
+            hld.Add(btn = new("Convert", new(402, 532), new(96, 26))); //btn.OnPressed += ; //TODO: 
+            hld.Add(btn = new("Export", new(502, 532), new(96, 26))); //btn.OnPressed += ; //TODO: 
         }
         #endregion
     }

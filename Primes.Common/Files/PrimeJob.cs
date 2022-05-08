@@ -688,6 +688,36 @@ namespace Primes.Common.Files
             {
                 return !(left == right);
             }
+            public static bool operator >(Version left, Version right)
+            {
+                if (left.major > right.major) return true;
+                if (left.minor > right.minor) return true;
+                if (left.patch > right.patch) return true;
+                return false;
+            }
+            public static bool operator <(Version left, Version right)
+            {
+                if (left.major < right.major) return true;
+                if (left.minor < right.minor) return true;
+                if (left.patch < right.patch) return true;
+                return false;
+            }
+            public static bool operator >=(Version left, Version right)
+            {
+                if (left == right) return true;
+                if (left.major > right.major) return true;
+                if (left.minor > right.minor) return true;
+                if (left.patch > right.patch) return true;
+                return false;
+            }
+            public static bool operator <=(Version left, Version right)
+            {
+                if (left == right) return true;
+                if (left.major < right.major) return true;
+                if (left.minor < right.minor) return true;
+                if (left.patch < right.patch) return true;
+                return false;
+            }
         }
 
 
@@ -763,6 +793,17 @@ namespace Primes.Common.Files
             /// <param name="comp">The value to serialize.</param>
             /// <returns><see cref="byte"/> containing the compression flags.</returns>
             public static byte GetByte(Comp comp) => comp.GetByte();
+
+
+
+            public override string ToString()
+            {
+                if (!IsCompressed()) return "None";
+                else if (NCC && ONSS) return $"INVALID:{flags:X2}";
+                else if (NCC) return "NCC";
+                else if (ONSS) return "ONSS";
+                else return $"INVALID:{flags:X2}";
+            }
         }
 
 

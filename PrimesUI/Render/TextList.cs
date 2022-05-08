@@ -43,7 +43,6 @@ namespace Primes.UI.Render
             
             Scroll = Mathf.Clamp(Scroll, 0, Math.Max(Lines.Count - 1, 0));  
         }
-
         public void Render(Vector2i localOffset)
         {
             int yOff = 0;//store y offset so we can determine where to stop drawing
