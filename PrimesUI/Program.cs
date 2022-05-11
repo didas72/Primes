@@ -20,6 +20,7 @@ namespace Primes.UI
         private static bool masterRun = true;
         private static Menu selectedMenu = Menu.Control;
         private static List<IRenderable> UI;
+        private static Font monospaceFont;
 
         #region Palette
         /*
@@ -31,7 +32,7 @@ namespace Primes.UI
          * Highlights   0, 206, 255
          */
 
-        private static Color /*Background = new(51, 51, 51, 255),*/ Mid = new(77, 77, 77, 255), /*Foreground = new(102, 102, 102, 255), Text = new(0, 0, 0, 255),*/ Highlights = new(0, 206, 255, 255);
+        private static Color Background = new(51, 51, 51, 255), Mid = new(77, 77, 77, 255), Foreground = new(102, 102, 102, 255), Text = new(0, 0, 0, 255), Highlights = new(0, 206, 255, 255);
 
         #endregion
 
@@ -92,6 +93,7 @@ namespace Primes.UI
             }
 
             if (!InitWindow()) return false;
+            if (!InitFont()) return false;
             if (!InitUI()) return false;
 
             return true;
@@ -122,6 +124,14 @@ namespace Primes.UI
             BuildFilesMenu(pageHld);
 
             ConnectionData.OnConnectionCheck += OnConnectionCheck;
+
+            return true;
+        }
+        private static bool InitFont()
+        {
+            string path = "./Fonts/courier-prime/Courier Prime Bold.ttf";
+            if (!File.Exists(path)) return false;
+            monospaceFont = Raylib.LoadFont(path);
 
             return true;
         }
@@ -195,7 +205,7 @@ namespace Primes.UI
         #region Control Menu Button Handles
         private static void OnControlRemoteConnectPressed(object sender, EventArgs e)
         {
-            PopupConnectRemote();
+            PopupControlConnectRemote();
         }
         private static void OnControlLocalConnectPressed(object sender, EventArgs e)
         {
@@ -206,12 +216,27 @@ namespace Primes.UI
         }
         #endregion
 
-        #region File Menu Button Handles
+        #region Files Menu Button Handles
         private static void OnFilesOpenPressed(object sender, EventArgs e)
         {
-            if (!FileHandler.Open())
+            PopupFilesOpen();
+        }
+
+        private static void OnPopupFilesOpenPressed(string status, string path)
+        {
+            if (status == "CANCEL") return;
+
+            if (status == "INVALID")
             {
-                throw new NotImplementedException(); //TODO: Error popup
+                PopupErrorMessage("Invalid path/file!");
+                return;
+            }
+
+            if (status != "OK") throw new NotImplementedException();
+
+            if (!FileHandler.Open(path))
+            {
+                PopupErrorMessage("Failed to open file!"); //TODO: Error popup
             }
         }
         #endregion
@@ -225,6 +250,78 @@ namespace Primes.UI
             ConnectionData.EnableCheckTimer();
 
             ClosePopup();
+        }
+
+
+
+        private static void OnPopupFileOpenPressed(Action<string, string> onClose)
+        {
+            TextList lst = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
+            TextBox txt = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
+
+            try
+            {
+                string path = Path.Combine(txt.Text, lst.Lines[lst.Selected]);
+                ClosePopup();
+                Log.LogEvent($"Selected path is {path}", "PopupFileOpenPressed");
+
+                if (!File.Exists(path))
+                {
+                    Log.LogEvent(Log.EventType.Error, "File does not exists.", "PopupFileOpenPressed");
+                    onClose("INVALID", string.Empty);
+                }
+                else
+                    onClose("OK", path);
+            }
+            catch (Exception e) { Log.LogException("Failed to open file.", "PopupFileOpenPressed", e); onClose("INVALID", string.Empty); }
+        }
+        private static void OnPopupFileCancelPressed(Action<string, string> onClose)
+        {
+            onClose("CANCEL", string.Empty);
+            ClosePopup();
+        }
+        private static void OnPopupFileSelectedPressed(string filter)
+        {
+            TextList lst = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
+            TextBox txt = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
+
+            string path;
+            string file = lst.Lines[lst.Selected];
+
+            if (file.StartsWith('>')) //directory
+            {
+                path = Path.Combine(txt.Text, file.TrimStart('>'));
+                FileOpenUpdate(filter, path);
+            }
+
+            //do nothing if file
+        }
+        private static void OnPopupFileUpPressed(string filter)
+        {
+            TextBox txt = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
+
+            try
+            {
+                string path = Path.GetDirectoryName(txt.Text);
+                FileOpenUpdate(filter, path);
+            }
+            catch
+            {
+                FileOpenUpdate(filter, string.Empty);
+            }
+        }
+
+
+
+        private static void OnPopupFilesOpenOpenJobPressed(object sender, EventArgs e)
+        {
+            ClosePopup();
+            PopupOpenFile("*.primejob", OnPopupFilesOpenPressed);
+        }
+        private static void OnPopupFilesOpenOpenResourcePressed(object sender, EventArgs e)
+        {
+            ClosePopup();
+            PopupOpenFile("*.rsrc", OnPopupFilesOpenPressed);
         }
         #endregion
         #endregion
@@ -259,6 +356,22 @@ namespace Primes.UI
 
             openPopups.Push(pop);
         }
+        private static void PopupOpenFile(string filter, Action<string, string> onClose)
+        {
+            Button btn; TextList lst; TextBox txt;
+            Holder pop = new(new(200, 175));
+            pop.Add(new Panel(new(0, 0), new(400, 250), Background));
+            pop.Add(new TextBox("Select file to open:", new(10, 10), new(280, 20)));
+            pop.Add(txt = new TextBox("Path: ", new(40, 30), new(350, 20))); txt.Id_Name = "CURRENT_PATH";
+            pop.Add(btn = new Button("^", new(10, 30), new(20, 20))); btn.OnPressed += (object sender, EventArgs e) => OnPopupFileUpPressed(filter);
+            pop.Add(lst = TextList.CreateSelectable(new(10, 50), new(380, 175))); lst.Id_Name = "DIR_LISTING"; lst.OnSelected += (object sender, EventArgs e) => OnPopupFileSelectedPressed(filter);
+            pop.Add(btn = new Button("Cancel", new(180, 220), new(100, 20))); btn.OnPressed += (object sender, EventArgs e) => OnPopupFileCancelPressed(onClose);
+            pop.Add(btn = new Button("Open", new(290, 220), new(100, 20))); btn.OnPressed += (object sender, EventArgs e) => OnPopupFileOpenPressed(onClose);
+
+            openPopups.Push(pop);
+
+            FileOpenUpdate(filter, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+        }
 
 
 
@@ -267,7 +380,7 @@ namespace Primes.UI
         #endregion
 
         #region Control Popups
-        private static void PopupConnectRemote()
+        private static void PopupControlConnectRemote()
         {
             InputField field;
             Button btn;
@@ -277,6 +390,20 @@ namespace Primes.UI
             pop.Add(field = new InputField(new(20, 45), new(300,30))); field.Id_Name = "IP"; field.Text = "127.0.0.1:13031";
             pop.Add(btn = new("Connect", new(100, 212), new(90, 26))); btn.OnPressed += OnConnectRemotePressed;
             pop.Add(btn = new("Close", new(210, 212), new(90, 26))); btn.OnPressed += OnPopupClosePressed;
+
+            openPopups.Push(pop);
+        }
+        #endregion
+
+        #region Files Popups
+        private static void PopupFilesOpen()
+        {
+            Button btn;
+            Holder pop = new(new(275, 260));
+            pop.Add(new Panel(new(0, 0), new(250, 80), new Color(100, 100, 100, 255)));
+            pop.Add(new TextBox("Open:", new(10, 10), new(200, 20)));
+            pop.Add(btn = new("Job", new(10, 50), new(100, 20))); btn.OnPressed += OnPopupFilesOpenOpenJobPressed;
+            pop.Add(btn = new("Resource", new(140, 50), new(100, 20))); btn.OnPressed += OnPopupFilesOpenOpenResourcePressed;
 
             openPopups.Push(pop);
         }
@@ -447,6 +574,34 @@ namespace Primes.UI
                 hld.Enabled = menu.ToString() == hld.Id;
             }
         }
+        private static void FileOpenUpdate(string filter, string path)
+        {
+            TextList lst = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
+            TextBox txt = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
+
+            txt.Text = path;
+            lst.Lines.Clear();
+
+            if (path == string.Empty) //show drive list
+            {
+                foreach (string d in Environment.GetLogicalDrives())
+                {
+                    lst.Lines.Add(">" + d);
+                }
+            }
+            else
+            {
+                string[] subDirs = Directory.GetDirectories(path);
+                string[] files = Directory.GetFiles(path, filter);
+
+                lst.Scroll = 0;
+
+                foreach (string dir in subDirs) //diff appearance for folders
+                    lst.Lines.Add(">" + Path.GetFileName(dir));
+                foreach (string file in files)
+                    lst.Lines.Add(Path.GetFileName(file));
+            }
+        }
 
 
 
@@ -518,7 +673,7 @@ namespace Primes.UI
         }
         private static void BuildFilesMenu(Holder pageHld)
         {
-            Button btn; TextBox txtBox; Holder hld; TextList txtLst;
+            Button btn; TextBox txtBox; Holder hld; TextList lst;
             hld = new(Vector2i.Zero, "Files"); hld.Id_Name = "FILES";
             pageHld.Add(hld);
 
@@ -531,14 +686,14 @@ namespace Primes.UI
 
 
             //View area
-            hld.Add(txtLst = new(new(2, 32), new(396, 496))); txtLst.Id_Name = "VIEW_LIST"; FileHandler.SetContent(txtLst);
+            hld.Add(lst = new(new(2, 32), new(396, 496))); lst.Id_Name = "VIEW_LIST"; FileHandler.SetContent(lst); lst.CustomFont = monospaceFont; lst.UseCustomFont = true;
             hld.Add(btn = new("Switch view", new(2, 532), new(146, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.SwitchView();
             hld.Add(btn = new("Find...", new(152, 532), new(146, 26))); //btn.OnPressed += ; //TODO: Find popup
 
 
             //Header area
             hld.Add(txtBox = new("Header", 20, new(402, 2), new(96, 26), Highlights));
-            hld.Add(txtLst = new(new(402, 32), new(396, 376))); txtLst.Id_Name = "HEADER_LIST"; FileHandler.SetHeader(txtLst);
+            hld.Add(lst = new(new(402, 32), new(396, 376))); lst.Id_Name = "HEADER_LIST"; FileHandler.SetHeader(lst); lst.CustomFont = monospaceFont; lst.UseCustomFont = true;
             hld.Add(btn = new("Change version", new(402, 412), new(176, 26))); //btn.OnPressed += ; //TODO: 
             hld.Add(btn = new("Change compression", new(582, 412), new(216, 26))); //btn.OnPressed += ; //TODO: 
             hld.Add(btn = new("Change field", new(402, 442), new(176, 26))); //btn.OnPressed += ; //TODO: 

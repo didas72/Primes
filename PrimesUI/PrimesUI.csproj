@@ -20,4 +20,10 @@
     <ProjectReference Include="..\Primes.Common\Primes.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Fonts\courier-prime\Courier Prime Bold.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

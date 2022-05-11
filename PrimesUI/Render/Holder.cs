@@ -37,10 +37,12 @@ namespace Primes.UI.Render
         {
             if (!Enabled) return;
 
+            Vector2i offset = localOffset + Position;
+
             foreach (IRenderable renderable in Children)
             {
                 if (renderable is IUpdatable upt)
-                    upt.Update(localOffset + Position);
+                    upt.Update(offset);
             }
         }
         public void Render(Vector2i localOffset)

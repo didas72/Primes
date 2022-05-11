@@ -19,6 +19,11 @@ namespace Primes.UI
     internal static class FileHandler
     {
         private static TextList content, header;
+        private static bool currentViewBinary = false;
+        private static bool currentViewResource = false;
+
+        private static PrimeJob currentJob;
+        private static KnownPrimesResourceFile currentResource;
 
 
 
@@ -27,30 +32,12 @@ namespace Primes.UI
 
 
 
-        public static bool Open()
+        public static bool Open(string path)
         {
-            //TODO: Error, thread not STA :/
-            //Custom file dialogs we go :(
-            OpenFileDialog dialog = new()
-            {
-                Title = "Choose file",
-                DefaultExt = "primejob",
-                Filter = "PrimeJob files|*.primejob|Resource files|*.rsrc|All files|*.*",
-                CheckFileExists = true,
-                CheckPathExists = true,
-                InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "primes"),
-                Multiselect = false,
-            };
-
-            var result = dialog.ShowDialog();
-
-            if (result != DialogResult.OK)
-                return false;
-
-            if (Path.GetExtension(dialog.FileName).ToLowerInvariant() == ".rsrc")
-                return OpenResource(dialog.FileName);
+            if (Path.GetExtension(path).ToLowerInvariant() == ".rsrc")
+                return OpenResource(path);
             else
-                return OpenJob(dialog.FileName);
+                return OpenJob(path);
         }
         public static bool SaveJob(string path)
         {
@@ -65,16 +52,63 @@ namespace Primes.UI
 
         public static void CreateNewJob()
         {
-            throw new NotImplementedException();
+            currentJob = new PrimeJob(PrimeJob.Version.Latest, PrimeJob.Comp.Default, 0, 0, 0, 0, new());
+            currentViewResource = false;
+            BuildTexts();
+            //TODO: Anything else?
         }
         public static void CreateNewResource()
+        {
+            currentResource = new KnownPrimesResourceFile(KnownPrimesResourceFile.Version.Latest, KnownPrimesResourceFile.Comp.Default, Array.Empty<ulong>());
+            currentViewResource = true;
+            throw new NotImplementedException(); //TODO: Build texts for these
+        }
+
+
+
+        public static void SwitchView()
+        {
+            BuildContentText(!currentViewBinary);
+        }
+        public static void Find()
         {
             throw new NotImplementedException();
         }
 
 
 
-        public static void SwitchView()
+        public static void ChangeVersion()
+        {
+            throw new NotImplementedException();
+        }
+        public static void ChangeCompression()
+        {
+            throw new NotImplementedException();
+        }
+        public static void ChangeField()
+        {
+            throw new NotImplementedException();
+        }
+        public static void ApplyChanges()
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+        public static void Validate()
+        {
+            throw new NotImplementedException();
+        }
+        public static void Fix()
+        {
+            throw new NotImplementedException();
+        }
+        public static void Convert()
+        {
+            throw new NotImplementedException();
+        }
+        public static void Export()
         {
             throw new NotImplementedException();
         }
@@ -85,40 +119,87 @@ namespace Primes.UI
         {
             try
             {
-                PrimeJob job = PrimeJob.Deserialize(path);
-
-                header.Lines.Clear();
-                content.Lines.Clear();
-
-                BuildHeaderText(job);
-                BuildContentText(job);
+                currentJob = PrimeJob.Deserialize(path);
+                currentViewResource = false;
+                BuildTexts();
             }
-            catch { return false; }
+            catch (Exception e) { Log.LogException("Failed to open file!", "FileHandler", e); return false; }
 
-            throw new NotImplementedException();
+            return true;
         }
         private static bool OpenResource(string path)
         {
+            currentViewResource = true;
             throw new NotImplementedException();
         }
 
 
 
-        private static void BuildHeaderText(PrimeJob job)
+        private static void BuildTexts()
         {
-            header.Lines.Add($"Version: {job.FileVersion}");
-            if (job.FileVersion >= new PrimeJob.Version(1, 2, 0))
-                header.Lines.Add($"Compression: {job.FileCompression}");
-            if (job.FileVersion >= new PrimeJob.Version(1, 1, 0))
-                header.Lines.Add($"Batch: {job.Batch}");
-            header.Lines.Add($"Start: {job.Start}");
-            header.Lines.Add($"Count: {job.Count}");
-            header.Lines.Add($"Progress: {job.Progress}");
+            BuildHeaderText();
+            BuildContentText(false);
         }
-        private static void BuildContentText(PrimeJob job)
+        private static void BuildHeaderText()
         {
-            return;
-            throw new NotImplementedException(); //TODO: 
+            header.Lines.Clear();
+
+            header.Lines.Add($"Version: {currentJob.FileVersion}");
+
+            //version dependant
+            if (currentJob.FileVersion >= new PrimeJob.Version(1, 1, 0))
+                header.Lines.Add($"Batch: {currentJob.Batch}");
+            if (currentJob.FileVersion >= new PrimeJob.Version(1, 2, 0))
+                header.Lines.Add($"Compression: {currentJob.FileCompression}");
+            
+            header.Lines.Add($"Start: {currentJob.Start} ({Utils.FormatNumber(currentJob.Start).Replace(".00", string.Empty)})");
+            header.Lines.Add($"Count: {currentJob.Count} ({Utils.FormatNumber(currentJob.Count).Replace(".00", string.Empty)})");
+            header.Lines.Add($"Progress: {currentJob.Progress} ({(currentJob.Progress * 100f / (float)currentJob.Count).ToString("F2").Replace(".00", string.Empty)}%)");
+        }
+        private static void BuildContentText(bool binaryView)
+        {
+            currentViewBinary = binaryView;
+
+            content.Lines.Clear();
+
+            if (binaryView)
+                BuildBinaryContentText();
+            else
+                BuildNormalContentText();
+        }
+        private static void BuildBinaryContentText()
+        {
+            MemoryStream ms = new();
+            PrimeJob.Serialize(currentJob, ms);
+            ms.Seek(0, SeekOrigin.Begin);
+
+            byte[] buffer = new byte[8]; int len; string line;
+            int lHead = 0;
+
+            do
+            {
+                len = ms.Read(buffer, 0, buffer.Length);
+                if (len == 0) break;
+
+                line = $"0x{lHead:X6}: ";
+
+                for (int i = 0; i < len; i++)
+                {
+                    line += $"{buffer[i]:X2} "; 
+                }
+
+                content.Lines.Add(line);
+
+                lHead += 8;
+            }
+            while (len == buffer.Length);
+        }
+        private static void BuildNormalContentText()
+        {
+            for (int i = 0; i < currentJob.Primes.Count; i++)
+            {
+                content.Lines.Add($"{i:D4}: {currentJob.Primes[i]}");
+            }
         }
     }
 }
