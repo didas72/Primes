@@ -4,6 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Diagnostics;
 
 using DidasUtils.Logging;
 using DidasUtils.Numerics;
@@ -213,6 +214,44 @@ namespace Primes.UI
 
             ConnectionData.EnableCheckTimer();
             UpdateConnectionStatus();
+        }
+        private static void OnControlLocalLaunchPressed(object sender, EventArgs e)
+        {
+            bool SVCrunning = Process.GetProcesses().Any((Process p) => p.ProcessName == "PrimesSVC.exe");
+            string newStatus;
+
+            if (SVCrunning)
+            {
+                newStatus = "Service already running.";
+            }
+            else
+            {
+                try
+                {
+                    ProcessStartInfo inf = new()
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = "/C start PrimesSVC.exe",
+                        CreateNoWindow = true,
+                    };
+                    Process p = Process.Start(inf);
+
+                    if (!p.WaitForExit(20)) throw new Exception();
+                    if (p.ExitCode != 0) throw new Exception();
+
+                    newStatus = "Service started.";
+                }
+                catch { newStatus = "Failed to start service."; }
+            }
+
+            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
+            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
+            TextBox connStatus = control.Children.Find((IRenderable rend) => rend.Id_Name == "CONNECTION_STATUS") as TextBox;
+            connStatus.Text = newStatus;
+        }
+        private static void OnControlOpenPrimesFolder(object sender, EventArgs e)
+        {
+            Process.Start("explorer.exe", $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "primes")}");
         }
         #endregion
 
@@ -632,10 +671,11 @@ namespace Primes.UI
             hld.Add(btn = new("Connect local", new(2, 2), new(148, 28))); btn.OnPressed += OnControlLocalConnectPressed;
             hld.Add(btn = new("Connect remote", new(152, 2), new(168, 28))); btn.OnPressed += OnControlRemoteConnectPressed;
             hld.Add(btn = new("Start/Stop", new(2, 32), new(148, 28))); //btn.OnPressed += ;
+            hld.Add(btn = new("Launch local", new(152, 32), new(168, 28))); btn.OnPressed += OnControlLocalLaunchPressed;
             hld.Add(txtBox = new TextBox("Not connected", 20, new(2, 62), new(268, 28), Highlights)); txtBox.Id_Name = "CONNECTION_STATUS";
             hld.Add(prgBar = new(new(2, 92), new(298, 28))); prgBar.Id_Name = "BATCH_PROGRESS";
             hld.Add(txtBox = new("Batch XXXX", 20, new(302, 92), new(98, 28), Highlights)); txtBox.Id_Name = "BATCH_NUMBER";
-            hld.Add(btn = new("Open primes folder", new(2, 122), new(198, 28))); //btn.OnPressed += ;
+            hld.Add(btn = new("Open primes folder", new(2, 122), new(198, 28))); btn.OnPressed += OnControlOpenPrimesFolder;
             hld.Add(btn = new("Check for resource update", new(2, 152), new(298, 28))); //btn.OnPressed += ;
         }
         private static void BuildTestingMenu(Holder pageHld)
@@ -681,7 +721,7 @@ namespace Primes.UI
             hld.Add(new Panel(new(0, 0), new(400, 30), Mid));
             hld.Add(btn = new("Open", new(2, 2), new(96, 26))); btn.OnPressed += OnFilesOpenPressed;
             hld.Add(btn = new("New job", new(102, 2), new(96, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.CreateNewJob();
-            hld.Add(btn = new("New rsrc", new(202, 2), new(96, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.CreateNewJob();
+            hld.Add(btn = new("New rsrc", new(202, 2), new(96, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.CreateNewResource();
             hld.Add(btn = new("Save", new(302, 2), new(96, 26))); //btn.OnPressed += ; //TODO: Save popup
 
 

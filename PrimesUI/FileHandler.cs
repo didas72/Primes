@@ -129,18 +129,42 @@ namespace Primes.UI
         }
         private static bool OpenResource(string path)
         {
-            currentViewResource = true;
-            throw new NotImplementedException();
+            try
+            {
+                currentResource = KnownPrimesResourceFile.Deserialize(path);
+                currentViewResource = true;
+                BuildTexts();
+            }
+            catch (Exception e) { Log.LogException("Failed to open file!", "FileHandler", e); return false; }
+
+            return true;
         }
 
 
 
         private static void BuildTexts()
         {
-            BuildHeaderText();
-            BuildContentText(false);
+            if (currentViewResource)
+            {
+                BuildResourceHeaderText();
+                BuildResourceContentText(false);
+            }
+            else
+            {
+                BuildJobHeaderText();
+                BuildJobContentText(false);
+            }
         }
-        private static void BuildHeaderText()
+
+        private static void BuildContentText(bool binaryView)
+        {
+            if (currentViewResource)
+                BuildResourceContentText(binaryView);
+            else
+                BuildJobContentText(binaryView);
+        }
+
+        private static void BuildJobHeaderText()
         {
             header.Lines.Clear();
 
@@ -156,18 +180,18 @@ namespace Primes.UI
             header.Lines.Add($"Count: {currentJob.Count} ({Utils.FormatNumber(currentJob.Count).Replace(".00", string.Empty)})");
             header.Lines.Add($"Progress: {currentJob.Progress} ({(currentJob.Progress * 100f / (float)currentJob.Count).ToString("F2").Replace(".00", string.Empty)}%)");
         }
-        private static void BuildContentText(bool binaryView)
+        private static void BuildJobContentText(bool binaryView)
         {
             currentViewBinary = binaryView;
 
             content.Lines.Clear();
 
             if (binaryView)
-                BuildBinaryContentText();
+                BuildJobBinaryContentText();
             else
-                BuildNormalContentText();
+                BuildJobNormalContentText();
         }
-        private static void BuildBinaryContentText()
+        private static void BuildJobBinaryContentText()
         {
             MemoryStream ms = new();
             PrimeJob.Serialize(currentJob, ms);
@@ -194,11 +218,48 @@ namespace Primes.UI
             }
             while (len == buffer.Length);
         }
-        private static void BuildNormalContentText()
+        private static void BuildJobNormalContentText()
         {
             for (int i = 0; i < currentJob.Primes.Count; i++)
             {
                 content.Lines.Add($"{i:D4}: {currentJob.Primes[i]}");
+            }
+        }
+
+        private static void BuildResourceHeaderText()
+        {
+            header.Lines.Clear();
+
+            header.Lines.Add($"Version: {currentResource.FileVersion}");
+            header.Lines.Add($"Primes count: {currentResource.Primes.Length}");
+
+            if (currentResource.FileVersion.Equals(new KnownPrimesResourceFile.Version(1, 1, 0)))
+                header.Lines.Add("Highest checked in file: (N/A)");
+            else if (currentResource.FileVersion.Equals(new KnownPrimesResourceFile.Version(1, 2, 0)))
+                header.Lines.Add($"Compression: {currentResource.FileCompression}");
+        }
+        private static void BuildResourceContentText(bool binaryView)
+        {
+            currentViewBinary = binaryView;
+
+            content.Lines.Clear();
+
+            if (binaryView)
+                BuildResourceBinaryContentText();
+            else
+                BuildResourceNormalContentText();
+        }
+        private static void BuildResourceBinaryContentText()
+        {
+            currentViewBinary = false;
+
+            throw new Exception("I guarantee you don't have RAM for this.");
+        }
+        private static void BuildResourceNormalContentText()
+        {
+            for (int i = 0; i < currentResource.Primes.Length; i++)
+            {
+                content.Lines.Add($"{i:D4}: {currentResource.Primes[i]}");
             }
         }
     }
