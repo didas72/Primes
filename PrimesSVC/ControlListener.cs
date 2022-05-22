@@ -142,6 +142,14 @@ namespace Primes.SVC
                     response = MessageBuilder.ResponseActionSuccess();
                     return true;
 
+                case "trun":
+                    if (WorkCoordinator.IsWorkRunning())
+                        WorkCoordinator.StopWork();
+                    else
+                        WorkCoordinator.StartWork();
+                    response = MessageBuilder.ResponseRequestSuccess();
+                    return true;
+
                 case "fstop":
                     WorkCoordinator.StopWork();
                     response = MessageBuilder.ResponseActionSuccess();
@@ -164,7 +172,7 @@ namespace Primes.SVC
             switch (value)
             {
                 case "rstatus":
-                    response = MessageBuilder.ResponseRequestSuccess(WorkCoordinator.IsWorkRunning().ToString());
+                    response = MessageBuilder.ResponseRequestSuccess(WorkCoordinator.IsWorkRunning() ? "Running." : "Stopped.");
                     return true;
 
                 case "cbnum":

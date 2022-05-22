@@ -215,6 +215,10 @@ namespace Primes.UI
             ConnectionData.EnableCheckTimer();
             UpdateConnectionStatus();
         }
+        private static void OnControlStartStopPressed(object sender, EventArgs e)
+        {
+
+        }
         private static void OnControlLocalLaunchPressed(object sender, EventArgs e)
         {
             bool SVCrunning = Process.GetProcesses().Any((Process p) => p.ProcessName == "PrimesSVC.exe");
@@ -502,9 +506,9 @@ namespace Primes.UI
             try
             {
                 TimeSpan timeout = new(0, 0, 0, 0, 300);
-                UpdateConnectionStatus();
                 UpdateBatchNumber(timeout);
                 UpdateBatchProgress(timeout);
+                UpdateRunStatus(timeout);
                 //TODO: add other needed things
             }
             catch
@@ -512,49 +516,16 @@ namespace Primes.UI
                 ConnectionData.DisableCheckTimer();
             }
         }
-        private static bool PingService(TimeSpan timeout)
-        {
-            byte[] ping = MessageBuilder.Ping();
-            bool ret;
-
-            try
-            {
-                TcpClient cli = new();
-                var result = cli.BeginConnect(ConnectionData.RemoteEndpoint.Address, ConnectionData.RemoteEndpoint.Port, null, null);
-
-                var success = result.AsyncWaitHandle.WaitOne(timeout);
-                MessageBuilder.SendMessage(ping, cli);
-
-                ret = MessageBuilder.ReceiveMessage(cli.GetStream(), out byte[] _, timeout);
-                cli.Close();
-
-                return ret;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+        private static bool PingService(TimeSpan timeout) => SendAndAwaitMessage(MessageBuilder.Ping(), timeout, out byte[] _);
         private static void UpdateBatchNumber(TimeSpan timeout)
         {
-            byte[] message = MessageBuilder.Message("req", string.Empty, "cbnum");
             Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
             Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
             TextBox connStatus = control.Children.Find((IRenderable rend) => rend.Id_Name == "BATCH_NUMBER") as TextBox;
 
-            try
+            if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "cbnum"), timeout, out byte[] response))
             {
-                TcpClient cli = new();
-                cli.Connect(ConnectionData.RemoteEndpoint);
-                MessageBuilder.SendMessage(message, cli);
-
-                if (!MessageBuilder.ReceiveMessage(cli.GetStream(), out message, timeout))
-                {
-                    connStatus.Text = "-1";
-                    return;
-                }
-
-                MessageBuilder.DeserializeMessage(message, out string messageType, out string target, out object value);
+                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
                 if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
                 {
                     connStatus.Text = "-1";
@@ -563,7 +534,7 @@ namespace Primes.UI
 
                 connStatus.Text = ((string)value)[13..];
             }
-            catch
+            else
             {
                 connStatus.Text = "-1";
                 return;
@@ -571,24 +542,13 @@ namespace Primes.UI
         }
         private static void UpdateBatchProgress(TimeSpan timeout)
         {
-            byte[] message = MessageBuilder.Message("req", string.Empty, "cbprog");
             Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
             Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
             ProgressBar batchPrg = control.Children.Find((IRenderable rend) => rend.Id_Name == "BATCH_PROGRESS") as ProgressBar;
 
-            try
+            if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "cbprog"), timeout, out byte[] response))
             {
-                TcpClient cli = new();
-                cli.Connect(ConnectionData.RemoteEndpoint);
-                MessageBuilder.SendMessage(message, cli);
-
-                if (!MessageBuilder.ReceiveMessage(cli.GetStream(), out message, timeout))
-                {
-                    batchPrg.Value = 0f;
-                    return;
-                }
-
-                MessageBuilder.DeserializeMessage(message, out string messageType, out string target, out object value);
+                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
                 if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
                 {
                     batchPrg.Value = 0f;
@@ -597,10 +557,57 @@ namespace Primes.UI
 
                 batchPrg.Value = float.Parse(((string)value)[13..]);
             }
+            else
+            {
+                batchPrg.Value = 0f;
+                return;
+            }
+        }
+        private static void UpdateRunStatus(TimeSpan timeout)
+        {
+            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
+            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
+            TextBox connStatus = control.Children.Find((IRenderable rend) => rend.Id_Name == "CONNECTION_STATUS") as TextBox;
+
+            if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "rstatus"), timeout, out byte[] response))
+            {
+                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
+                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
+                {
+                    connStatus.Text = "Failed to connect.";
+                    return;
+                }
+
+                connStatus.Text = ((string)value)[13..];
+            }
+            else
+            {
+                connStatus.Text = "Failed to connect.";
+                return;
+            }
+        }
+
+        private static bool SendAndAwaitMessage(byte[] message, TimeSpan timeout, out byte[] response)
+        {
+            bool ret;
+            response = null;
+
+            try
+            {
+                TcpClient cli = new();
+                var result = cli.BeginConnect(ConnectionData.RemoteEndpoint.Address, ConnectionData.RemoteEndpoint.Port, null, null);
+
+                var success = result.AsyncWaitHandle.WaitOne(timeout);
+                MessageBuilder.SendMessage(message, cli);
+
+                ret = MessageBuilder.ReceiveMessage(cli.GetStream(), out response, timeout);
+                cli.Close();
+
+                return ret;
+            }
             catch
             {
-                batchPrg.Value = 0;
-                return;
+                return false;
             }
         }
         #endregion
@@ -670,7 +677,7 @@ namespace Primes.UI
 
             hld.Add(btn = new("Connect local", new(2, 2), new(148, 28))); btn.OnPressed += OnControlLocalConnectPressed;
             hld.Add(btn = new("Connect remote", new(152, 2), new(168, 28))); btn.OnPressed += OnControlRemoteConnectPressed;
-            hld.Add(btn = new("Start/Stop", new(2, 32), new(148, 28))); //btn.OnPressed += ;
+            hld.Add(btn = new("Start/Stop", new(2, 32), new(148, 28))); btn.OnPressed += OnControlStartStopPressed;
             hld.Add(btn = new("Launch local", new(152, 32), new(168, 28))); btn.OnPressed += OnControlLocalLaunchPressed;
             hld.Add(txtBox = new TextBox("Not connected", 20, new(2, 62), new(268, 28), Highlights)); txtBox.Id_Name = "CONNECTION_STATUS";
             hld.Add(prgBar = new(new(2, 92), new(298, 28))); prgBar.Id_Name = "BATCH_PROGRESS";
