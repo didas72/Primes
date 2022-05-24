@@ -43,7 +43,7 @@ namespace Primes.UI
         {
             try
             {
-                if (!Init()) return;
+                if (!Init(args)) return;
 
                 //parse args
 
@@ -76,7 +76,7 @@ namespace Primes.UI
 
 
 
-        private static bool Init()
+        private static bool Init(string[] args)
         {
             Log.InitConsole();
             Log.UsePrint = false;
@@ -92,6 +92,8 @@ namespace Primes.UI
                 Log.Print($"Failed to init: {e}");
                 return false;
             }
+
+            //TODO: parse args
 
             if (!InitWindow()) return false;
             if (!InitFont()) return false;
@@ -217,7 +219,24 @@ namespace Primes.UI
         }
         private static void OnControlStartStopPressed(object sender, EventArgs e)
         {
+            TimeSpan timeout = new(0, 0, 0, 0, 300);
 
+            if (SendAndAwaitMessage(MessageBuilder.Message("run", string.Empty, "trun"), timeout, out byte[] response))
+            {
+                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
+                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("ACTION_PASS:"))
+                {
+                    _ControlStatus.Text = "Start/stop failed.";
+                    return;
+                }
+
+                _ControlStatus.Text = "Started/stopped.";
+            }
+            else
+            {
+                _ControlStatus.Text = "Start/stop failed.";
+                return;
+            }
         }
         private static void OnControlLocalLaunchPressed(object sender, EventArgs e)
         {
@@ -237,6 +256,7 @@ namespace Primes.UI
                         FileName = "cmd.exe",
                         Arguments = "/C start PrimesSVC.exe",
                         CreateNoWindow = true,
+                        ErrorDialog = false,
                     };
                     Process p = Process.Start(inf);
 
@@ -248,14 +268,53 @@ namespace Primes.UI
                 catch { newStatus = "Failed to start service."; }
             }
 
-            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
-            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
-            TextBox connStatus = control.Children.Find((IRenderable rend) => rend.Id_Name == "CONNECTION_STATUS") as TextBox;
-            connStatus.Text = newStatus;
+            _ControlStatus.Text = newStatus;
         }
         private static void OnControlOpenPrimesFolder(object sender, EventArgs e)
         {
             Process.Start("explorer.exe", $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "primes")}");
+        }
+        private static void OnControlCheckForResourceUpdate(object sender, EventArgs e)
+        {
+            TimeSpan timeout = new(0, 0, 0, 0, 300);
+
+            if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "reslen"), timeout, out byte[] response))
+            {
+                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
+                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
+                {
+                    _ControlStatus.Text = "Failed to get resource info.";
+                    return;
+                }
+
+                _ControlStatus.Text = $"Reslen={((string)value)[13..]}. (not implemented)"; //TODO:
+            }
+            else
+            {
+                _ControlStatus.Text = "Failed to get resource info.";
+                return;
+            }
+        }
+        private static void OnControlKillService(object sender, EventArgs e)
+        {
+            TimeSpan timeout = new(0, 0, 0, 1);
+
+            if (SendAndAwaitMessage(MessageBuilder.Message("run", string.Empty, "fstop"), timeout, out byte[] response))
+            {
+                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
+                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
+                {
+                    _ControlStatus.Text = "Failed to stop service.";
+                    return;
+                }
+
+                _ControlStatus.Text = "Service stopping...";
+            }
+            else
+            {
+                _ControlStatus.Text = "Failed to stop service.";
+                return;
+            }
         }
         #endregion
 
@@ -480,32 +539,12 @@ namespace Primes.UI
 
             return true;
         }
-        private static void UpdateConnectionStatus()
-        {
-            string newStatus = string.Empty;
-
-            try
-            {
-                if (!PingService(new TimeSpan(0, 0, 0, 0, 300)))
-                    newStatus = "Failed to connect.";
-                else
-                    newStatus = "Connected.";
-            }
-            catch
-            {
-                newStatus = "Failed to connect.";
-            }
-
-            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
-            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
-            TextBox connStatus = control.Children.Find((IRenderable rend) => rend.Id_Name == "CONNECTION_STATUS") as TextBox;
-            connStatus.Text = newStatus;
-        }
         private static void OnConnectionCheck(object sender, EventArgs e)
         {
             try
             {
                 TimeSpan timeout = new(0, 0, 0, 0, 300);
+                if (!UpdateConnectionStatus()) return;
                 UpdateBatchNumber(timeout);
                 UpdateBatchProgress(timeout);
                 UpdateRunStatus(timeout);
@@ -516,35 +555,67 @@ namespace Primes.UI
                 ConnectionData.DisableCheckTimer();
             }
         }
-        private static bool PingService(TimeSpan timeout) => SendAndAwaitMessage(MessageBuilder.Ping(), timeout, out byte[] _);
+        private static bool PingService(TimeSpan timeout)
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+            bool ret = SendAndAwaitMessage(MessageBuilder.Ping(), timeout, out byte[] _);
+            sw.Stop();
+
+            _ControlPing.Text = $"Ping: {sw.Elapsed.Milliseconds}ms";
+
+            return ret;
+        }
+        private static bool UpdateConnectionStatus()
+        {
+            string newStatus;
+
+            try
+            {
+                if (!PingService(new TimeSpan(0, 0, 0, 0, 300)))
+                {
+                    FailedConnection();
+                    newStatus = "Failed to connect.";
+                    return false;
+                }
+                else
+                {
+                    newStatus = "Connected.";
+                    return true;
+                }
+            }
+            catch
+            {
+                FailedConnection();
+                newStatus = "Failed to connect.";
+                return false;
+            }
+
+            _ControlConnectionStatus.Text = newStatus;
+        }
         private static void UpdateBatchNumber(TimeSpan timeout)
         {
-            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
-            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
-            TextBox connStatus = control.Children.Find((IRenderable rend) => rend.Id_Name == "BATCH_NUMBER") as TextBox;
+            TextBox batchNumber = _ControlHolder.Children.Find((IRenderable rend) => rend.Id_Name == "BATCH_NUMBER") as TextBox;
 
             if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "cbnum"), timeout, out byte[] response))
             {
                 MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
                 if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
                 {
-                    connStatus.Text = "-1";
+                    batchNumber.Text = "Batch XX";
                     return;
                 }
 
-                connStatus.Text = ((string)value)[13..];
+                batchNumber.Text = "Batch " + ((string)value)[13..];
             }
             else
             {
-                connStatus.Text = "-1";
+                batchNumber.Text = "Batch XX";
                 return;
             }
         }
         private static void UpdateBatchProgress(TimeSpan timeout)
         {
-            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
-            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
-            ProgressBar batchPrg = control.Children.Find((IRenderable rend) => rend.Id_Name == "BATCH_PROGRESS") as ProgressBar;
+            ProgressBar batchPrg = _ControlHolder.Children.Find((IRenderable rend) => rend.Id_Name == "BATCH_PROGRESS") as ProgressBar;
 
             if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "cbprog"), timeout, out byte[] response))
             {
@@ -565,24 +636,20 @@ namespace Primes.UI
         }
         private static void UpdateRunStatus(TimeSpan timeout)
         {
-            Holder pageHld = UI.Find((IRenderable rend) => rend.Id_Name == "PAGE_HOLDER") as Holder;
-            Holder control = pageHld.Children.Find((IRenderable rend) => rend.Id_Name == "CONTROL") as Holder;
-            TextBox connStatus = control.Children.Find((IRenderable rend) => rend.Id_Name == "CONNECTION_STATUS") as TextBox;
-
             if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "rstatus"), timeout, out byte[] response))
             {
                 MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
                 if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
                 {
-                    connStatus.Text = "Failed to connect.";
+                    _ControlRunStatus.Text = "Failed to check status.";
                     return;
                 }
 
-                connStatus.Text = ((string)value)[13..];
+                _ControlRunStatus.Text = ((string)value)[13..];
             }
             else
             {
-                connStatus.Text = "Failed to connect.";
+                _ControlRunStatus.Text = "Failed to check status.";
                 return;
             }
         }
@@ -595,6 +662,12 @@ namespace Primes.UI
             try
             {
                 TcpClient cli = new();
+                if (ConnectionData.RemoteEndpoint == null)
+                {
+                    FailedConnection();
+                    return false;
+                }
+
                 var result = cli.BeginConnect(ConnectionData.RemoteEndpoint.Address, ConnectionData.RemoteEndpoint.Port, null, null);
 
                 var success = result.AsyncWaitHandle.WaitOne(timeout);
@@ -607,10 +680,16 @@ namespace Primes.UI
             }
             catch
             {
+                FailedConnection();
                 return false;
             }
         }
+        private static void FailedConnection()
+        {
+            ConnectionData.DisableCheckTimer();
+        }
         #endregion
+
 
 
         private static void EnableOnlyMenu(Menu menu)
@@ -670,25 +749,31 @@ namespace Primes.UI
 
             return hld;
         }
+        private static Holder _ControlHolder; private static TextBox _ControlConnectionStatus, _ControlRunStatus, _ControlStatus, _ControlPing;
         private static void BuildControlMenu(Holder pageHld)
         {
             Holder hld; Button btn; TextBox txtBox; ProgressBar prgBar;
-            pageHld.Add(hld = new Holder(Vector2i.Zero, "Control")); hld.Id_Name = "CONTROL";
+            pageHld.Add(hld = new Holder(Vector2i.Zero, "Control")); hld.Id_Name = "CONTROL"; _ControlHolder = hld;
 
-            hld.Add(btn = new("Connect local", new(2, 2), new(148, 28))); btn.OnPressed += OnControlLocalConnectPressed;
-            hld.Add(btn = new("Connect remote", new(152, 2), new(168, 28))); btn.OnPressed += OnControlRemoteConnectPressed;
-            hld.Add(btn = new("Start/Stop", new(2, 32), new(148, 28))); btn.OnPressed += OnControlStartStopPressed;
-            hld.Add(btn = new("Launch local", new(152, 32), new(168, 28))); btn.OnPressed += OnControlLocalLaunchPressed;
-            hld.Add(txtBox = new TextBox("Not connected", 20, new(2, 62), new(268, 28), Highlights)); txtBox.Id_Name = "CONNECTION_STATUS";
-            hld.Add(prgBar = new(new(2, 92), new(298, 28))); prgBar.Id_Name = "BATCH_PROGRESS";
-            hld.Add(txtBox = new("Batch XXXX", 20, new(302, 92), new(98, 28), Highlights)); txtBox.Id_Name = "BATCH_NUMBER";
-            hld.Add(btn = new("Open primes folder", new(2, 122), new(198, 28))); btn.OnPressed += OnControlOpenPrimesFolder;
-            hld.Add(btn = new("Check for resource update", new(2, 152), new(298, 28))); //btn.OnPressed += ;
+            hld.Add(btn = new("Connect local", new(2, 2), new(168, 28))); btn.OnPressed += OnControlLocalConnectPressed;
+            hld.Add(btn = new("Connect remote", new(172, 2), new(168, 28))); btn.OnPressed += OnControlRemoteConnectPressed;
+            hld.Add(txtBox = new("Not connected.", 20, new(342, 2), new(338, 28), Highlights)); txtBox.Id_Name = "CONNECTION_STATUS"; _ControlConnectionStatus = txtBox;
+            hld.Add(btn = new("Start/Stop", new(2, 32), new(168, 28))); btn.OnPressed += OnControlStartStopPressed;
+            hld.Add(btn = new("Launch local", new(172, 32), new(168, 28))); btn.OnPressed += OnControlLocalLaunchPressed;
+            hld.Add(txtBox = new("Run status...", 20, new(342, 32), new(338, 28), Highlights)); txtBox.Id_Name = "RUN_STATUS"; _ControlRunStatus = txtBox;
+            hld.Add(prgBar = new(new(2, 62), new(338, 28))); prgBar.Id_Name = "BATCH_PROGRESS";
+            hld.Add(txtBox = new("Batch XXXX", 20, new(342, 62), new(98, 28), Highlights)); txtBox.Id_Name = "BATCH_NUMBER";
+            hld.Add(btn = new("Open primes folder", new(2, 92), new(338, 28))); btn.OnPressed += OnControlOpenPrimesFolder;
+            hld.Add(btn = new("Check for resource update", new(2, 122), new(338, 28))); btn.OnPressed += OnControlCheckForResourceUpdate;
+            hld.Add(txtBox = new("Status...", 20, new(2, 152), new(448, 28), Highlights)); txtBox.Id_Name = "STATUS"; _ControlStatus = txtBox;
+            hld.Add(txtBox = new("Ping: XXXms", 20, new(2, 182), new(448, 28), Highlights)); txtBox.Id_Name = "PING"; _ControlPing = txtBox;
+            hld.Add(btn = new("KILL SERVICE", 20, new(2, 538), new(168, 28), new(255, 255, 0, 255), new(255, 0, 0, 255), new(255, 100, 100, 255))); btn.OnPressed += OnControlKillService;
         }
+        private static Holder _TestingHolder;
         private static void BuildTestingMenu(Holder pageHld)
         {
             Holder hld, hld1, hld2; TextBox txtBox; Button btn; ProgressBar prgBar; TextList txtLst; InputField inp;
-            pageHld.Add(hld = new(Vector2i.Zero, "Testing")); hld.Id_Name = "TESTING";
+            pageHld.Add(hld = new(Vector2i.Zero, "Testing")); hld.Id_Name = "TESTING"; _TestingHolder = hld;
 
             hld.Add(hld1 = new(Vector2i.Zero, "Benchmarking")); hld1.Id_Name = "BENCHMARK";
             hld.Add(hld2 = new(new(401, 0), "Stress Testing")); hld2.Id_Name = "STRESSTEST";//after divider
@@ -718,11 +803,11 @@ namespace Primes.UI
             hld2.Add(prgBar = new(new(2, 142), new(296, 28))); prgBar.Id_Name = "STRESSTEST_PROGRESS";
             hld2.Add(txtBox = new("CPU temp: XXX.X ºC", 20, new(2, 172), new(296, 26), Highlights)); txtBox.Id_Name = "CPU_TEMP";
         }
+        private static Holder _FilesHolder;
         private static void BuildFilesMenu(Holder pageHld)
         {
             Button btn; TextBox txtBox; Holder hld; TextList lst;
-            hld = new(Vector2i.Zero, "Files"); hld.Id_Name = "FILES";
-            pageHld.Add(hld);
+            pageHld.Add(hld = new(Vector2i.Zero, "Files")); hld.Id_Name = "FILES"; _FilesHolder = hld;
 
             //File control
             hld.Add(new Panel(new(0, 0), new(400, 30), Mid));

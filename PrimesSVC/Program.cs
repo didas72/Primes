@@ -11,11 +11,13 @@ namespace Primes.SVC
     {
         private static void Main(string[] args)
         {
-            if (!Init())
+            if (!Init(args))
             {
                 Log.LogEvent(Log.EventType.Fatal, "Failed to init.", "Main");
                 Environment.Exit(1);
             }
+
+            Log.LogEvent("Service started.", "Main");
 
             try
             {
@@ -30,13 +32,17 @@ namespace Primes.SVC
             }
 
             //regular exit
+            Log.LogEvent("Service stopping...", "Main");
+
             WorkCoordinator.StopWork();
-            
+            System.Threading.Thread.Sleep(300); //just to be seen while testing
+            Environment.Exit(0);
+            return; //sanity and proper branch flow for VS
         }
 
 
 
-        private static bool Init()
+        private static bool Init(string[] args)
         {
             try
             {
@@ -46,6 +52,8 @@ namespace Primes.SVC
                 Globals.startLogPath = Path.Combine(Globals.startLogPath, "SVC_start_log.txt");
 
                 GetOS();
+
+                //TODO: parse args
 
                 if (!InitSettings())
                     return false;

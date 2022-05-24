@@ -46,7 +46,8 @@ namespace Primes.SVC
             if (workers == null) return;
 
             for (int i = 0; i < workers.Length; i++)
-                workers[i]?.Stop();
+                if (workers[i] == null || workers[i].IsRunning())
+                    workers[i].Stop();
         }
         public static void WaitForWorkers(TimeSpan maxWait)
         {

@@ -46,17 +46,16 @@ namespace Primes.SVC
             {
                 listener.Start();
 
-                while (true)
+                while (doListen)
                 {
-                    if (!doListen)
-                        break;
-
                     TcpClient socket = listener.AcceptTcpClient();
                     Log.LogEvent($"Client connected at {socket.Client.RemoteEndPoint}", "ListenLoop");
 
                     //only handle one at a time
                     HandleClient(socket);
                 }
+
+                listener.Stop();
             }
             catch (Exception e)
             {
@@ -147,11 +146,10 @@ namespace Primes.SVC
                         WorkCoordinator.StopWork();
                     else
                         WorkCoordinator.StartWork();
-                    response = MessageBuilder.ResponseRequestSuccess();
+                    response = MessageBuilder.ResponseActionSuccess();
                     return true;
 
                 case "fstop":
-                    WorkCoordinator.StopWork();
                     response = MessageBuilder.ResponseActionSuccess();
                     doListen = false;
                     return true;
@@ -182,6 +180,21 @@ namespace Primes.SVC
                 case "cbprog":
                     response = MessageBuilder.ResponseRequestSuccess(WorkCoordinator.GetCurrentBatchProgress().ToString());
                     return true;
+
+                case "reslen":
+
+                    try
+                    {
+                        long len = new FileInfo(Path.Combine(Globals.resourcesDir, "knownPrimes.rsrc")).Length;
+                        response = MessageBuilder.ResponseRequestSuccess("0x"+len.ToString("X2"));
+                        return true;
+                    }
+                    catch
+                    {
+                        response = MessageBuilder.ResponseRequestInvalid("Failed to get resource length.");
+                        return true;
+                    }
+                    
 
                 default:
                     response = MessageBuilder.ResponseRequestInvalid();
