@@ -74,11 +74,9 @@ namespace Primes.Common.Files
         /// <param name="path">Path of the file to read from.</param>
         /// <returns>Deserialized <see cref="KnownPrimesResourceFile"/></returns>
         /// <exception cref="IncompatibleVersionException"></exception>
-        public static KnownPrimesResourceFile Deserialize(string path)
+        public static KnownPrimesResourceFile Deserialize(Stream stream)
         {
-            KnownPrimesResourceFile file = new(Version.Zero, new ulong[] { 0 });
-
-            FileStream stream = File.OpenRead(path);
+            KnownPrimesResourceFile file;
 
             byte[] verB = new byte[3];
             stream.Read(verB, 0, 3);
@@ -87,25 +85,43 @@ namespace Primes.Common.Files
 
             if (!ver.IsCompatible())
             {
-                throw new IncompatibleVersionException($"Attempted to deserialize known primes resource of version {ver} but no serialization method was implemented for such version.");
+                throw new IncompatibleVersionException($"Attempted to deserialize known primes resource of version {ver} but no deserialization method was implemented for such version.");
             }
             else
             {
                 if (ver.IsEqual(new Version(1, 2, 0)))
-                {
                     file = KnownPrimesResourceFileSerializer.Deserializev1_2_0(stream);
-                }
                 else if (ver.IsEqual(new Version(1, 1, 0)))
                 {
-                    byte[] bytes = File.ReadAllBytes(path);
-                    file = KnownPrimesResourceFileSerializer.Deserializev1_1_0(bytes);
+                    byte[] buffer = new byte[stream.Length - stream.Position];
+                    stream.Read(buffer, 0, buffer.Length);
+                    file = KnownPrimesResourceFileSerializer.Deserializev1_1_0(buffer);
                 }
                 else if (ver.IsEqual(new Version(1, 0, 0)))
                 {
-                    byte[] bytes = File.ReadAllBytes(path);
-                    file = KnownPrimesResourceFileSerializer.Deserializev1_0_0(bytes);
+                    byte[] buffer = new byte[stream.Length - stream.Position];
+                    stream.Read(buffer, 0, buffer.Length);
+                    file = KnownPrimesResourceFileSerializer.Deserializev1_0_0(buffer);
                 }
+                else
+                    throw new IncompatibleVersionException($"Attempted to deserialize known primes resource of version {ver} but no deserialization method was implemented for such version.");
             }
+
+            return file;
+        }
+        public static KnownPrimesResourceFile Deserialize(Stream stream, int maxBytes)
+        {
+            KnownPrimesResourceFile file;
+
+            byte[] verB = new byte[3];
+            stream.Read(verB, 0, 3);
+
+            Version ver = new(verB[0], verB[1], verB[2]);
+
+            if (ver.IsEqual(new Version(1, 2, 0)))
+                file = KnownPrimesResourceFileSerializer.Deserializev1_2_0(stream, maxBytes);
+            else
+                throw new IncompatibleVersionException($"Attempted to partially deserialize known primes resource of version {ver} but no partial deserialization method was implemented for such version.");
 
             return file;
         }

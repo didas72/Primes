@@ -102,9 +102,17 @@ namespace Primes.SVC
 
 
 
-        public static PrimeJob GetNextPrimeJob()
+        public static PrimeJob GetNextPrimeJob(Semaphore stopCheck)
         {
-            jobQueueAccess.WaitOne();
+            start:
+
+            if (!jobQueueAccess.WaitOne(500))
+            {
+                if (stopCheck.WaitOne(0))
+                    return null;
+
+                goto start;
+            }
 
             if (jobQueue.Count <= 0)
                 EnqueueJobs();
@@ -124,6 +132,16 @@ namespace Primes.SVC
                 maxJobQueue = Settings.GetMaxJobQueue();
 
             jobQueue = PrimesUtils.GetDoableJobs(Globals.jobsDir, (uint)maxJobQueue, true);
+
+            if (jobQueue.Count <= 0)//no more available offline, check with JobDistributer
+            {
+                if (!GetOnlineJobs())//no more are available online, stop work //TODO: Set an event to attempt to get more jobs later
+                    StopWork();
+            }
+        }
+        private static bool GetOnlineJobs()
+        {
+            throw new NotImplementedException();
         }
     }
 }

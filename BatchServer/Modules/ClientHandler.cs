@@ -29,13 +29,13 @@ namespace BatchServer.Modules
             expireTimer.Elapsed += ExpireTimer;
 
             queuedClients.Add((client, expireTimer));
-            client.messageReceived += MessageReceived;
+            client.MessageReceived += MessageReceived;
             client.StartListening();
 
             expireTimer.Start();
         }
 
-        private void MessageReceived(Client sender, byte[] data)
+        private void MessageReceived(object sender, byte[] data)
         {
             try
             {
@@ -58,14 +58,14 @@ namespace BatchServer.Modules
                 {
                     Log.LogEvent($"Client '{cl.socket.Client.RemoteEndPoint}' successfully identified as a controller.", "ClientHandler");
 
-                    cl.messageReceived -= MessageReceived;
+                    cl.MessageReceived -= MessageReceived;
                     Globals.ctlHandle.Handle(cl);
                 }
                 else if (ident.identifier == Message_Identifier.Identifier.Client)
                 {
                     Log.LogEvent($"Client '{cl.socket.Client.RemoteEndPoint}' successfully identified as a client.", "ClientHandler");
 
-                    cl.messageReceived -= MessageReceived;
+                    cl.MessageReceived -= MessageReceived;
                     Globals.server.Handle(cl);
                 }
                 else

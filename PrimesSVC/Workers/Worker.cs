@@ -64,7 +64,7 @@ namespace Primes.SVC
             {
                 sw.Restart();
                 bufferHead = 0;
-                job = WorkCoordinator.GetNextPrimeJob();
+                job = WorkCoordinator.GetNextPrimeJob(stopControl);
                 
                 if (job == null) break;
 

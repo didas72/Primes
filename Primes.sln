@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobManagement", "JobManagem
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimesTester", "PrimesTester\PrimesTester.csproj", "{EF685B51-E2D5-46FC-B51C-923CB9283940}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimesTools", "PrimesTools\PrimesTools.csproj", "{DD05A858-F9AC-4E13-B85B-A1025230DCF1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimesTools", "PrimesTools\PrimesTools.csproj", "{DD05A858-F9AC-4E13-B85B-A1025230DCF1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BatchServer", "BatchServer\BatchServer.csproj", "{B5F23AFA-DA3C-46A5-A1D6-9C72031D6301}"
 EndProject

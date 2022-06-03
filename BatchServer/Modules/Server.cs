@@ -33,7 +33,7 @@ namespace BatchServer.Modules
 
         public void Handle(Client client)
         {
-            client.messageReceived += Message_Received;
+            client.MessageReceived += Message_Received;
 
             lock (handling)
             {
@@ -330,15 +330,16 @@ namespace BatchServer.Modules
 
 
 
-        private void Message_Received(Client sender, byte[] data)
+        private void Message_Received(object sender, byte[] data)
         {
-            byte status = 255; 
+            byte status = 255;
+            Client tSender = (Client)sender;
 
             try
             {
                 lock (handling)
                 {
-                    status = handling[sender].status;
+                    status = handling[tSender].status;
                 }
 
                 Message msg = Message.Deserialize(data);
@@ -346,34 +347,34 @@ namespace BatchServer.Modules
                 switch (status)
                 {
                     case 0:
-                        if (msg is not Message_Client_StateRequest req) SafeDisconnect(sender);
-                        else HandleRequest(sender, req);
+                        if (msg is not Message_Client_StateRequest req) SafeDisconnect(tSender);
+                        else HandleRequest(tSender, req);
                         break;
 
                     case 2:
-                        if (msg is not Message_Client_Acknowledge ack1) SafeDisconnect(sender);
-                        else ClientAcknowledgedServe(sender, ack1);
+                        if (msg is not Message_Client_Acknowledge ack1) SafeDisconnect(tSender);
+                        else ClientAcknowledgedServe(tSender, ack1);
                         break;
 
                     case 4:
-                        if (msg is not Message_Client_Acknowledge ack2) SafeDisconnect(sender);
-                        else ClientAcknowledgedSendCheck(sender, ack2);
+                        if (msg is not Message_Client_Acknowledge ack2) SafeDisconnect(tSender);
+                        else ClientAcknowledgedSendCheck(tSender, ack2);
                         break;
 
                     case 6:
-                        if (msg is not Message_Client_Data dta1) SafeDisconnect(sender);
-                        else ClientReceivedData(sender, dta1);
+                        if (msg is not Message_Client_Data dta1) SafeDisconnect(tSender);
+                        else ClientReceivedData(tSender, dta1);
                         break;
 
                     case 8:
-                        if (msg is not Message_Client_Acknowledge ack3) SafeDisconnect(sender);
-                        else ClientAcknowledReceiveCheck(sender, ack3);
+                        if (msg is not Message_Client_Acknowledge ack3) SafeDisconnect(tSender);
+                        else ClientAcknowledReceiveCheck(tSender, ack3);
                         break;
 
                         //FIXME: Add missing ones
 
                     default:
-                        Log.LogEvent(Log.EventType.Warning, $"Client '{sender.socket.Client.RemoteEndPoint}' has invalid status {status}. Disconnecting", "Server");
+                        Log.LogEvent(Log.EventType.Warning, $"Client '{tSender.socket.Client.RemoteEndPoint}' has invalid status {status}. Disconnecting", "Server");
                         
                         break;
                 }
@@ -382,7 +383,7 @@ namespace BatchServer.Modules
             {
                 Log.LogException($"Error serving client with status ${status}", "Server", e);
 
-                SafeDisconnect(sender);
+                SafeDisconnect(tSender);
             }
         }
         private void SafeDisconnect(Client client)

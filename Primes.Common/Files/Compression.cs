@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 using DidasUtils.Extensions;
 
@@ -27,7 +29,7 @@ namespace Primes.Common.Files
             public static byte[] Compress(ulong[] ulongs)
             {
                 if (ulongs.Length < 2)
-                    throw new ArgumentException(nameof(ulongs));
+                    throw new ArgumentException("The array must have at least two values.", nameof(ulongs));
 
                 List<byte> bytes = new();
 
@@ -72,7 +74,7 @@ namespace Primes.Common.Files
             public static ulong[] Uncompress(byte[] bytes)
             {
                 if (bytes.Length < 8)
-                    throw new ArgumentException(nameof(bytes));
+                    throw new ArgumentException("The array must have at least 8 bytes.", nameof(bytes));
 
                 List<ulong> ulongs = new();
 
@@ -279,7 +281,7 @@ namespace Primes.Common.Files
 
 
             loadBlock:
-                LoadBlock(ref stream, ref block, ref pendingBlockRead, 0);
+                LoadBlock(stream, ref block, ref pendingBlockRead, 0);
 
                 blockHeader = 0;
 
@@ -302,7 +304,7 @@ namespace Primes.Common.Files
                             if (!pendingBlockRead)
                                 throw new Exception("Out of blocks.");
 
-                            LoadBlock(ref stream, ref block, ref pendingBlockRead, block.Length - blockHeader);
+                            LoadBlock(stream, ref block, ref pendingBlockRead, block.Length - blockHeader);
                             blockHeader -= BlockSize;
                         }
 
@@ -343,7 +345,7 @@ namespace Primes.Common.Files
 
 
             loadBlock:
-                LoadBlock(ref stream, ref block, ref pendingBlockRead, 0);
+                LoadBlock(stream, ref block, ref pendingBlockRead, 0);
 
                 blockHeader = 0;
 
@@ -366,7 +368,7 @@ namespace Primes.Common.Files
                             if (!pendingBlockRead)
                                 throw new Exception("Out of blocks.");
 
-                            LoadBlock(ref stream, ref block, ref pendingBlockRead, block.Length - blockHeader);
+                            LoadBlock(stream, ref block, ref pendingBlockRead, block.Length - blockHeader);
                             blockHeader -= BlockSize;
                         }
 
@@ -391,7 +393,7 @@ namespace Primes.Common.Files
 
 
 
-            private static void LoadBlock(ref Stream stream, ref byte[] block, ref bool pendingBlockRead, int preserve)
+            private static void LoadBlock(Stream stream, ref byte[] block, ref bool pendingBlockRead, int preserve)
             {
                 int size = preserve + (int)Math.Min(BlockSize, stream.RemainingBytes());
 
@@ -400,6 +402,227 @@ namespace Primes.Common.Files
 
                 if (stream.RemainingBytes() == 0)
                     pendingBlockRead = false;
+            }
+
+
+
+            /// <summary>
+            /// A helper class that simplifies partial reading of NCC compressed data.
+            /// </summary>
+            public class StreamReader
+            {
+                /// <summary>
+                /// The underlying stream used by the reader.
+                /// </summary>
+                public Stream BaseStream { get; }
+
+
+                private ulong lastRead = ulong.MaxValue; //there are no valid ulongs above this so NCC no longer applies
+
+
+
+                /// <summary>
+                /// Initializes a new instance of <see cref="StreamReader"/> class from the specified stream.
+                /// </summary>
+                /// <param name="baseStream">The stream to be read.</param>
+                public StreamReader(Stream baseStream)
+                {
+                    BaseStream = baseStream;
+                }
+
+
+
+                /// <summary>
+                /// Reads the next value from the input stream and advances the stream position as needed.
+                /// </summary>
+                /// <returns></returns>
+                public ulong Read()
+                {
+                    ushort offset;
+
+                    if (lastRead == ulong.MaxValue)
+                        return lastRead = ReadAbsolute();
+
+                    offset = ReadOffset();
+
+                    if (offset == 0)
+                        return lastRead = ReadAbsolute();
+
+                    return lastRead += ReadOffset();
+                }
+                /// <summary>
+                /// Reads a specified maximum of values from the current stream into a buffer, beginning at the specified index.
+                /// </summary>
+                /// <param name="buffer">When this method returns, contains the specified array with the values between index and (index + count - 1) replaced by the values read from the current source.</param>
+                /// <param name="index">The index of buffer at which to begin writing.</param>
+                /// <param name="count">The maximum number of values to read.</param>
+                /// <returns>The number of values that have been read, or 0 if at the end of the stream and no data was read. The number will be less than or equal to the count parameter, depending on whether the data is available within the stream.</returns>
+                /// <exception cref="ArgumentNullException"></exception>
+                /// <exception cref="ArgumentOutOfRangeException"></exception>
+                public int Read(ulong[] buffer, int index, int count)
+                {
+                    if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+                    if (index < 0 || index >= buffer.Length) throw new ArgumentOutOfRangeException(nameof(index));
+                    if (count < 0 || count + index >= buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
+
+                    int head = index; ushort offset; int read = 0;
+
+                    try
+                    {
+                        if (lastRead == ulong.MaxValue)
+                        {
+                            buffer[head++] = lastRead = ReadAbsolute();
+                            read++;
+                        }
+
+                        while (head < count + index)
+                        {
+                            offset = ReadOffset();
+                            if (offset == 0)
+                            {
+                                buffer[head++] = lastRead = ReadAbsolute();
+                            }
+                            else
+                            {
+                                lastRead += offset;
+                                buffer[head++] = lastRead;
+                            }
+
+                            read++;
+                        }
+                    }
+                    catch { }
+
+                    return read;
+                }
+
+
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                private ushort ReadOffset()
+                {
+                    byte[] buffer = new byte[2];
+                    int read = BaseStream.Read(buffer, 0, 2);
+
+                    if (read != 2) throw new EndOfStreamException();
+
+                    return BitConverter.ToUInt16(buffer, 0);
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                private ulong ReadAbsolute()
+                {
+                    byte[] buffer = new byte[8];
+                    int read = BaseStream.Read(buffer, 0, 8);
+
+                    if (read != 8) throw new EndOfStreamException();
+
+                    return BitConverter.ToUInt64(buffer, 0);
+                }
+            }
+
+            /// <summary>
+            /// A helper class that simplifies partial writing of NCC compressed data.
+            /// </summary>
+            public class StreamWriter
+            {
+                /// <summary>
+                /// The underlying stream used by the writer.
+                /// </summary>
+                public Stream BaseStream { get; }
+
+                
+                private ulong lastWritten = ulong.MaxValue; //there are no valid ulongs above this so NCC no longer applies
+                private const ulong maxOff = (ulong)ushort.MaxValue;
+
+
+
+                /// <summary>
+                /// Initializes a new instance of the <see cref="StreamWriter"/> class from the specified stream.
+                /// </summary>
+                /// <param name="baseStream">The stream to be read.</param>
+                public StreamWriter(Stream baseStream)
+                {
+                    BaseStream = baseStream;
+                }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="StreamWriter"/> class from the specified stream and sets the last value present on the stream to correctly append values to it.
+                /// </summary>
+                /// <param name="baseStream">The stream to be read.</param>
+                /// <param name="lastPresent">The last value present on the stream. Required to be able to correctly append value to the stream.</param>
+                public StreamWriter(Stream baseStream, ulong lastPresent)
+                {
+                    BaseStream = baseStream;
+                    lastWritten = lastPresent;
+                }
+
+
+
+                /// <summary>
+                /// Writes a value to the stream.
+                /// </summary>
+                /// <param name="value"></param>
+                public void Write(ulong value)
+                {
+                    if (lastWritten == ulong.MaxValue)
+                        WriteRawAbsolute(value);
+                    else if (value < lastWritten)
+                        WriteAbsolute(value);
+                    else
+                    {
+                        ulong offset = value - lastWritten;
+                        if (offset > maxOff) WriteAbsolute(value);
+                        else WriteOffset((ushort)offset);
+                    }
+                    
+                    BaseStream.Flush();
+                }
+                /// <summary>
+                /// Writes a subarray of values to the stream.
+                /// </summary>
+                /// <param name="buffer">The array that contains the values to write.</param>
+                /// <param name="index">The value position in the buffer at which to start reading data.</param>
+                /// <param name="count">The maximum number of value to write.</param>
+                /// <exception cref="ArgumentNullException"></exception>
+                /// <exception cref="ArgumentOutOfRangeException"></exception>
+                public void Write(ulong[] buffer, int index, int count)
+                {
+                    if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+                    if (index < 0 || index >= buffer.Length) throw new ArgumentOutOfRangeException(nameof(index));
+                    if (count < 0 || count + index >= buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
+
+                    int head = index; ulong offset;
+
+                    if (lastWritten == ulong.MaxValue)
+                        WriteRawAbsolute(lastWritten = buffer[head++]);
+
+                    while (head < count)
+                    {
+                        offset = buffer[head++] - lastWritten;
+
+                        if (offset > maxOff) WriteAbsolute(buffer[head-1]);
+                        else WriteOffset((ushort)offset);
+                    }
+
+                    BaseStream.Flush();
+                }
+
+
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                private void WriteOffset(ushort offset) => BaseStream.Write(BitConverter.GetBytes(offset));
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                private void WriteAbsolute(ulong value)
+                {
+                    BaseStream.WriteByte(0);
+                    BaseStream.WriteByte(0);
+                    BaseStream.Write(BitConverter.GetBytes(value));
+                }
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                private void WriteRawAbsolute(ulong value)
+                {
+                    BaseStream.Write(BitConverter.GetBytes(value));
+                }
             }
         }
 

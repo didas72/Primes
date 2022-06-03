@@ -23,10 +23,8 @@ namespace Primes.SVC
             try
             {
                 int maxResMem = Settings.GetMaxResourceMemory();
-
-                if (maxResMem > 0) throw new NotImplementedException(); //must implement partial deserialization first
-
                 string kprfPath = Path.Combine(Globals.resourcesDir, "knownPrimes.rsrc");
+                KnownPrimesResourceFile file;
 
                 if (!File.Exists(kprfPath))
                 {
@@ -35,7 +33,19 @@ namespace Primes.SVC
                     return true;
                 }
 
-                var file = KnownPrimesResourceFile.Deserialize(kprfPath);
+                if (maxResMem > 0) //must implement partial deserialization first
+                {
+                    FileStream fs = File.OpenRead(kprfPath);
+                    file = KnownPrimesResourceFile.Deserialize(fs, maxResMem);
+                    fs.Close();
+                }
+                else
+                {
+                    FileStream fs = File.OpenRead(kprfPath);
+                    file = KnownPrimesResourceFile.Deserialize(fs);
+                    fs.Close();
+                }
+                    
                 knownPrimes = file.Primes;
             }
             catch (Exception e)

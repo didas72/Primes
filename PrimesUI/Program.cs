@@ -45,8 +45,6 @@ namespace Primes.UI
             {
                 if (!Init(args)) return;
 
-                //parse args
-
                 EnableOnlyMenu(selectedMenu);
 
                 while (masterRun && !Raylib.WindowShouldClose())
@@ -567,30 +565,26 @@ namespace Primes.UI
         }
         private static bool UpdateConnectionStatus()
         {
-            string newStatus;
-
             try
             {
                 if (!PingService(new TimeSpan(0, 0, 0, 0, 300)))
                 {
                     FailedConnection();
-                    newStatus = "Failed to connect.";
+                    _ControlConnectionStatus.Text = "Failed to connect.";
                     return false;
                 }
                 else
                 {
-                    newStatus = "Connected.";
+                    _ControlConnectionStatus.Text = "Connected.";
                     return true;
                 }
             }
             catch
             {
                 FailedConnection();
-                newStatus = "Failed to connect.";
+                _ControlConnectionStatus.Text = "Failed to connect.";
                 return false;
             }
-
-            _ControlConnectionStatus.Text = newStatus;
         }
         private static void UpdateBatchNumber(TimeSpan timeout)
         {

@@ -576,6 +576,31 @@ namespace Primes.Common.Files
 
             return file;
         }
+        /// <summary>
+        /// Partially deserializes a <see cref="KnownPrimesResourceFile"/> of version 1.2.0 from a stream.
+        /// </summary>
+        /// <param name="stream">Stream containing the <see cref="KnownPrimesResourceFile"/>.</param>
+        /// <param name="maxBytes">The maximum number of bytes of primes to be loaded to RAM.</param>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException"></exception>
+        public static KnownPrimesResourceFile Deserializev1_2_0(Stream stream, int maxBytes)
+        {
+            maxBytes /= 8;
+            byte[] buffer = new byte[5];
+
+            stream.Seek(3, SeekOrigin.Begin);
+            stream.Read(buffer, 0, 5);
+
+            KnownPrimesResourceFile.Comp comp = new(buffer[0]);
+            KnownPrimesResourceFile krpc = new(new(1, 2, 0), comp, new ulong[Math.Min(BitConverter.ToInt32(buffer, 1), maxBytes)]);
+
+            if (!comp.NCC) throw new NotSupportedException("Partial loading of resources is only available for NCC.");
+
+            Compression.NCC.StreamReader reader = new(stream);
+            reader.Read(krpc.Primes, 0, maxBytes);
+
+            return krpc;
+        }
 
 
 
