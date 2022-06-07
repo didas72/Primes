@@ -131,8 +131,10 @@ namespace Primes.UI
         {
             try
             {
-                currentResource = KnownPrimesResourceFile.Deserialize(path);
+                FileStream fs = File.OpenRead(path);
+                currentResource = KnownPrimesResourceFile.Deserialize(fs);
                 currentViewResource = true;
+                fs.Close();
                 BuildTexts();
             }
             catch (Exception e) { Log.LogException("Failed to open file!", "FileHandler", e); return false; }

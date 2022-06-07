@@ -1,4 +1,6 @@
-﻿Messages for PrimesSVC
+﻿ControlMessages for PrimesSVC
+
+PrimesUI 'controls the bus' while PrimesSVC ONLY responds
 
 l = letters (caps and no caps)
 d = digits
@@ -21,8 +23,9 @@ Message types (3 letters, capital sensitive):
 -Data (dta)
 -Ping (png)
 
-Possible message structure, spaces as dividers:
--Type (Eg 'Req') (string, 3 ld)
+
+Message structure, spaces as dividers:
+-Type (Eg 'req') (string, 3 ld)
 -Target length (int16, 0+)
 -Target (Eg 'Batch_status') (<target length> lds)
 -Value length (int32, 0+)

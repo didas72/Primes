@@ -55,23 +55,13 @@ namespace Primes.SVC
 
                 //TODO: parse args
 
-                if (!InitSettings())
-                    return false;
-
-                if (!InitDirs())
-                    return false;
-
-                if (!InitLog())
-                    return false;
-
-                if (!ControlListener.Init())
-                    return false;
-
-                if (!ResourceHolder.Init())
-                    return false;
-
-                if (!WorkCoordinator.InitWorkers())
-                    return false;
+                if (!InitSettings()) return false;
+                if (!InitDirs()) return false;
+                if (!InitLog()) return false;
+                if (!ControlListener.Init()) return false;
+                if (!ResourceHolder.Init()) return false;
+                if (!BatchManager.Init()) return false;
+                if (!WorkCoordinator.InitWorkers()) return false;
             }
             catch (Exception e)
             {

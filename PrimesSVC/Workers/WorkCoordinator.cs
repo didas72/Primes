@@ -141,6 +141,10 @@ namespace Primes.SVC
         }
         private static bool GetOnlineJobs()
         {
+            if (!BatchManager.IsServerAccessible()) return false;
+
+            BatchManager.GetBatches(new TimeSpan(0, 0, 1));
+
             throw new NotImplementedException();
         }
     }

@@ -105,6 +105,21 @@ namespace Primes.Common.Net
             if (string.IsNullOrEmpty(messageType) || messageType != "png" || !string.IsNullOrEmpty(target) || value != null) return false;
             return true;
         }
+        public static bool ValidateErrorMessage(string messageType, string target, object value)
+        {
+            if (string.IsNullOrEmpty(messageType) || messageType != "err" || !string.IsNullOrEmpty(target) || value is not string || string.IsNullOrEmpty((string)value)) return false;
+            return true;
+        }
+        public static bool ValidateAckMessage(string messageType, string target, object value)
+        {
+            if (string.IsNullOrEmpty(messageType) || messageType != "ack" || !string.IsNullOrEmpty(target) || value != null) return false;
+            return true;
+        }
+        public static bool ValidateDataMessage(string messageType, string target, object value)
+        {
+            if (string.IsNullOrEmpty(messageType) || messageType != "dta" || !string.IsNullOrEmpty(target) || value == null) return false;
+            return true;
+        }
 
 
 
