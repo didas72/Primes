@@ -1,15 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.IO;
 using System.Net.Sockets;
 
 using DidasUtils.Data;
 using DidasUtils.Logging;
+using DidasUtils.ErrorCorrection;
 
 namespace Primes.Common.Net
 {
     public static class MessageBuilder
     {
+        private const int blockSize = 4096;
+
+
         public static byte[] Message(string messageType, string target, byte[] value)
         {
             if (messageType == null) throw new ArgumentNullException(nameof(messageType));
@@ -168,6 +173,135 @@ namespace Primes.Common.Net
         public static void SendMessage(byte[] message, TcpClient cli)
         {
             SegmentedData.SendToStream(message, cli.GetStream(), 4096);
+        }
+
+
+
+
+        /* Segmented data
+         * Messages sent:
+         * 1) Header
+         *      -Total data length (-1 if unknown) (int)
+         *      -Max block size (int)
+         * 2) Block(s)
+         *      -Block number (not needed for Tcp but sanity check) (int)
+         *      -Data size (last will be smaller, could be computed but safer) (int)
+         *      -Data
+         *      -(Padding (with 0s) if needed)
+         *      -Fletcher32 check (data only) (not needed for Tcp but sanity check) (int)
+         * 3) Tail
+         *      -Block number = -1 (int)
+        */
+        public static bool SendStreamData(Stream source, NetworkStream ns, int timeoutMillis)
+        {
+            int prevWriteMillis = ns.WriteTimeout;
+            ns.WriteTimeout = timeoutMillis;
+
+            try
+            {
+                //send header
+                byte[] buffer = new byte[8];
+                int length = -1;
+
+                try { length = (int)(source.Length - source.Position); } catch { }
+
+                Array.Copy(BitConverter.GetBytes(length), 0, buffer, 0, 4);
+                Array.Copy(BitConverter.GetBytes(blockSize), 0, buffer, 4, 4);
+
+                ns.Write(buffer, 0, buffer.Length);//send
+
+
+
+                //send blocks
+                buffer = new byte[blockSize]; byte[] data = new byte[blockSize - 12]; int read, blockCount = 0; uint fletcher32;
+
+                do
+                {
+                    read = source.Read(data, 0, data.Length); if (read == 0) break;
+                    if (read != blockSize - 12)//padding
+                    {
+                        for (int i = read; i < data.Length; i++) data[i] = 0;
+                    }
+                    fletcher32 = Fletcher.Fletcher32(data);
+
+                    Array.Copy(BitConverter.GetBytes(blockCount++), 0, buffer, 0, 4);
+                    Array.Copy(BitConverter.GetBytes(read), 0, buffer, 4, 4);
+                    Array.Copy(data, 0, buffer, 8, data.Length);
+                    Array.Copy(BitConverter.GetBytes(fletcher32), 0, buffer, blockSize - 4, 4);
+
+                    ns.Write(buffer, 0, buffer.Length);
+                }
+                while (read > 0);
+
+                //send tail
+                ns.Write(BitConverter.GetBytes((int)-1), 0, 4);
+
+            }
+            catch (Exception e)
+            {
+                Log.LogException("Failed to send data from stream.", "SendStreamData", e);
+                try { ns.WriteTimeout = prevWriteMillis; } catch { }
+                return false;
+            }
+
+            ns.WriteTimeout = prevWriteMillis;
+            return true;
+        }
+        public static bool ReceiveStreamData(Stream output, NetworkStream ns, int timeoutMillis) 
+        {
+            int prevReadMillis = ns.ReadTimeout;
+            ns.ReadTimeout = timeoutMillis;
+
+            try
+            {
+                //read header
+                byte[] buffer = new byte[8];
+                int read = ns.Read(buffer, 0, buffer.Length); if (read != 8) throw new Exception("Could not read entire header from socket.");
+
+                int totalDataLength = BitConverter.ToInt32(buffer, 0); //used if outputting to an array instead of a stream for example (pre alloc mem)
+                int blockSize = BitConverter.ToInt32(buffer, 4); if (blockSize <= 12) throw new Exception("Invalid header.");
+
+
+                //read blocks/tail
+                buffer = new byte[blockSize]; byte[] data = new byte[blockSize - 12];
+                uint fletcherReceived, fletcherCalculated; int blockNum, receivedData = 0, dataSize, lastBlock = -1; //-1 to syncronize everything right off the bat
+
+                do
+                {
+                    read = ns.Read(buffer, 0, buffer.Length);
+
+                    blockNum = BitConverter.ToInt32(buffer, 0);
+
+                    if (read == blockSize) //block
+                    {
+                        if (blockNum != ++lastBlock) throw new Exception("Could not receive all blocks.");
+
+                        dataSize = BitConverter.ToInt32(buffer, 4); if (dataSize > blockSize - 12 || dataSize <= 0) throw new Exception("Invalid block header.");
+                        Array.Copy(buffer, 8, data, 0, blockSize - 12);
+                        fletcherReceived = BitConverter.ToUInt32(buffer, blockSize - 4); fletcherCalculated = Fletcher.Fletcher32(data);
+                        if (fletcherReceived != fletcherCalculated) throw new Exception($"Data corrupted. ({fletcherReceived}r=/={fletcherCalculated}c)");
+
+                        receivedData += dataSize;
+                        output.Write(buffer, 8, dataSize); output.Flush();
+                    }
+                    else if (read == 4) //probably tail
+                    {
+                        if (blockNum == -1) break; //it is tail
+                        else throw new Exception("Could not read entire block/tail from socket.");
+                    }
+                    else throw new Exception("Could not read entire block/tail from socket.");
+                }
+                while (receivedData < totalDataLength);
+            }
+            catch (Exception e)
+            {
+                Log.LogException("Failed to receive data to stream.", "ReceiveStreamData", e);
+                try { ns.WriteTimeout = prevReadMillis; } catch { }
+                return false;
+            }
+
+            ns.ReadTimeout = prevReadMillis;
+            return true;
         }
     }
 }

@@ -61,6 +61,8 @@ namespace Primes.SVC
                 if (!ControlListener.Init()) return false;
                 if (!ResourceHolder.Init()) return false;
                 if (!BatchManager.Init()) return false;
+                if (!Scheduler.Init()) return false;
+                if (!WorkCoordinator.Init()) return false;
                 if (!WorkCoordinator.InitWorkers()) return false;
             }
             catch (Exception e)
@@ -121,7 +123,10 @@ namespace Primes.SVC
                 Directory.CreateDirectory(Globals.jobsDir);
                 Globals.completeDir = Path.Combine(Globals.homeDir, "complete");
                 Directory.CreateDirectory(Globals.completeDir);
+
+                //clear cache
                 Globals.cacheDir = Path.Combine(Globals.homeDir, "cache");
+                Directory.Delete(Globals.cacheDir, true);
                 Directory.CreateDirectory(Globals.cacheDir);
             }
             catch (Exception e)

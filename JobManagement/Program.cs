@@ -3,6 +3,8 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
 
 using DidasUtils;
 using DidasUtils.Logging;
@@ -12,6 +14,7 @@ using DidasUtils.Data;
 
 using Primes.Common;
 using Primes.Common.Files;
+using Primes.Common.Net;
 
 namespace JobManagement
 {
@@ -32,6 +35,8 @@ namespace JobManagement
             //Please ignore this project.
 
             //Currently set to scan and update compression
+
+            Log.InitLog("E:\\Documents\\primes\\", "JobManagement.txt");
 
             Blue("Start");
             
@@ -318,7 +323,52 @@ namespace JobManagement
         }
         public static void Temporary()
         {
-            
+            string line = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(line)) //receive
+            {
+                Console.WriteLine("Receiving...");
+
+                TcpListener list = TcpListener.Create(6969); list.Start();
+                TcpClient cli = list.AcceptTcpClient(); list.Stop();
+
+                Console.WriteLine("Connected.");
+
+                FileStream fs = File.OpenWrite(@"E:\Documents\primes\0.primejob.test");
+
+                while (cli.Available == 0) Thread.Sleep(0);
+
+                Stopwatch sw = Stopwatch.StartNew();
+
+                MessageBuilder.ReceiveStreamData(fs, cli.GetStream(), 1000);
+
+                sw.Stop();
+                Console.WriteLine("Received.");
+                Console.WriteLine($"Elapsed {sw.ElapsedMilliseconds}ms");
+
+                fs.Flush();
+                fs.Close();
+            }
+            else //send
+            {
+                Console.WriteLine("Sending...");
+
+                FileStream fs = File.OpenRead(@"E:\Documents\primes\0.primejob");
+
+                TcpClient cli = new("127.0.0.1", 6969);
+
+                Console.WriteLine("Connected.");
+
+                Stopwatch sw = Stopwatch.StartNew();
+
+                MessageBuilder.SendStreamData(fs, cli.GetStream(), 1000);
+
+                sw.Stop();
+                Console.WriteLine("Sent.");
+                Console.WriteLine($"Elapsed {sw.ElapsedMilliseconds}ms");
+
+                fs.Close();
+            }
         }
 
 
@@ -424,7 +474,7 @@ namespace JobManagement
             Stopwatch s = new();
             s.Start();
             for (ulong i = start; i < end; i++)
-                PrimesMath.IsPrime(i, ref knownPrimes);
+                PrimesMath.IsPrime(i, knownPrimes);
             s.Stop();
             White($"Ours (reosurce): {s.ElapsedMilliseconds}ms");
         }
