@@ -53,7 +53,7 @@ namespace Primes.SVC
 
                 GetOS();
 
-                //TODO: parse args
+                //TODO: parse args (plan what args beforehand however)
 
                 if (!InitSettings()) return false;
                 if (!InitDirs()) return false;

@@ -138,7 +138,7 @@ namespace Primes.SVC
 
                 //generated batches are relatively small (~10k) so it's not too bad to use the normal messaging system
                 byte[] bytes = (byte[])value;
-                File.WriteAllBytes(Path.Combine(Globals.cacheDir, "batchDownload.7z.tmp"), bytes);
+                File.WriteAllBytes(Path.Combine(Globals.cacheDir, "batchDownload.7z.tmp"), bytes); //extraction is done externally
 
                 MessageBuilder.SendMessage(MessageBuilder.Message("ack", string.Empty, string.Empty), ns);
                 ns.Close();
@@ -243,6 +243,65 @@ namespace Primes.SVC
 
             return ReturnBatchStatus.Success;
         }
+        public static RegetBatchesStatus RegetAllBatches(TimeSpan timeout)
+        {
+            if (!initialized) throw new Exception("Attempted to use uninitialized BatchManager.");
+
+            Log.LogEvent($"Attempting to reget all batches from '{serverIP}:{serverPort}'.", "RegetAllBatches");
+
+            TcpClient cli = new();
+
+            try
+            {
+                cli.Connect(serverIP, serverPort);
+                if (!cli.Connected) throw new Exception(failedConnErr);
+                Socket soc = cli.Client;
+                NetworkStream ns = cli.GetStream();
+
+                if (!MessageBuilder.ReceiveMessage(ns, out byte[] msg, timeout)) throw new Exception("Failed to get intent request message.");
+                MessageBuilder.DeserializeMessage(msg, out string msgType, out string tgt, out object value);
+                if (!MessageBuilder.ValidateRequestMessage(msgType, tgt, value)) throw new Exception(unexpectedMsgErr);
+                if ((string)value != "intent") throw new Exception(unexpectedMsgErr);
+
+                MessageBuilder.SendMessage(MessageBuilder.Message("ret", string.Empty, $"reget;{clientId}"), ns);
+
+                if (!MessageBuilder.ReceiveMessage(ns, out msg, timeout)) throw new Exception("Failed to get server response.");
+                MessageBuilder.DeserializeMessage(msg, out msgType, out tgt, out value);
+                if (MessageBuilder.ValidateErrorMessage(msgType, tgt, value))
+                {
+                    string[] parts = ((string)value).Split(";");
+                    if (parts.Length != 2) throw new Exception("Recieved an invalid error message.");
+                    clientId = uint.Parse(parts[0]);
+                    UpdateClientIDFile();
+                    Log.LogEvent($"Batch server denied new batch. Reason: {parts[1]}", "GetBatch");
+                    cli.Close();
+                    if (parts[1] == "InvalidId")
+                        return RegetBatchesStatus.InvalidId;
+                    else if (parts[1] == "NoBatchesAssigned")
+                        return RegetBatchesStatus.NoBatchesAssigned;
+                    else
+                        return RegetBatchesStatus.UnspecifiedError;
+                }
+                else if (!MessageBuilder.ValidateDataMessage(msgType, tgt, value)) throw new Exception(unexpectedMsgErr);
+
+                //generated batches are relatively small (~10k) so it's not too bad to use the normal messaging system
+                //since they should come in small amounts (doubt more than 10), data should be limited to ~100k, which is a already a bit but should not be too bad still
+                byte[] bytes = (byte[])value;
+                File.WriteAllBytes(Path.Combine(Globals.cacheDir, "batchDownload.7z.tmp"), bytes); //extraction is done externally
+
+                MessageBuilder.SendMessage(MessageBuilder.Message("ack", string.Empty, string.Empty), ns);
+                ns.Close();
+                cli.Close();
+            }
+            catch (Exception e)
+            {
+                Log.LogException("Failed to get assigned batches.", "RegetAllBatches", e);
+                try { cli?.Close(); } catch { }
+                return RegetBatchesStatus.UnspecifiedError;
+            }
+
+            return RegetBatchesStatus.Success;
+        }
 
 
         private static void UpdateClientIDFile()
@@ -288,6 +347,15 @@ namespace Primes.SVC
             InvalidId,
             BatchNotAssigned,
             CouldNotDetermineBatchNum,
+        }
+        public enum RegetBatchesStatus
+        {
+            UnspecifiedError = -1,
+            Success = 0,
+            NoBatchesAssigned, //no batches assigned sort of counts as success since technically all assigned batches were resent
+                               //and the getting of more batches will be done further down the work loop, however, to get extraction
+                               //done properly outside BatchManager, a separate signal is sent for simplicity
+            InvalidId,
         }
     }
 }

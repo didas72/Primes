@@ -46,6 +46,7 @@ namespace Primes.SVC
         public void Stop()
         {
             stopControl.WaitOne();
+            stopControl.Release();
         }
 
         public bool IsRunning()
@@ -89,7 +90,11 @@ namespace Primes.SVC
                         job.Primes.AddRange(primeBuffer);
                         bufferHead = 0;
 
-                        if (stopControl.WaitOne(0)) break;
+                        if (stopControl.WaitOne(0))
+                        {
+                            stopControl.Release();
+                            break;
+                        }
                     }
 
                     current += 2;
@@ -101,7 +106,11 @@ namespace Primes.SVC
                 SaveJob();
 
                 sw.Stop();
-                if (stopControl.WaitOne(0)) break;
+                if (stopControl.WaitOne(0))
+                {
+                    stopControl.Release();
+                    break;
+                }
             }
         }
         private void SaveJob()

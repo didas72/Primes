@@ -44,6 +44,7 @@ namespace Primes.SVC
         }
 
 
+
         public static void StartWork()
         {
             for (int i = 0; i < workers.Length; i++)
@@ -163,7 +164,7 @@ namespace Primes.SVC
                 return false;
             }
 
-            switch (BatchManager.GetBatch(new TimeSpan(0, 0, 1)))
+            switch (BatchManager.GetBatch(TimeSpan.FromSeconds(1)))
             {
                 case BatchManager.GetBatchStatus.UnspecifiedError:
                     Scheduler.EnableBatchGetRetry();
@@ -171,41 +172,63 @@ namespace Primes.SVC
 
                 case BatchManager.GetBatchStatus.Success:
                     Scheduler.DisableBatchGetRetry(); //not needed anymore
-                    string archivePath = Path.Combine(Globals.cacheDir, "batchDownload.7z.tmp");
-                    if (!SevenZip.TryDecompress7z(archivePath, Globals.cacheDir))
-                    {
-                        Log.LogEvent(Log.EventType.Warning, "Failed to extract received batch.", "GetOnlineJobs");
-                        File.Delete(archivePath);
-                        return false;
-                    }
-                    string[] dirs = Directory.GetDirectories(Globals.cacheDir);
-                    foreach (string dir in dirs)
-                    {
-                        if (long.TryParse(dir, out _)) //assume it is what we want, since cache will be empty most of the times
-                        {
-                            Utils.CopyDirectory(dir, Globals.jobsDir);
-                            Directory.Delete(dir, true);
-                            break;
-                        }
-                    }
-                    return true;
+                    return ExtractReceived();
 
                 case BatchManager.GetBatchStatus.NoAvailableBatches:
                     Scheduler.EnableBatchGetRetry();
                     return false;
 
                 case BatchManager.GetBatchStatus.LimitReached:
-                    return false; //TODO: Request resend, reset locals
+                    if (RegetBatches()) return true;
+                    Scheduler.EnableBatchGetRetry();
+                    return false;
 
                 default:
                     return false;
             }
         }
+        private static bool RegetBatches()
+        {
+            Log.LogEvent(Log.EventType.Warning, "Local batches differs from online assignments. Resetting to online.", "RegetBatches");
+
+            StopWork();
+            Directory.Delete(Globals.jobsDir, true); Directory.CreateDirectory(Globals.jobsDir);
+            Directory.Delete(Globals.completeDir, true); Directory.CreateDirectory(Globals.completeDir);
+
+            BatchManager.RegetBatchesStatus status = BatchManager.RegetAllBatches(TimeSpan.FromSeconds(1));
+
+            switch (status)
+            {
+                case BatchManager.RegetBatchesStatus.Success:
+                    if (ExtractReceived())
+                    {
+                        StartWork();
+                        return true;
+                    }
+                    else
+                        return false;
+
+                case BatchManager.RegetBatchesStatus.NoBatchesAssigned:
+                    return false; //no need to extract, resume normal operation
+
+                case BatchManager.RegetBatchesStatus.InvalidId:
+                    ResetLocal();
+                    return false;
+
+                case BatchManager.RegetBatchesStatus.UnspecifiedError:
+                    Log.LogEvent(Log.EventType.HighWarning, "TryRegetBatches failed with an unspecified error. Stopping work and rescheduling restart.", "TryRegetBatches");
+                    return false; //back up the call stack, we end up either in OnBatchGetRetry or EnqueueJobs. Either way, work is stopped (or was previously) and Scheduler is activated (or stays active)
+            }
+
+            //if we somehow get here
+            return false;
+        }
         
+
         
         private static void OnBatchReturn(object sender, ElapsedEventArgs args)
         {
-            //(hopefully I'll stick to the 1 batch = 1k jobs format bc it kinda depends on that, also the batch will be lost if a single job is lost)
+            //hopefully I'll stick to the 1 batch = 1k jobs format bc it kinda depends on that, also the batch will be lost if a single job is lost
 
             if (!BatchManager.IsServerAccessible()) return;
 
@@ -232,17 +255,35 @@ namespace Primes.SVC
 
                         if (goodBatch)
                         {
-                            BatchManager.ReturnBatchStatus status = BatchManager.ReturnBatch(dir, new TimeSpan(0, 0, 1));
+                            BatchManager.ReturnBatchStatus status = BatchManager.ReturnBatch(dir, TimeSpan.FromSeconds(1));
 
-                            if (status == BatchManager.ReturnBatchStatus.Success)
+                            switch (status)
                             {
-                                Directory.Delete(dir, true);
-                                Log.LogEvent($"Successfully returned batch '{Path.GetFileName(dir)}'.", "OnBatchReturn");
-                            }
-                            else
-                            {
-                                Log.LogEvent(Log.EventType.Warning, $"Failed to return batch '{Path.GetFileName(dir)}'. Reason: {status} Progress will be lost.", "OnBatchReturn");
-                                Directory.Delete(dir, true);
+                                case BatchManager.ReturnBatchStatus.Success:
+                                    Directory.Delete(dir, true);
+                                    Log.LogEvent($"Successfully returned batch '{Path.GetFileName(dir)}'.", "OnBatchReturn");
+                                    break;
+
+                                case BatchManager.ReturnBatchStatus.BatchNotAssigned:
+                                    Log.LogEvent(Log.EventType.Warning, $"Batch {Path.GetFileName(dir)} was not assigned. Deleting", "OnBatchReturn");
+                                    Directory.Delete(dir, true);
+                                    break;
+
+                                case BatchManager.ReturnBatchStatus.InvalidId:
+                                    Log.LogEvent(Log.EventType.Warning, "Current clientId is invalid. Deleting files.", "OnBatchReturn");
+                                    ResetLocal();
+                                    return; //no need to do anything else since all batches are gone
+
+                                case BatchManager.ReturnBatchStatus.CouldNotDetermineBatchNum:
+                                    Log.LogEvent(Log.EventType.Warning, $"Could not determine batchNum for batch {Path.GetFileName(dir)}. Deleting", "OnBatchReturn");
+                                    Directory.Delete(dir, true);
+                                    break;
+
+                                case BatchManager.ReturnBatchStatus.UnspecifiedError:
+                                    Log.LogEvent(Log.EventType.Warning, $"Failed to return batch '{Path.GetFileName(dir)}'. Deleting.", "OnBatchReturn");
+                                    Directory.Delete(dir, true);
+                                    break;
+
                             }
                         }
                     }
@@ -267,6 +308,39 @@ namespace Primes.SVC
             }
             else
                 return; //no can do
+        }
+
+
+
+        private static void ResetLocal()
+        {
+            StopWork();
+            Directory.Delete(Globals.jobsDir, true); Directory.CreateDirectory(Globals.jobsDir);
+            Directory.Delete(Globals.completeDir, true); Directory.CreateDirectory(Globals.completeDir);
+            StartWork();
+        }
+        private static bool ExtractReceived()
+        {
+            string archivePath = Path.Combine(Globals.cacheDir, "batchDownload.7z.tmp");
+
+            if (!SevenZip.TryDecompress7z(archivePath, Globals.cacheDir))
+            {
+                Log.LogEvent(Log.EventType.Warning, "Failed to extract received batch.", "GetOnlineJobs");
+                File.Delete(archivePath);
+                return false;
+            }
+
+            string[] dirs = Directory.GetDirectories(Globals.cacheDir);
+            foreach (string dir in dirs)
+            {
+                if (long.TryParse(dir, out _)) //assume it is what we want, since cache should be empty
+                {
+                    Utils.CopyDirectory(dir, Globals.jobsDir);
+                    Directory.Delete(dir, true);
+                }
+            }
+
+            return true;
         }
     }
 }
