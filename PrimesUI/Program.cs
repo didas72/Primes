@@ -16,7 +16,7 @@ using Primes.UI.Render;
 
 namespace Primes.UI
 {
-    class Program
+    static class Program
     {
         private static bool masterRun = true;
         private static Menu selectedMenu = Menu.Control;
@@ -91,7 +91,7 @@ namespace Primes.UI
                 return false;
             }
 
-            //TODO: parse args
+            //TODO: Parse args
 
             if (!InitWindow()) return false;
             if (!InitFont()) return false;
@@ -285,7 +285,7 @@ namespace Primes.UI
                     return;
                 }
 
-                _ControlStatus.Text = $"Reslen={((string)value)[13..]}. (not implemented)"; //TODO:
+                _ControlStatus.Text = $"Reslen={((string)value)[13..]}. (not implemented)"; //TODO: Implement checking of resource version
             }
             else
             {
@@ -336,7 +336,7 @@ namespace Primes.UI
 
             if (!FileHandler.Open(path))
             {
-                PopupErrorMessage("Failed to open file!"); //TODO: Error popup
+                PopupErrorMessage("Failed to open file!");
             }
         }
         #endregion
@@ -433,7 +433,8 @@ namespace Primes.UI
         //info/error popups should be 250x125, cornered at 300x
 
         #region General Popups
-        private static void PopupUnhandledException(Exception e)
+        public static void ShowPopup(Holder pop) => openPopups.Push(pop);
+        public static void PopupUnhandledException(Exception e)
         {
             Button btn;
             Holder pop = new(new(200, 175));
@@ -445,7 +446,7 @@ namespace Primes.UI
 
             openPopups.Push(pop);
         }
-        private static void PopupErrorMessage(string message)
+        public static void PopupErrorMessage(string message)
         {
             Button btn;
             Holder pop = new(new(250, 230));
@@ -456,6 +457,38 @@ namespace Primes.UI
 
             openPopups.Push(pop);
         }
+        public static void PopupStatusMessage(string title, string message)
+        {
+            Button btn;
+            Holder pop = new(new(250, 230));
+            pop.Add(new Panel(new(0, 0), new(300, 120), new Color(50, 50, 50, 255)));
+            pop.Add(new TextBox(title, new(10, 10), new(280, 20)));
+            pop.Add(new TextBox(message, new(10, 35), new(280, 20)));
+            pop.Add(btn = new("Close", new(122, 90), new(56, 25))); btn.OnPressed = OnPopupClosePressed;
+
+            openPopups.Push(pop);
+        }
+        public static void PopupChoiceMessage(string title, string opt1, string opt2, EventHandler<int> choiceCallback)
+        {
+            //0 = aborted
+            //1 = first
+            //2 = second
+
+            Button btn;
+            Holder pop = new(new(250, 230));
+            pop.Add(new Panel(new(0, 0), new(300, 120), new Color(50, 50, 50, 255)));
+            pop.Add(new TextBox(title, new(10, 10), new(280, 20)));
+            pop.Add(btn = new(opt1, new(10, 35), new(135, 20))); btn.OnPressed += (object sender, EventArgs _) => PopupChoicePressed(sender, 1, choiceCallback);
+            pop.Add(btn = new(opt2, new(155, 35), new(135, 20))); btn.OnPressed += (object sender, EventArgs _) => PopupChoicePressed(sender, 2, choiceCallback);
+            pop.Add(btn = new("Close", new(122, 90), new(56, 25))); btn.OnPressed += (object sender, EventArgs _) => PopupChoicePressed(sender, 0, choiceCallback);
+
+            openPopups.Push(pop);
+        }
+        public static void OnPopupClosePressed(object sender, EventArgs e) => openPopups.Pop();
+
+
+
+        private static void ClosePopup() => openPopups.Pop();
         private static void PopupOpenFile(string filter, Action<string, string> onClose)
         {
             Button btn; TextList lst; TextBox txt;
@@ -472,11 +505,11 @@ namespace Primes.UI
 
             FileOpenUpdate(filter, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
         }
-
-
-
-        private static void OnPopupClosePressed(object sender, EventArgs e) => openPopups.Pop();
-        private static void ClosePopup() => openPopups.Pop();
+        private static void PopupChoicePressed(object sender, int code, EventHandler<int> callback)
+        {
+            ClosePopup();
+            callback?.Invoke(sender, code);
+        }
         #endregion
 
         #region Control Popups
@@ -546,7 +579,6 @@ namespace Primes.UI
                 UpdateBatchNumber(timeout);
                 UpdateBatchProgress(timeout);
                 UpdateRunStatus(timeout);
-                //TODO: add other needed things
             }
             catch
             {
@@ -814,24 +846,25 @@ namespace Primes.UI
             //View area
             hld.Add(lst = new(new(2, 32), new(396, 496))); lst.Id_Name = "VIEW_LIST"; FileHandler.SetContent(lst); lst.CustomFont = monospaceFont; lst.UseCustomFont = true;
             hld.Add(btn = new("Switch view", new(2, 532), new(146, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.SwitchView();
-            hld.Add(btn = new("Find...", new(152, 532), new(146, 26))); //btn.OnPressed += ; //TODO: Find popup
+            hld.Add(btn = new("Find...", new(152, 532), new(116, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.Find();
+            hld.Add(btn = new("Go to...", new(272, 532), new(116, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.GoTo();
 
 
             //Header area
             hld.Add(txtBox = new("Header", 20, new(402, 2), new(96, 26), Highlights));
             hld.Add(lst = new(new(402, 32), new(396, 376))); lst.Id_Name = "HEADER_LIST"; FileHandler.SetHeader(lst); lst.CustomFont = monospaceFont; lst.UseCustomFont = true;
-            hld.Add(btn = new("Change version", new(402, 412), new(176, 26))); //btn.OnPressed += ; //TODO: 
-            hld.Add(btn = new("Change compression", new(582, 412), new(216, 26))); //btn.OnPressed += ; //TODO: 
-            hld.Add(btn = new("Change field", new(402, 442), new(176, 26))); //btn.OnPressed += ; //TODO: 
-            hld.Add(btn = new("Apply changes", new(582, 442), new(216, 26))); //btn.OnPressed += ; //TODO: 
+            hld.Add(btn = new("Change version", new(402, 412), new(176, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.ChangeVersion();
+            hld.Add(btn = new("Change compression", new(582, 412), new(216, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.ChangeCompression();
+            hld.Add(btn = new("Change field", new(402, 442), new(176, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.ChangeField();
+            hld.Add(btn = new("Apply changes", new(582, 442), new(216, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.ApplyChanges();
 
 
             //Tools area
             hld.Add(txtBox = new("Tools", 20, new(402, 472), new(196, 26), Highlights));
-            hld.Add(btn = new("Validate", new(402, 502), new(96, 26))); //btn.OnPressed += ; //TODO: 
-            hld.Add(btn = new("Fix", new(502, 502), new(96, 26))); //btn.OnPressed += ; //TODO: 
-            hld.Add(btn = new("Convert", new(402, 532), new(96, 26))); //btn.OnPressed += ; //TODO: 
-            hld.Add(btn = new("Export", new(502, 532), new(96, 26))); //btn.OnPressed += ; //TODO: 
+            hld.Add(btn = new("Validate", new(402, 502), new(96, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.Validate();
+            hld.Add(btn = new("Fix", new(502, 502), new(96, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.Fix();
+            hld.Add(btn = new("Convert", new(402, 532), new(96, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.Convert();
+            hld.Add(btn = new("Export", new(502, 532), new(96, 26))); btn.OnPressed += (object _, EventArgs _) => FileHandler.Export();
         }
         #endregion
     }

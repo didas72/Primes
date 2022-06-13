@@ -47,7 +47,7 @@ namespace Primes.SVC
             try
             {
                 Log.UsePrint = false;
-                Globals.startLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
+                Globals.startLogPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 Log.InitLog(Globals.startLogPath, "SVC_start_log.txt");
                 Globals.startLogPath = Path.Combine(Globals.startLogPath, "SVC_start_log.txt");
 
@@ -126,7 +126,8 @@ namespace Primes.SVC
 
                 //clear cache
                 Globals.cacheDir = Path.Combine(Globals.homeDir, "cache");
-                Directory.Delete(Globals.cacheDir, true);
+                if (Directory.Exists(Globals.cacheDir))
+                    Directory.Delete(Globals.cacheDir, true);
                 Directory.CreateDirectory(Globals.cacheDir);
             }
             catch (Exception e)

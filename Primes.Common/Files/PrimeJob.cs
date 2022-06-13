@@ -461,9 +461,9 @@ namespace Primes.Common.Files
 
                     last = job.Primes[i]; //Update value to check the order
 
-                    if (message.Length >= 10000)
+                    if (message.Length >= 200)
                     {
-                        message += "Max message length reached. Checking stopped.";
+                        message = "Log too long. Stopped." + message;
                         return false;
                     }
                 }

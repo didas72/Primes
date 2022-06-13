@@ -14,7 +14,7 @@ namespace Primes.SVC
         public static bool Init()
         {
             batchGetRetry = new() { AutoReset = true, Interval = 1000 * 60 * 30 }; //every 30 mins
-            batchReturn = new() { AutoReset = true, Interval = 1000 * 60 * 60 * 2 }; //2 hours
+            batchReturn = new() { AutoReset = true, Interval = 1000 * 60 * 60 * 2 }; //every 2 hours
 
             batchGetRetry.Elapsed += OnBatchGetRetry;
             batchReturn.Elapsed += OnBatchReturn;
