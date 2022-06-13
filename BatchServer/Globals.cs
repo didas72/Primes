@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Timers;
 
+using DidasUtils.Files;
+
 namespace BatchServer
 {
     internal static class Globals
@@ -15,5 +17,7 @@ namespace BatchServer
 
         public static Timer ExpireElementsTimer;
         public static ClientData clientData;
+        public static ClientListener clientListener;
+        public static SettingsDocument settings;
     }
 }

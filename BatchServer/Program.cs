@@ -4,13 +4,13 @@ using System.Collections.Generic;
 
 using DidasUtils;
 using DidasUtils.Logging;
+using DidasUtils.Files;
 
 namespace BatchServer
 {
     internal static class Program
     {
         //TODO: Control listener
-        //TODO: Timer to expire batches and users
 
         private static void Main(string[] args)
         {
@@ -22,9 +22,10 @@ namespace BatchServer
 
             Log.LogEvent("Server started.", "Main");
 
-            //TODO: execution loop
+            //TODO: execution loop, probably will join the control listener or something similar
 
             Log.LogEvent("Server stopping...", "Main");
+            StopServer();
             Environment.Exit(0);
             return; //sanity and proper branch flow for VS
         }
@@ -40,9 +41,11 @@ namespace BatchServer
                 Log.InitLog(Globals.startLogPath, "BatchServer_start_log.txt");
                 Globals.startLogPath = Path.Combine(Globals.startLogPath, "BatchServer_start_log.txt");
 
+                if (!InitSettings()) return false;
                 if (!InitDirs()) return false;
                 if (!InitLog()) return false;
                 if (!InitClientData()) return false;
+                if (!InitClientListener()) return false;
             }
             catch (Exception e)
             {
@@ -52,11 +55,38 @@ namespace BatchServer
 
             return true;
         }
+        private static bool InitSettings()
+        {
+            try
+            {
+                Globals.settings = SettingsDocument.Deserialize(Path.Combine(Environment.CurrentDirectory, "settings.set"));
+
+                Dictionary<string, string> scheme = new()
+                {
+                    { "homeDir", Environment.CurrentDirectory },
+                    { "maxAssignedBatches", "5" },
+                    { "maxDesyncOps", "10" },
+                    { "batchExpireHours", "120" }, //5 days
+                    { "clientExpireHours", "720" }, //1 month
+                    { "clientPort", "13032" },
+                    { "controlPort", "13033" }
+                };
+
+                Globals.settings.ApplySettingsScheme(scheme, false);
+            }
+            catch (Exception e)
+            {
+                Log.LogException("Failed to init settings.", "IntitSettings", e);
+                return false;
+            }
+
+            return false;
+        }
         private static bool InitDirs()
         {
             try
             {
-                Globals.homeDir = Settings.HomeDir;
+                Globals.homeDir = Globals.settings.GetString("homeDir");
                 Directory.CreateDirectory(Globals.homeDir);
 
                 Globals.sourceDir = Path.Combine(Globals.homeDir, "source");
@@ -80,7 +110,7 @@ namespace BatchServer
         }
         private static bool InitLog()
         {
-            Log.InitLog(Path.Combine(Globals.homeDir), "SVC_log.txt");
+            Log.InitLog(Path.Combine(Globals.homeDir), "Server_log.txt");
             Log.UsePrint = false;
 
             try { File.Delete(Path.Combine(Globals.startLogPath)); } catch { }
@@ -92,7 +122,7 @@ namespace BatchServer
             try
             {
                 string filePath = Path.Combine(Globals.homeDir, "cliDta.dta");
-                Globals.clientData = new(filePath, false, 5, 5, TimeSpan.FromDays(5), TimeSpan.FromDays(120)); //TODO: Add settings here
+                Globals.clientData = new(filePath, false, Globals.settings.GetInt("maxAssignedBatches"), Globals.settings.GetInt("maxDesyncOps"), TimeSpan.FromHours(Globals.settings.GetInt("batchExpireHours")), TimeSpan.FromHours(Globals.settings.GetInt("clientExpireHours")));
                 Globals.clientData.OnExpireElements(null, null);
 
                 Globals.ExpireElementsTimer = new()
@@ -111,6 +141,21 @@ namespace BatchServer
             }
 
             return true;
+        }
+        private static bool InitClientListener()
+        {
+            Globals.clientListener = new(Globals.settings.GetInt("clientPort"));
+            Globals.clientListener.Start();
+
+            return true;
+        }
+
+
+
+        private static void StopServer()
+        {
+            Globals.clientListener?.Stop();
+            Globals.clientData?.Close();
         }
     }
 }

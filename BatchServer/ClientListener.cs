@@ -82,20 +82,23 @@ namespace BatchServer
                     switch (parts[0])
                     {
                         case "get":
-                            //TODO: handle get
+                            HandleGet();
                             break;
 
                         case "ret":
-                            //TODO: handle ret
+                            HandleRet();
                             break;
 
                         case "reget":
-                            //TODO: handle reget
+                            HandleReget();
                             break;
 
                         default:
                             throw new Exception("Invalid request.");
                     }
+
+                    ns.Close();
+                    cli.Close();
                 }
                 catch (Exception e)
                 {
@@ -106,6 +109,21 @@ namespace BatchServer
 
         ClientListenLoop_end:
             listener.Stop();
+        }
+
+
+
+        private void HandleGet()
+        {
+            //TODO: Implement handle get
+        }
+        private void HandleRet()
+        {
+            //TODO: Implement handle ret
+        }
+        private void HandleReget()
+        {
+            //TODO: Implement handle reget
         }
     }
 }
