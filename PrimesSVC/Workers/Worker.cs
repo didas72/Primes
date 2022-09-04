@@ -15,38 +15,45 @@ namespace Primes.SVC
 {
     internal class Worker
     {
+        /// <summary>
+        /// ONLY TO BE USED INSIDE WorkCoordinator
+        /// </summary>
+        public volatile bool shouldStop;
+
         private readonly ulong[] primeBuffer;
         private int bufferHead;
         private PrimeJob job;
         private bool isPrime;
         private ulong current, max;
         private readonly Stopwatch sw;
-        private Semaphore stopControl;
         private Thread selfThread;
+        private int workerID;
 
 
 
-        public Worker(int primeBufferSize)
+        public Worker(int primeBufferSize, int workerID)
         {
             primeBuffer = new ulong[primeBufferSize];
             sw = new();
             job = null;
             selfThread = null;
+            this.workerID = workerID;
         }
 
 
 
         public void Start()
         {
-            if (selfThread == null)
+            shouldStop = false;
+
+            if (selfThread == null || !selfThread.IsAlive)
                 selfThread = new Thread(WorkLoop);
-            if (!selfThread.IsAlive)
-                selfThread.Start();
+
+            selfThread.Start();
         }
         public void Stop()
         {
-            stopControl.WaitOne();
-            stopControl.Release();
+            shouldStop = true;
         }
 
         public bool IsRunning()
@@ -57,74 +64,118 @@ namespace Primes.SVC
 
 
 
+        //TODO: move back to local
+        public string jobPath, jobRename;
         private void WorkLoop()
         {
-            stopControl = new Semaphore(0,1);
+            //string jobPath, jobRename;
 
-            while (true)
+            while (!shouldStop)
             {
-                sw.Restart();
-                bufferHead = 0;
-                job = WorkCoordinator.GetNextPrimeJob(stopControl);
-                
-                if (job == null) break;
-
-                current = job.Start + job.Progress;
-                max = job.Start + job.Count;
-
-                current = current % 2 == 0 ? current + 1 : current;
-                
-                while (current < max)
+                try
                 {
-                    if (ResourceHolder.knownPrimes.Length == 0)
-                        isPrime = PrimesMath.IsPrime(current);
-                    else
-                        isPrime = PrimesMath.IsPrime(current, ResourceHolder.knownPrimes);
+                    Log.LogEvent("Work loop", "Worker#?");
 
-                    if (!isPrime) continue;
+                    sw.Restart();
+                    bufferHead = 0;
+                    jobPath = null;
+                    jobRename = null;
 
-                    primeBuffer[bufferHead++] = current;
+                    jobPath = WorkCoordinator.GetNextPrimeJob(this);
 
-                    if (bufferHead >= primeBuffer.Length)
+                    if (string.IsNullOrEmpty(jobPath))
+                        break;
+
+                    Log.LogEvent($"Job {Path.GetFileNameWithoutExtension(jobPath)} assigned.", $"Worker#{workerID}");
+
+                    jobRename = Path.ChangeExtension(jobPath, ".Rprimejob"); //do this first to (hopefully) prevent having it readded to the queue
+                    File.Move(jobPath, jobRename); //TODO: Fix consistently getting file is being used by another process
+                    job = PrimeJob.Deserialize(jobRename);
+                    
+
+                    Log.LogEvent($"Job fetched. {job.FileVersion}", $"Worker#{workerID}");
+
+                    current = job.Start + job.Progress;
+                    max = job.Start + job.Count;
+
+                    current = current % 2 == 0 ? current + 1 : current;
+
+                    while (current < max)
                     {
-                        job.Primes.AddRange(primeBuffer);
-                        bufferHead = 0;
+                        if (ResourceHolder.knownPrimes.Length == 0)
+                            isPrime = PrimesMath.IsPrime(current);
+                        else
+                            isPrime = PrimesMath.IsPrime(current, ResourceHolder.knownPrimes);
 
-                        if (stopControl.WaitOne(0))
+                        current += 2;
+
+                        if (!isPrime) continue;
+
+                        primeBuffer[bufferHead++] = current;
+
+                        if (bufferHead >= primeBuffer.Length)
                         {
-                            stopControl.Release();
-                            break;
+                            job.Primes.AddRange(primeBuffer);
+                            bufferHead = 0;
+
+                            if (shouldStop)
+                            {
+                                break;
+                            }
                         }
                     }
 
-                    current += 2;
+                    if (bufferHead < primeBuffer.Length)
+                        job.Primes.AddRange(primeBuffer.GetFirst(bufferHead));
+
+                    if (!shouldStop)
+                        SaveJob(jobPath, jobRename);
+                    else
+                        SaveJobPartial(jobPath, jobRename); //TODO:
+
+                    sw.Stop();
                 }
-
-                if (bufferHead < primeBuffer.Length)
-                    job.Primes.AddRange(primeBuffer.GetFirst(bufferHead));
-
-                SaveJob();
-
-                sw.Stop();
-                if (stopControl.WaitOne(0))
+                catch (Exception e)
                 {
-                    stopControl.Release();
-                    break;
+                    Log.LogException("Exception while doing work.", $"Worker#{workerID}", e);
                 }
+
+                Thread.Sleep(500); //TODO: reset to Sleep(0);
             }
+
+            Log.LogEvent("Exiting work loop.", $"Worker#{workerID}");
         }
-        private void SaveJob()
+        private void SaveJob(string sourcePath, string jobRename)
         {
             try
             {
-                string path = Path.Combine(Globals.completeDir, $"{job.Start}.primejob");
+                string path = Path.Combine(Globals.completeDir, job.Batch.ToString());
+                Directory.CreateDirectory(path);
+                path = Path.Combine(path, $"{job.Start}.primejob");
 
                 PrimeJob.Serialize(job, path);
             }
             catch (Exception e)
             {
-                Log.LogException($"Failed to save job '{job.Start}'.", "Worker", e);
+                Log.LogException($"Failed to save job '{job.Start}'.", $"Worker#{workerID}", e);
+                File.Move(jobRename, sourcePath);
             }
+
+            File.Delete(jobRename);
+        }
+        private void SaveJobPartial(string sourcePath, string jobRename)
+        {
+            try
+            {
+                PrimeJob.Serialize(job, sourcePath);
+            }
+            catch (Exception e)
+            {
+                Log.LogException($"Failed to save job '{job.Start}'.", $"Worker#{workerID}", e);
+                File.Move(jobRename, sourcePath);
+            }
+
+            File.Delete(jobRename);
         }
     }
 }

@@ -70,7 +70,7 @@ namespace Primes.SVC
 
                 if (!MessageBuilder.ReceiveMessage(ns, out byte[] msg, new TimeSpan(0, 0, 0, 0, 300)))
                 {
-                    Log.LogEvent("Timed out while trying to receive message.", "HandleClient");
+                    Log.LogEvent(Log.EventType.Warning, "Timed out while trying to receive message.", "HandleClient");
                     client.Close();
                     return;
                 }
@@ -86,7 +86,9 @@ namespace Primes.SVC
                 ns.Close();
                 client.Close();
 
-                Log.LogEvent("Handle complete", "ListenLoop");
+                string debugValue = value is string s ? s : "object";
+
+                Log.LogEvent($"Handle complete. type='{messageType}';target='{target}';value='{debugValue}'", "ListenLoop");
             }
             catch (Exception e)
             {
@@ -100,6 +102,11 @@ namespace Primes.SVC
         private static bool HandleMessage(string msgType, string target, object value, out byte[] response)
         {
             response = Array.Empty<byte>();
+
+            //TODO: Handle freezes
+            //TODO: Start stop return as failed to start stop
+            //TODO: More logging options
+            //TODO: Here/PrimesUI, premature / unhandled disconnections
 
             switch (msgType)
             {
@@ -121,6 +128,7 @@ namespace Primes.SVC
                     throw new NotImplementedException();
 
                 default:
+                    Log.LogEvent(Log.EventType.Warning, $"Invalid msgType '{msgType}'.", "HandleMessage");
                     return false;
             }
         }
@@ -134,18 +142,20 @@ namespace Primes.SVC
                 case "start":
                     WorkCoordinator.StartWork();
                     response = MessageBuilder.ResponseActionSuccess();
+                    Log.LogEvent($"Started work, status: {WorkCoordinator.IsWorkRunning()}.", "HandleRunMessage");
                     return true;
 
                 case "stop":
                     WorkCoordinator.StopWork();
                     response = MessageBuilder.ResponseActionSuccess();
+                    Log.LogEvent($"Stopped work, status: {!WorkCoordinator.IsWorkRunning()}.", "HandleRunMessage");
                     return true;
 
                 case "trun":
                     if (WorkCoordinator.IsWorkRunning())
-                        WorkCoordinator.StopWork();
+                    { WorkCoordinator.StopWork(); Log.LogEvent($"T-Stopped work, status: {!WorkCoordinator.IsWorkRunning()}.", "HandleRunMessage"); }
                     else
-                        WorkCoordinator.StartWork();
+                    { WorkCoordinator.StartWork(); Log.LogEvent($"T-Started work, status: {WorkCoordinator.IsWorkRunning()}.", "HandleRunMessage"); }
                     response = MessageBuilder.ResponseActionSuccess();
                     return true;
 
@@ -157,7 +167,7 @@ namespace Primes.SVC
                 default:
                     response = MessageBuilder.ResponseActionInvalid();
                     Log.LogEvent(Log.EventType.Warning, $"Received invalid or unhandled action '{value}'.", "HandleRunMessage");
-                    return true;
+                    return false;
             }
         }
         private static bool HandlePingMessage(out byte[] response)
@@ -169,19 +179,22 @@ namespace Primes.SVC
         {
             switch (value)
             {
-                case "rstatus":
+                case "rstatus": //run status
                     response = MessageBuilder.ResponseRequestSuccess(WorkCoordinator.IsWorkRunning() ? "Running." : "Stopped.");
+                    Log.LogEvent("Response is " + (WorkCoordinator.IsWorkRunning() ? "Running." : "Stopped."), "HandleRequestMessage");
                     return true;
 
-                case "cbnum":
+                case "cbnum": //batch num
                     response = MessageBuilder.ResponseRequestSuccess(WorkCoordinator.GetCurrentBatchNumber().ToString());
+                    Log.LogEvent("Response is " + WorkCoordinator.GetCurrentBatchNumber().ToString(), "HandleRequestMessage");
                     return true;
 
-                case "cbprog":
+                case "cbprog": //batch progress
                     response = MessageBuilder.ResponseRequestSuccess(WorkCoordinator.GetCurrentBatchProgress().ToString());
+                    Log.LogEvent("Response is " + WorkCoordinator.GetCurrentBatchProgress().ToString(), "HandleRequestMessage");
                     return true;
 
-                case "reslen":
+                case "reslen": //resource length
 
                     try
                     {
@@ -199,7 +212,7 @@ namespace Primes.SVC
                 default:
                     response = MessageBuilder.ResponseRequestInvalid();
                     Log.LogEvent(Log.EventType.Warning, $"Received invalid or unhandled request '{value}'.", "HandleRequestMessage");
-                    return true;
+                    return false;
             }
         }
     }

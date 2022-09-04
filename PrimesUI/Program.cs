@@ -757,6 +757,7 @@ namespace Primes.UI
 
 
         #region UIBuilding
+        //TODO: Add disconnect button to Control page
         private static Holder BuildMenuBar()
         {
             Button btn; Holder hld;

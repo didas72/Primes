@@ -337,7 +337,9 @@ namespace Primes.Common.Files
         /// <returns><see cref="Status"/> representing the status of the checked <see cref="PrimeJob"/> file.</returns>
         public static Status PeekStatusFromFile(string path)
         {
-            byte[] bytes = File.ReadAllBytes(path);
+            FileStream fs = File.OpenRead(path);
+            byte[] bytes = new byte[32]; //32 is enough for up to v1.2.0, might not be the case for later versions
+            fs.Read(bytes, 0, 32);
 
             Version ver = new(bytes[0], bytes[1], bytes[2]);
 
@@ -349,16 +351,16 @@ namespace Primes.Common.Files
             {
                 if (ver == new Version(1, 0, 0))
                 {
-                    return PrimeJobSerializer.PeekStatusv1_0_0(ref bytes);
+                    return PrimeJobSerializer.PeekStatusv1_0_0(bytes);
                 }
                 else if (ver == new Version(1, 1, 0))
                 {
-                    return PrimeJobSerializer.PeekStatusv1_1_0(ref bytes);
+                    return PrimeJobSerializer.PeekStatusv1_1_0(bytes);
                 }
             }
             else //it is latest
             {
-                return PrimeJobSerializer.PeekStatusv1_2_0(ref bytes);
+                return PrimeJobSerializer.PeekStatusv1_2_0(bytes);
             }
 
             return Status.None;

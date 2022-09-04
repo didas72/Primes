@@ -18,11 +18,12 @@ namespace Primes.SVC
 {
     internal static class WorkCoordinator
     {
-        private static readonly Semaphore jobQueueAccess = new(0, 1);
+        private static readonly object _lock = new();
         private static Queue<string> jobQueue = new();
         private static int maxJobQueue = -1;
+        private static bool useBatchServer = true;
 
-        private static Worker[] workers;
+        public static Worker[] workers; //return to private
 
 
 
@@ -30,6 +31,7 @@ namespace Primes.SVC
         {
             Scheduler.OnBatchReturn += OnBatchReturn;
             Scheduler.OnBatchGetRetry += OnBatchGetRetry;
+            useBatchServer = Settings.UseBatchServer;
             return true;
         }
         public static bool InitWorkers()
@@ -38,7 +40,7 @@ namespace Primes.SVC
             int bufferSize = Settings.PrimeBufferSize;
 
             for (int i = 0; i < workers.Length; i++)
-                workers[i] = new Worker(bufferSize);
+                workers[i] = new Worker(bufferSize, i);
 
             return true;
         }
@@ -90,9 +92,12 @@ namespace Primes.SVC
         {
             if (jobQueue == null || jobQueue.Count == 0) return 0;
 
-            jobQueueAccess.WaitOne();
-            string path = jobQueue.Peek();
-            jobQueueAccess.Release();
+            string path;
+
+            lock (_lock)
+            {
+                path = jobQueue.Peek();
+            }
 
             return PrimeJob.Deserialize(path).Batch;
         }
@@ -100,9 +105,12 @@ namespace Primes.SVC
         {
             if (jobQueue == null || jobQueue.Count == 0) return 0;
 
-            jobQueueAccess.WaitOne();
-            string path = jobQueue.Peek();
-            jobQueueAccess.Release();
+            string path;
+
+            lock (_lock)
+            {
+                path = jobQueue.Peek();
+            }
 
             string dir = Path.GetDirectoryName(path);
             int left = Directory.GetFiles(dir, "*.primejob").Length;
@@ -111,16 +119,18 @@ namespace Primes.SVC
 
 
 
-        public static PrimeJob GetNextPrimeJob(Semaphore stopCheck)
+        public static string GetNextPrimeJob(Worker self)
         {
-            string path;
+            string ret;
 
             start:
 
-            if (!jobQueueAccess.WaitOne(500))
+            if (!Monitor.TryEnter(_lock))
             {
-                if (stopCheck.WaitOne(0))
+                if (self.shouldStop)
                     return null;
+
+                Thread.Sleep(1);
 
                 goto start;
             }
@@ -129,19 +139,18 @@ namespace Primes.SVC
                 EnqueueJobs();
 
             if (jobQueue.Count <= 0)
-                path = null;
+                ret = null;
             else
-                path = jobQueue.Dequeue();
+                ret = jobQueue.Dequeue();
 
-            jobQueueAccess.Release();
+            Monitor.Exit(_lock);
 
-            if (path == null)
-                return null;
-
-            return PrimeJob.Deserialize(path);
+            return ret;
         }
         private static void EnqueueJobs()
         {
+            Thread.Sleep(5); //give other threads time to keep files for themselves
+
             if (maxJobQueue == -1)
                 maxJobQueue = Settings.GetMaxJobQueue();
 
@@ -149,7 +158,12 @@ namespace Primes.SVC
 
             if (jobQueue.Count <= 0)//no more available offline, check with JobDistributer
             {
-                if (!GetOnlineJobs())//no more are available online, stop work
+                if (useBatchServer)
+                {
+                    if (!GetOnlineJobs())//no more are available online, stop work
+                        StopWork();
+                }
+                else
                     StopWork();
             }
         }

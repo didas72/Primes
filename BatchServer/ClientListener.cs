@@ -16,8 +16,8 @@ namespace BatchServer
         private volatile bool running = false;
 
 
-        private TcpListener listener;
-        private Thread thread;
+        private readonly TcpListener listener;
+        private readonly Thread thread;
 
 
         private const string unexpectedMsgErr = "Recieved unexpected message.";

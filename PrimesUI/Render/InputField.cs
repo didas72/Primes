@@ -36,7 +36,7 @@ namespace Primes.UI.Render
 
         public void Update(Vector2i offset)
         {
-            Vector2 mousePos = Raylib.GetMousePosition() - offset.ToVector2();
+            Vector2 mousePos = Raylib.GetMousePosition() - (Vector2)offset;
 
             if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_LEFT_BUTTON))
             {

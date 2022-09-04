@@ -26,6 +26,7 @@ namespace Primes.SVC
         public static int PrimeBufferSize { get => GetPrimeBufferSize(); set => SetPrimeBufferSize(value); }
         public static int MaxJobQueue { get => GetMaxJobQueue(); set => SetMaxJobQueue(value); }
         public static int MaxResourceMemory { get => GetMaxResourceMemory(); set => SetMaxResourceMemory(value); }
+        public static bool UseBatchServer { get => GetUseBatchServer(); set => SetUseBatchServer(value); }
 
 
 
@@ -210,6 +211,20 @@ namespace Primes.SVC
         public static void SetMaxResourceMemory(int value)
         {
             SetRegValue("MaxResourceMemory", value, RegistryValueKind.DWord);
+        }
+
+        public static bool GetUseBatchServer()
+        {
+            if (!HasRegValue("UseBatchServer"))
+                SetUseBatchServer(true);
+
+            GetRegValue("UseBatchServer", out object outp);
+
+            return (int)outp != 0;
+        }
+        public static void SetUseBatchServer(bool value)
+        {
+            SetRegValue("UseBatchServer", value ? 1 : 0, RegistryValueKind.DWord);
         }
     }
 }

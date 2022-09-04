@@ -11,12 +11,12 @@ namespace BatchServer
 {
     internal class ClientData
     {
-        private string wrappedFilePath;
-        private string lockPath;
+        private readonly string wrappedFilePath;
+        private readonly string lockPath;
         private int opCount; //keeps track of how many operations have occurred, once a certain value has been reached, update file (reduces file IO)
 
-        private List<Client> clients;
-        private List<Batch> batches;
+        private readonly List<Client> clients;
+        private readonly List<Batch> batches;
 
 
 
@@ -51,7 +51,7 @@ namespace BatchServer
             ClientExpireTime = clientExpireTime;
 
             wrappedFilePath = filePath;
-            lockPath = Path.Combine(Path.GetDirectoryName(filePath), "cliDta.lock");
+            lockPath = Path.ChangeExtension(filePath, ".lock");
 
             if (File.Exists(lockPath))
             {
@@ -61,14 +61,17 @@ namespace BatchServer
                 File.Delete(lockPath);
             }
 
-            File.Create(lockPath);
+            File.Create(lockPath).Close();
+
+            if (!File.Exists(filePath)) //fresh
+                File.WriteAllText(filePath, "CLIENTS\nBATCHES\nEND");
 
             DeserializeFile(); //first time
         }
 
 
 
-        public bool ValidateClientId(uint clientId) => clientId == 0 ? false : clients.Any((Client cli) => cli.clientId == clientId);
+        public bool ValidateClientId(uint clientId) => clientId != 0 && clients.Any((Client cli) => cli.clientId == clientId);
         //0 if none
         public uint GetNewClientId()
         {

@@ -22,6 +22,7 @@ namespace JobManagement
     {
         public const string basePath = "E:\\Documents\\primes\\working\\";
         public const ulong perJob = 10000000;
+        private static readonly bool useSendStreamData = false;
 
         public static List<string> prints = new();
 
@@ -325,49 +326,97 @@ namespace JobManagement
         {
             string line = Console.ReadLine();
 
-            if (string.IsNullOrWhiteSpace(line)) //receive
+            if (useSendStreamData)
             {
-                Console.WriteLine("Receiving...");
+                if (string.IsNullOrWhiteSpace(line)) //receive
+                {
+                    Console.WriteLine("Receiving...");
 
-                TcpListener list = TcpListener.Create(6969); list.Start();
-                TcpClient cli = list.AcceptTcpClient(); list.Stop();
+                    TcpListener list = TcpListener.Create(6969); list.Start();
+                    TcpClient cli = list.AcceptTcpClient(); list.Stop();
 
-                Console.WriteLine("Connected.");
+                    Console.WriteLine("Connected.");
 
-                FileStream fs = File.OpenWrite(@"E:\Documents\primes\0.primejob.test");
+                    FileStream fs = File.OpenWrite(@"E:\Documents\primes\0.primejob.test");
 
-                while (cli.Available == 0) Thread.Sleep(0);
+                    while (cli.Available == 0) Thread.Sleep(0);
 
-                Stopwatch sw = Stopwatch.StartNew();
+                    Stopwatch sw = Stopwatch.StartNew();
 
-                MessageBuilder.ReceiveStreamData(fs, cli.GetStream(), 1000);
+                    MessageBuilder.ReceiveStreamData(fs, cli.GetStream(), 1000);
 
-                sw.Stop();
-                Console.WriteLine("Received.");
-                Console.WriteLine($"Elapsed {sw.ElapsedMilliseconds}ms");
+                    sw.Stop();
+                    Console.WriteLine("Received.");
+                    Console.WriteLine($"Elapsed {sw.ElapsedMilliseconds}ms");
 
-                fs.Flush();
-                fs.Close();
+                    fs.Flush();
+                    fs.Close();
+                }
+                else //send
+                {
+                    Console.WriteLine("Sending...");
+
+                    FileStream fs = File.OpenRead(@"E:\Documents\primes\0.primejob");
+                    //MemoryStream fs = new(); fs.Write(new byte[] { 0x20, 0x21, 0x22, 0xff, 0xff, 0x20, 0x21, 0x22  });
+
+                    TcpClient cli = new("127.0.0.1", 6969);
+
+                    Console.WriteLine("Connected.");
+
+                    Stopwatch sw = Stopwatch.StartNew();
+
+                    MessageBuilder.SendStreamData(fs, cli.GetStream(), 1000);
+
+                    sw.Stop();
+                    Console.WriteLine("Sent.");
+                    Console.WriteLine($"Elapsed {sw.ElapsedMilliseconds}ms");
+
+                    fs.Close();
+                }
             }
-            else //send
+            else
             {
-                Console.WriteLine("Sending...");
+                if (string.IsNullOrWhiteSpace(line)) //receive
+                {
+                    Console.WriteLine("Receiving...");
 
-                FileStream fs = File.OpenRead(@"E:\Documents\primes\0.primejob");
+                    TcpListener list = TcpListener.Create(6969); list.Start();
+                    TcpClient cli = list.AcceptTcpClient(); list.Stop();
 
-                TcpClient cli = new("127.0.0.1", 6969);
+                    Console.WriteLine("Connected.");
 
-                Console.WriteLine("Connected.");
+                    FileStream fs = File.OpenWrite(@"E:\Documents\primes\0.primejob.test");
 
-                Stopwatch sw = Stopwatch.StartNew();
+                    while (cli.Available == 0) Thread.Sleep(0);
 
-                MessageBuilder.SendStreamData(fs, cli.GetStream(), 1000);
+                    Stopwatch sw = Stopwatch.StartNew();
 
-                sw.Stop();
-                Console.WriteLine("Sent.");
-                Console.WriteLine($"Elapsed {sw.ElapsedMilliseconds}ms");
+                    MessageBuilder.ReceiveMessage(cli.GetStream(), out byte[] msg, TimeSpan.FromMilliseconds(100000));
 
-                fs.Close();
+                    sw.Stop();
+                    Console.WriteLine("Received.");
+                    Console.WriteLine($"Elapsed {sw.ElapsedMilliseconds}ms");
+
+                    fs.Write(msg, 0, msg.Length);
+                    fs.Flush();
+                    fs.Close();
+                }
+                else //send
+                {
+                    Console.WriteLine("Sending...");
+
+                    byte[] msg = new byte[] { 0x20, 0x21, 0x22, 0xff, 0xff, 0x20, 0x21, 0x22 };
+
+                    TcpClient cli = new("127.0.0.1", 6969);
+                    Console.WriteLine("Connected.");
+                    Stopwatch sw = Stopwatch.StartNew();
+
+                    MessageBuilder.SendMessage(msg, cli.GetStream());
+
+                    sw.Stop();
+                    Console.WriteLine("Sent.");
+                    Console.WriteLine($"Elapsed {sw.ElapsedMilliseconds}ms");
+                }
             }
         }
 

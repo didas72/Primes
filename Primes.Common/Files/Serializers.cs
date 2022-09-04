@@ -197,7 +197,7 @@ namespace Primes.Common.Files
         /// </summary>
         /// <param name="allBytes"><see cref="byte"/> array to peek status from.</param>
         /// <returns></returns>
-        public static PrimeJob.Status PeekStatusv1_0_0(ref byte[] allBytes)
+        public static PrimeJob.Status PeekStatusv1_0_0(byte[] allBytes)
         {
             PrimeJob.Status status;
 
@@ -221,7 +221,7 @@ namespace Primes.Common.Files
         /// </summary>
         /// <param name="allBytes"><see cref="byte"/> array to peek status from.</param>
         /// <returns></returns>
-        public static PrimeJob.Status PeekStatusv1_1_0(ref byte[] allBytes)
+        public static PrimeJob.Status PeekStatusv1_1_0(byte[] allBytes)
         {
             PrimeJob.Status status;
 
@@ -245,7 +245,7 @@ namespace Primes.Common.Files
         /// </summary>
         /// <param name="allBytes"><see cref="byte"/> array to peek status from.</param>
         /// <returns></returns>
-        public static PrimeJob.Status PeekStatusv1_2_0(ref byte[] allBytes)
+        public static PrimeJob.Status PeekStatusv1_2_0(byte[] allBytes)
         {
             PrimeJob.Status status;
 
@@ -591,13 +591,14 @@ namespace Primes.Common.Files
             stream.Seek(3, SeekOrigin.Begin);
             stream.Read(buffer, 0, 5);
 
+
             KnownPrimesResourceFile.Comp comp = new(buffer[0]);
             KnownPrimesResourceFile krpc = new(new(1, 2, 0), comp, new ulong[Math.Min(BitConverter.ToInt32(buffer, 1), maxBytes)]);
 
             if (!comp.NCC) throw new NotSupportedException("Partial loading of resources is only available for NCC.");
 
             Compression.NCC.StreamReader reader = new(stream);
-            reader.Read(krpc.Primes, 0, maxBytes);
+            reader.Read(krpc.Primes, 0, krpc.Primes.Length);
 
             return krpc;
         }

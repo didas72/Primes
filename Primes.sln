@@ -28,7 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ToReplace", "ToReplace", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimesSVC", "PrimesSVC\PrimesSVC.csproj", "{5E13B97A-EF59-4A44-825A-C7F5906930CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BatchServer", "BatchServer\BatchServer.csproj", "{384A416B-4B76-4C35-90E5-5CD4FE51A47E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BatchServer", "BatchServer\BatchServer.csproj", "{384A416B-4B76-4C35-90E5-5CD4FE51A47E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

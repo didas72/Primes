@@ -50,7 +50,7 @@ namespace Primes.UI.Render
 
         public void Update(Vector2i localOffset)
         {
-            Vector2 mousePos = Raylib.GetMousePosition() - localOffset.ToVector2();
+            Vector2 mousePos = Raylib.GetMousePosition() - (Vector2)localOffset;
             
             if (mousePos.X > Position.x && mousePos.X < Position.x + Size.x && mousePos.Y > Position.y && mousePos.Y < Position.y + Size.y)
             {
