@@ -1,0 +1,168 @@
+﻿Objectives with PrimesUI
+
+Merge all tools into one user-friendly, intuitive app.
+
+Musts:
+-Control Primes.Exec (which will become a background serviced, launch on user request/boot if configured)
+-Control benchmarking/stress testing
+-Visualize file contents
+-Convert files to new/old versions/compressions
+-Create files (jobs/resources)
+-Export primes to text, csv, etc
+-Collection of other tools (check if a number is prime, find in file, repair files, jobs=>resources, etc)
+-Analyze jobs/batches for stats
+
+Menu pages:
+-Control (Controls Primes.Exec, may be remote controlled since plan is to do it via TCP sockets)
+-Testing (Benchmarking/Stresstesting)
+-Files (Create/Open/Edit/Convert/Export/Validate files)
+-Stats (Analyze for stats)
+-Tools (Random tools) (is prime, )
+-Settings (Setts for this app, Setts for Primes.Exec, Check for updates)
+-[[Exit]]
+
+
+
+
+Global contents:
+	Pop-ups:
+	-Unhandled Exception:
+		-'An unhandled exception occurred!' text //further details may be added
+		-Close button
+
+
+
+
+Menu contents:
+
+	Control:
+		Controls Primes.Exec and related files
+
+		-Must be able to connect to local and remote machines
+		-Start and stop primes
+		-Launch local exe
+		-View status and progress
+		-Manually add/remove local jobs (local machine only)
+		-[Maybe] Manually check for updated resources files (Needs batch server to be completed AND EXTENDED)
+		-[Maybe] Check for online jobs (Needs batch server to be completed)
+
+		Interfaces:
+		-Connect local button
+		-Connect remote button (POP-UP)
+		-Start/Stop button
+		-Launch local
+		-Status text (Running + worker count / stopped)
+		-Batch progress bar
+		-Batch number text
+		-Open primes folder button
+		-Check resource update button
+
+		Pop-ups:
+		-Connect remote:
+			-IP input field
+			-Port input field
+			-Connect button
+			-Cancel button
+
+	Testing:
+		Controls benchmarks and stress tests.
+
+		-Must be able to run benchmarks
+		-Select and configure stress tests
+		-Start and stop stress tests
+		-View score of benchmark
+		-View progress of stress test
+		-View history of benchmarks
+
+		Interfaces: (Split screen for benchmark/stress test)
+		//Benchmark side
+		-Benchmark text
+		-Single-threaded button
+		-Multi-threaded button
+		-Benchmark status text
+		-Benchmark progress bar
+		-Benchmark score text
+		-Benchmark history text-list
+
+		//Middle
+		-Divider panel
+
+		//Stress test side
+		-Stress Test text
+		-Thread count input field
+		-Start/Stop button
+		-Test status text
+		-Test progress bar
+		-CPU temperature text (OpenHardwareMonitor has a .dll for this, search it up)
+
+	Files:
+		Tool collection that allows visualization of file contents, editing, exporting, convertion and creation.
+
+		-Must be able to open both jobs and resources (can just load parts at a time for memory)
+		-View contents as actual values and as hexdump
+		-Find values (or nearest value)
+		-Find compression specific locations (eg NCC big jumps)
+		-Convert jobfiles into resource files
+		-Validate jobs/batches
+		-Fix (if able) jobs/batches
+		-Convert file options (compression, version)
+		-Export contents to txt and csv
+		-[MOVED TO TOOLS]Generate jobs/batches
+
+		Interfaces:
+		//Top bar (file control)
+		-Open button
+		-New job button
+		-New resource button
+		-Save button
+		-Close button
+
+		//Header area
+		-Header text
+		-Header view text-list
+		-Change version button
+		-Change compression button
+		-Change field button (for all other options)
+		-Apply button
+
+		//View area
+		-Content view text-list
+		-Switch view button (values/hex)
+		-Find button
+
+		//Tools area
+		-Tools text
+		-Validate button
+		-Fix button
+		-Convert button
+		-Export button
+
+		Pop-ups:
+		-Open file dialog (Forms)
+		-Save file dialog (Forms)
+		-Change verison:
+			-Verion dropdown
+			-Accept button
+			-Cancel button
+		-Change compression:
+			-Compression dropdown
+			-Accept button
+			-Cancel button
+		-Change field:
+			-Field name input field
+			-Field value input field
+			-Accept button
+			-Cancel button
+		-Export:
+			-Format dropdown
+			-Export button (triggers save file dialog)
+			-Cancel button
+		-Convert:
+			-Convert to %other option% text
+			-Convert button (triggers save file dialog)
+			-Cancel button
+		-Find:
+			-Value input field
+			-Find button
+			-Find hex button
+			-Cancel button

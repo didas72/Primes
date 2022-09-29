@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <RootNamespace>Primes.UI</RootNamespace>
+	<StartupObject>Primes.UI.Program</StartupObject>
+	<UseWindowsForms>True</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Raylib-cs" Version="4.0.0-alpha.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DidasUtils\DidasUtils\DidasUtils.csproj" />
+    <ProjectReference Include="..\Primes.Common\Primes.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Fonts\courier-prime\Courier Prime Bold.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

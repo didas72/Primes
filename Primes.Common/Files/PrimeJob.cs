@@ -337,7 +337,9 @@ namespace Primes.Common.Files
         /// <returns><see cref="Status"/> representing the status of the checked <see cref="PrimeJob"/> file.</returns>
         public static Status PeekStatusFromFile(string path)
         {
-            byte[] bytes = File.ReadAllBytes(path);
+            FileStream fs = File.OpenRead(path);
+            byte[] bytes = new byte[32]; //32 is enough for up to v1.2.0, might not be the case for later versions
+            fs.Read(bytes, 0, 32);
 
             Version ver = new(bytes[0], bytes[1], bytes[2]);
 
@@ -349,16 +351,16 @@ namespace Primes.Common.Files
             {
                 if (ver == new Version(1, 0, 0))
                 {
-                    return PrimeJobSerializer.PeekStatusv1_0_0(ref bytes);
+                    return PrimeJobSerializer.PeekStatusv1_0_0(bytes);
                 }
                 else if (ver == new Version(1, 1, 0))
                 {
-                    return PrimeJobSerializer.PeekStatusv1_1_0(ref bytes);
+                    return PrimeJobSerializer.PeekStatusv1_1_0(bytes);
                 }
             }
             else //it is latest
             {
-                return PrimeJobSerializer.PeekStatusv1_2_0(ref bytes);
+                return PrimeJobSerializer.PeekStatusv1_2_0(bytes);
             }
 
             return Status.None;
@@ -461,9 +463,9 @@ namespace Primes.Common.Files
 
                     last = job.Primes[i]; //Update value to check the order
 
-                    if (message.Length >= 10000)
+                    if (message.Length >= 200)
                     {
-                        message += "Max message length reached. Checking stopped.";
+                        message = "Log too long. Stopped." + message;
                         return false;
                     }
                 }
@@ -670,6 +672,14 @@ namespace Primes.Common.Files
             {
                 return obj is Version version && Equals(version);
             }
+            /// <summary>
+            /// Returns the hash code for this instance.
+            /// </summary>
+            /// <returns></returns>
+            public override int GetHashCode()
+            {
+                return (major << 16) | (minor << 8) | patch;
+            }
 
 
             public static bool operator ==(Version left, Version right)
@@ -679,6 +689,36 @@ namespace Primes.Common.Files
             public static bool operator !=(Version left, Version right)
             {
                 return !(left == right);
+            }
+            public static bool operator >(Version left, Version right)
+            {
+                if (left.major > right.major) return true;
+                if (left.minor > right.minor) return true;
+                if (left.patch > right.patch) return true;
+                return false;
+            }
+            public static bool operator <(Version left, Version right)
+            {
+                if (left.major < right.major) return true;
+                if (left.minor < right.minor) return true;
+                if (left.patch < right.patch) return true;
+                return false;
+            }
+            public static bool operator >=(Version left, Version right)
+            {
+                if (left == right) return true;
+                if (left.major > right.major) return true;
+                if (left.minor > right.minor) return true;
+                if (left.patch > right.patch) return true;
+                return false;
+            }
+            public static bool operator <=(Version left, Version right)
+            {
+                if (left == right) return true;
+                if (left.major < right.major) return true;
+                if (left.minor < right.minor) return true;
+                if (left.patch < right.patch) return true;
+                return false;
             }
         }
 
@@ -755,6 +795,17 @@ namespace Primes.Common.Files
             /// <param name="comp">The value to serialize.</param>
             /// <returns><see cref="byte"/> containing the compression flags.</returns>
             public static byte GetByte(Comp comp) => comp.GetByte();
+
+
+
+            public override string ToString()
+            {
+                if (!IsCompressed()) return "None";
+                else if (NCC && ONSS) return $"INVALID:{flags:X2}";
+                else if (NCC) return "NCC";
+                else if (ONSS) return "ONSS";
+                else return $"INVALID:{flags:X2}";
+            }
         }
 
 

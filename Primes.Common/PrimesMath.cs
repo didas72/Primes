@@ -75,7 +75,7 @@ namespace Primes.Common
 		/// <param name="number">The number to be checked.</param>
 		/// <param name="knownPrimes">A reference to an array of known prime numbers.</param>
 		/// <returns>True if the number is prime, false otherwise.</returns>
-		public static bool IsPrime(ulong number, ref ulong[] knownPrimes)
+		public static bool IsPrime(ulong number, ulong[] knownPrimes)
 		{
 			if (number < 2)
 				return false;
@@ -116,7 +116,7 @@ namespace Primes.Common
 		/// <param name="knownPrimes">A reference to an array of known prime numbers.</param>
 		/// <param name="divider">The divider of the number checked if it is not prime, 0 otherwise.</param>
 		/// <returns>True if the number is prime, false otherwise.</returns>
-		public static bool IsPrime(ulong number, ref ulong[] knownPrimes, out ulong divider)
+		public static bool IsPrime(ulong number, ulong[] knownPrimes, out ulong divider)
 		{
 			divider = 0;
 

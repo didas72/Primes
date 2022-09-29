@@ -1,26 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Timers;
 
 using DidasUtils.Files;
 
-using BatchServer.Modules;
-
 namespace BatchServer
 {
-    public static class Globals
+    internal static class Globals
     {
-        public static string dataPath;
-        public static string logPath;
-        public static string settingsPath;
-        public static string batchesPath;
+        public static string startLogPath;
 
-        public static DbWrapper Db;
+        public static string homeDir;
+        public static string sourceDir;
+        public static string completeDir;
+        public static string cacheDir;
 
+        public static Timer ExpireElementsTimer;
+        public static ClientData clientData;
+        public static ClientListener clientListener;
         public static SettingsDocument settings;
-        public static int maxPerClient;
-
-        public static ClientHandler clHandle;
-        public static ControlHandler ctlHandle;
-        public static ConnectionListener conListener;
-        public static Server server;
     }
 }

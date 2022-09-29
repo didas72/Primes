@@ -1,0 +1,6 @@
+﻿Objectives for PrimesSVC
+
+-Run in background
+-Launched by external source (PrimesUI or Windows Task)
+-TCP Socket for comms and settings
+-Get/Return jobs to batch server

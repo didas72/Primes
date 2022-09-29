@@ -1,0 +1,18 @@
+﻿Settings for PrimesSVC
+
+Settings (present or TODO):
+ -HomeDir (string) (%appdata%/Roaming/primes)
+ -Threads (int32) (4)
+ -ControlPort (uint16) (13031)
+ -AllowExternalControl (bool) (true) (outside localhost)
+ -PrimeBufferSize (int32) (1024)
+ -MaxJobQueue (int32) (100) (absolute value, zero is unlimited, negative is INVALID (unhandled))
+ -MaxResourceMemory (int32) (limit krpc mem usage, in kiB, zero or negative is unlimited) (-1)
+
+ //later
+ -Logging options (performance, loading, saving, connections)
+
+ //later, separate file, possibly JSON
+ -UseJobServer
+ -JobServerIP
+ -JobServerPort

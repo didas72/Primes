@@ -1,0 +1,48 @@
+﻿ControlMessages for PrimesSVC
+
+PrimesUI 'controls the bus' while PrimesSVC ONLY responds
+
+l = letters (caps and no caps)
+d = digits
+s = +-*/%_\|^,.;:!?"#$&()[]{}<>@
+
+hex does NOT include 0x prefix
+
+Tasks performed by messages:
+-Start (If started into a possible paused mode, where only listener is running)
+-Stop
+-Request/Return Status
+-Request/Return Batch progress
+-Request/Return/Set settings
+
+Message types (3 letters, capital sensitive):
+-Request value (req)
+-Return (ret)
+-Set value (set)
+-Action (run)
+-Data (dta)
+-Ping (png)
+
+
+Message structure, spaces as dividers:
+-Type (Eg 'req') (string, 3 ld)
+-Target length (int16, 0+)
+-Target (Eg 'Batch_status') (<target length> lds)
+-Value length (int32, 0+)
+-Value type (uint8, 0 = binary, 1 = string; exclude if Value length = 0)
+-Value (Eg '4' as a setting value or 'stop' as an action, formatted as specified in value type, exclude if Value length = 0)
+
+
+
+Actions (no target):
+-Start 'start'
+-Stop 'stop'
+-Full stop 'fstop' (Exit)
+
+//later
+-Reload (Exit and start again)
+
+Requests (no target):
+-Run status 'rstatus'
+-Current batch number 'cbnum'
+-Current batch progress 'cbprog'

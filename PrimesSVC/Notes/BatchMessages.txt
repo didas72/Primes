@@ -1,0 +1,33 @@
+﻿BatchMessages for PrimesSVC
+
+BatchDistributer 'controls the bus' while PrimesSVC ONLY responds
+
+Tasks performed by messages:
+(as described in docs)
+-Status checks/replies (intent, batch numbers)
+-Error codes
+-Acknowledges
+-Data
+
+Message types (3 letters, capital sensitive):
+-Request status (req)
+-Return status (ret)
+-Error (err)
+-Acknowledgement (ack)
+-Data (dta)
+
+Message structure, spaces as dividers:
+-Type (Eg 'req') (string, 3 ld)
+-Target length (int16, 0+)
+-Target (Eg 'Batch_status') (<target length> lds)
+-Value length (int32, 0+)
+-Value type (uint8, 0 = binary, 1 = string; exclude if Value length = 0)
+-Value (Eg 'zero_avail' as an error code or 'get' as a status, formatted as specified in value type, exclude if Value length = 0)
+
+Requests (no target):
+-Intent 'intent'
+
+Returns (no target):
+-Intent 'get'/'resend'/'ret'
+
+Errors (no target):

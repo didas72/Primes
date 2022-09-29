@@ -1,217 +1,207 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Threading;
 
 using DidasUtils;
 using DidasUtils.Logging;
 using DidasUtils.Files;
 
-using BatchServer.Modules;
-
 namespace BatchServer
 {
-    /*
-     TODO:
-        - Not close right away
-        + Add icon
-        - Add controls to:
-            - add new batches
-            - fetch finished batches
-            - control batch info
-            - stop server
-            - restart server
-            - get user info
-            - control user info
-        - Add handling of requests
-        - Add checking the time of last time up, if long elapsed, extend all user return to today += ?2?
-        - Add missing logging for connects and interacts
-        +-Add specifiy of batch store paths
-        + Test!
-        + ---Add missing messages---
-     */
-
-    class Program
+    internal static class Program
     {
-        private static volatile bool running = false;
+        //TODO: Control listener
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            if (!Init()) Exit();
-
-            running = false;
-
-            while (running)
+            if (!Init(args))
             {
-                Thread.Sleep(50);
+                Log.LogEvent(Log.EventType.Fatal, "Failed to init.", "Main");
+                Environment.Exit(1);
             }
 
-            Exit();
+            Log.LogEvent("Server started.", "Main");
+
+            //TODO: execution loop, probably will join the control listener or something similar
+
+            Log.LogEvent("Server stopping...", "Main");
+            StopServer();
+            Log.LogEvent("Done.", "Main");
+            Environment.Exit(0);
+            return; //sanity and proper branch flow for VS
         }
 
 
 
-        static bool Init()
-        {
-            Log.InitConsole();
-
-            if (!InitDirs())
-            {
-                Log.Print("Failed to init directories!");
-                return false;
-            }
-
-            if (!InitLog())
-            {
-                Log.Print("Failed to init log!");
-                return false;
-            }
-
-            if (!InitSettings())
-            {
-                Log.LogEvent(Log.EventType.Fatal, "Failed to init settings!", "Init");
-                return false;
-            }
-
-            if (!InitDB())
-            {
-                Log.LogEvent(Log.EventType.Fatal, "Failed to init database!", "Init");
-                return false;
-            }
-
-            if (!InitNet())
-            {
-                Log.LogEvent(Log.EventType.Fatal, "Failed to init networking!", "Init");
-                return false;
-            }
-
-            Log.LogEvent("Initialization complete.", "Init");
-
-            return true;
-        }
-
-        static bool InitDirs()
-        {
-            //to run in raspberry / linux
-
-            //create data path if needed
-            try
-            {
-                Directory.CreateDirectory("/var/lib/didas72/");
-                Directory.CreateDirectory("/var/lib/didas72/batchServer/");
-
-                Globals.dataPath = "/var/lib/didas72/batchServer/";
-
-                Directory.CreateDirectory("/var/log/didas72/");
-                Directory.CreateDirectory("/var/log/didas72/batchServer/");
-
-                Globals.logPath = "/var/log/didas72/batchServer/";
-
-                Directory.CreateDirectory("/etc/didas72/");
-                Directory.CreateDirectory("/etc/didas72/batchServer/");
-
-                Globals.settingsPath = "/etc/didas72/batchServer/";
-
-                if (!Directory.Exists("/media/usb/")) return false;
-
-                Globals.batchesPath = "/media/usb/";
-            }
-            catch (Exception e)
-            {
-                Log.Print($"Error initializing directories: {e}");
-
-                return false;
-            }
-
-            return true;
-        }
-
-        static bool InitLog()
+        private static bool Init(string[] args)
         {
             try
             {
-                Log.InitLog(Globals.logPath, "main.log");
-                Log.LogEvent($"OS: {Environment.OSVersion.VersionString}", "Init");
+                Log.UsePrint = false;
+                Globals.startLogPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                Log.InitLog(Globals.startLogPath, "BatchServer_start_log.txt");
+                Globals.startLogPath = Path.Combine(Globals.startLogPath, "BatchServer_start_log.txt");
+
+                if (!InitSettings()) return false;
+                if (!ParseArgs(args)) return false;
+                if (!InitDirs()) return false;
+                if (!InitLog()) return false;
+                if (!InitClientData()) return false;
+                if (!InitClientListener()) return false;
             }
             catch (Exception e)
             {
-                Log.Print($"Failed to init log: {e}");
+                Log.LogException("Failed to init.", "Init", e);
                 return false;
             }
-            return true;
-        }
-
-        static bool InitSettings()
-        {
-            if (File.Exists(Globals.settingsPath + "settings.set"))
-            {
-                Globals.settings = new(File.ReadAllText(Globals.settingsPath + "settings.set"));
-            }
-            else
-            {
-                Log.LogEvent(Log.EventType.Warning, "No settings file present.", "InitSettings");
-
-                Globals.settings = new();
-                Globals.settings.ApplySettingsScheme(new Dictionary<string, string>() { { "server", "localhost" }, { "user", "root" }, { "password", "" }, { "port", "5505"} }, false);
-            }
 
             return true;
         }
-
-        static bool InitDB()
+        private static bool InitSettings()
         {
             try
             {
-                Globals.Db = new DbWrapper();
+                string setsPath = Path.Combine(Environment.CurrentDirectory, "settings.set");
 
-                Globals.Db.Connect(Globals.settings.GetString("server"), Globals.settings.GetString("user"), Globals.settings.GetString("password"));
+                if (File.Exists(setsPath))
+                    Globals.settings = SettingsDocument.Deserialize(Path.Combine(Environment.CurrentDirectory, "settings.set"));
+                else
+                    Globals.settings = new SettingsDocument();
 
-                int reply;
+                Dictionary<string, string> scheme = new()
+                {
+                    { "homeDir", Environment.CurrentDirectory },
+                    { "maxAssignedBatches", "5" },
+                    { "maxDesyncOps", "10" },
+                    { "batchExpireHours", "120" }, //5 days
+                    { "clientExpireHours", "720" }, //1 month
+                    { "clientPort", "13032" },
+                    { "controlPort", "13033" },
+                    { "forceLoadCliDta", bool.FalseString }
+                };
 
-                reply = Globals.Db.SendCommandNonQuery("CREATE DATABASE IF NOT EXISTS batchServer;");
-                if (reply != 0) Log.LogEvent("Database 'batchServer' did not exists and was created.", "InitDB");
+                Globals.settings.ApplySettingsScheme(scheme, false);
 
-                Globals.Db.SendCommandNonQuery("USE batchServer;");
-
-                Globals.Db.SendCommandNonQuery("CREATE TABLE IF NOT EXISTS users(user_id INT AUTO_INCREMENT PRIMARY KEY, last_ip INT, last_contacted DATETIME, last_requested DATETIME, last_submitted DATETIME);");
-                Globals.Db.SendCommandNonQuery("CREATE TABLE IF NOT EXISTS jobs(job_start BIGINT UNIQUE NOT NULL PRIMARY KEY, status TINYINT DEFAULT 0, added DATETIME NOT NULL, assigned_user INT, last_sent DATETIME, last_received DATETIME);");
+                SettingsDocument.Serialize(Globals.settings, setsPath);
             }
             catch (Exception e)
             {
-                Log.LogException("Error initializing database.", "InitDB", e);
+                Log.LogException("Failed to init settings.", "IntitSettings", e);
                 return false;
             }
 
             return true;
         }
+        private static bool ParseArgs(string[] args)
+        {
+            for (int i = 0; i < args.Length; i++)
+            {
+                switch (args[i])
+                {
+                    case "/?":
+                    case "-?":
+                    case "help":
+                    case "--help":
+                        Console.WriteLine("BatchServer available arguments:" +
+                            "'/?' or '-?' or 'help' or '--help' - Display this message." +
+                            "'-f' - Force loading of Client Data, regardless of existence of .lock file." +
+                            "'-x' - Ensures the existence of a valid settings file and exits. Useful to configure the server for the first time.");
+                        Environment.Exit(0);
+                        return false; //not actually needed but clean
 
-        static bool InitNet()
+                    case "-x":
+                        Console.WriteLine("Settings saved.");
+                        Environment.Exit(0);
+                        return false;
+
+                    case "-f":
+                        Globals.settings.SetValue("forceLoadCliDta", true);
+                        break;
+
+                    default:
+                        Log.LogEvent(Log.EventType.Warning, $"Unknown argument '{args[i]}'. Ignoring.", "ParseArgs");
+                        break;
+                }
+            }
+
+            return true;
+        }
+        private static bool InitDirs()
         {
             try
             {
-                Globals.conListener = new();
-                Globals.clHandle = new();
-                Globals.ctlHandle = new();
-                Globals.server = new();
+                Globals.homeDir = Globals.settings.GetString("homeDir");
+                Directory.CreateDirectory(Globals.homeDir);
 
-                Globals.conListener.StartListener(Globals.settings.GetInt("port"));
+                Globals.sourceDir = Path.Combine(Globals.homeDir, "source");
+                Directory.CreateDirectory(Globals.sourceDir);
+                Globals.completeDir = Path.Combine(Globals.homeDir, "complete");
+                Directory.CreateDirectory(Globals.completeDir);
+
+                //clear cache
+                Globals.cacheDir = Path.Combine(Globals.homeDir, "cache");
+                if (Directory.Exists(Globals.cacheDir))
+                    Directory.Delete(Globals.cacheDir, true);
+                Directory.CreateDirectory(Globals.cacheDir);
             }
             catch (Exception e)
             {
-                Log.LogException("Error initializing networking.", "InitNet", e);
+                Log.LogException("Failed to init dirs.", "InitDirs", e);
                 return false;
             }
+
+            return true;
+        }
+        private static bool InitLog()
+        {
+            Log.InitLog(Path.Combine(Globals.homeDir), "Server_log.txt");
+            Log.UsePrint = false;
+
+            try { File.Delete(Path.Combine(Globals.startLogPath)); } catch { }
+
+            return true;
+        }
+        private static bool InitClientData()
+        {
+            try
+            {
+                string filePath = Path.Combine(Globals.homeDir, "cliDta.dta");
+
+                Globals.clientData = new(filePath, Globals.settings.GetBool("forceLoadCliDta"), Globals.settings.GetInt("maxAssignedBatches"), Globals.settings.GetInt("maxDesyncOps"), TimeSpan.FromHours(Globals.settings.GetInt("batchExpireHours")), TimeSpan.FromHours(Globals.settings.GetInt("clientExpireHours")));
+                Globals.clientData.OnExpireElements(null, null);
+
+                Globals.ExpireElementsTimer = new()
+                {
+                    AutoReset = true,
+                    Interval = 1000 * 60 * 60 * 3, //every 3 hours
+                };
+
+                Globals.ExpireElementsTimer.Elapsed += Globals.clientData.OnExpireElements;
+                Globals.ExpireElementsTimer.Start();
+            }
+            catch (Exception e)
+            {
+                Log.LogException("Failed to init client data.", "InitClientData", e);
+                return false;
+            }
+
+            return true;
+        }
+        private static bool InitClientListener()
+        {
+            Globals.clientListener = new(Globals.settings.GetInt("clientPort"));
+            Globals.clientListener.Start();
 
             return true;
         }
 
 
 
-        static void Exit()
+        private static void StopServer()
         {
-            Globals.Db.Dispose();
-
-            Log.LogEvent("Exiting.", "Main");
+            try { Globals.clientListener?.Stop(); } catch (Exception e) { Log.LogException("Failed to stop client listener.", "StopServer", e); }
+            try { Globals.clientData?.Close(); } catch (Exception e) { Log.LogException("Failed to close client data.", "StopServer", e); }
+            try { SettingsDocument.Serialize(Globals.settings, Path.Combine(Environment.CurrentDirectory, "settings.set")); } catch (Exception e) { Log.LogException("Failed to save settings.", "StopServer", e); }
         }
     }
 }

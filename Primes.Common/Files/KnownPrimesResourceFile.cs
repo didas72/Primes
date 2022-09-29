@@ -32,7 +32,7 @@ namespace Primes.Common.Files
         /// <summary>
         /// Default empty instance.
         /// </summary>
-        public static KnownPrimesResourceFile Empty { get; } = new KnownPrimesResourceFile(Version.Zero, 0, new ulong[0]);
+        public static KnownPrimesResourceFile Empty { get; } = new KnownPrimesResourceFile(Version.Zero, 0, Array.Empty<ulong>());
 
 
 
@@ -73,47 +73,55 @@ namespace Primes.Common.Files
         /// </summary>
         /// <param name="path">Path of the file to read from.</param>
         /// <returns>Deserialized <see cref="KnownPrimesResourceFile"/></returns>
-        /// <exception cref="ArgumentException"></exception>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="PathTooLongException"></exception>
-        /// <exception cref="DirectoryNotFoundException"></exception>
-        /// <exception cref="IOException"></exception>
-        /// <exception cref="UnauthorizedAccessException"></exception>
-        /// <exception cref="FileNotFoundException"></exception>
-        /// <exception cref="NotSupportedException"></exception>
-        /// <exception cref="System.Security.SecurityException"></exception>
-        public static KnownPrimesResourceFile Deserialize(string path)
+        /// <exception cref="IncompatibleVersionException"></exception>
+        public static KnownPrimesResourceFile Deserialize(Stream stream)
         {
-            KnownPrimesResourceFile file = new KnownPrimesResourceFile(Version.Zero, new ulong[] { 0 });
-
-            FileStream stream = File.OpenRead(path);
+            KnownPrimesResourceFile file;
 
             byte[] verB = new byte[3];
             stream.Read(verB, 0, 3);
 
-            Version ver = new Version(verB[0], verB[1], verB[2]);
+            Version ver = new(verB[0], verB[1], verB[2]);
 
             if (!ver.IsCompatible())
             {
-                throw new IncompatibleVersionException($"Attempted to deserialize known primes resource of version {ver} but no serialization method was implemented for such version.");
+                throw new IncompatibleVersionException($"Attempted to deserialize known primes resource of version {ver} but no deserialization method was implemented for such version.");
             }
             else
             {
                 if (ver.IsEqual(new Version(1, 2, 0)))
-                {
                     file = KnownPrimesResourceFileSerializer.Deserializev1_2_0(stream);
-                }
                 else if (ver.IsEqual(new Version(1, 1, 0)))
                 {
-                    byte[] bytes = File.ReadAllBytes(path);
-                    file = KnownPrimesResourceFileSerializer.Deserializev1_1_0(bytes);
+                    byte[] buffer = new byte[stream.Length - stream.Position];
+                    stream.Read(buffer, 0, buffer.Length);
+                    file = KnownPrimesResourceFileSerializer.Deserializev1_1_0(buffer);
                 }
                 else if (ver.IsEqual(new Version(1, 0, 0)))
                 {
-                    byte[] bytes = File.ReadAllBytes(path);
-                    file = KnownPrimesResourceFileSerializer.Deserializev1_0_0(bytes);
+                    byte[] buffer = new byte[stream.Length - stream.Position];
+                    stream.Read(buffer, 0, buffer.Length);
+                    file = KnownPrimesResourceFileSerializer.Deserializev1_0_0(buffer);
                 }
+                else
+                    throw new IncompatibleVersionException($"Attempted to deserialize known primes resource of version {ver} but no deserialization method was implemented for such version.");
             }
+
+            return file;
+        }
+        public static KnownPrimesResourceFile Deserialize(Stream stream, int maxBytes)
+        {
+            KnownPrimesResourceFile file;
+
+            byte[] verB = new byte[3];
+            stream.Read(verB, 0, 3);
+
+            Version ver = new(verB[0], verB[1], verB[2]);
+
+            if (ver.IsEqual(new Version(1, 2, 0)))
+                file = KnownPrimesResourceFileSerializer.Deserializev1_2_0(stream, maxBytes);
+            else
+                throw new IncompatibleVersionException($"Attempted to partially deserialize known primes resource of version {ver} but no partial deserialization method was implemented for such version.");
 
             return file;
         }
@@ -122,15 +130,7 @@ namespace Primes.Common.Files
         /// </summary>
         /// <param name="file">Reference to the <see cref="KnownPrimesResourceFile"/> to serialize.</param>
         /// <param name="path">The path to write to.</param>
-        /// <exception cref="ArgumentException"></exception>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="PathTooLongException"></exception>
-        /// <exception cref="DirectoryNotFoundException"></exception>
-        /// <exception cref="IOException"></exception>
-        /// <exception cref="UnauthorizedAccessException"></exception>
-        /// <exception cref="FileNotFoundException"></exception>
-        /// <exception cref="NotSupportedException"></exception>
-        /// <exception cref="System.Security.SecurityException"></exception>
+        /// <exception cref="IncompatibleVersionException"></exception>
         public static void Serialize(KnownPrimesResourceFile file, string path)
         {
             if (!file.FileVersion.IsCompatible())
@@ -168,7 +168,7 @@ namespace Primes.Common.Files
         /// <returns><see cref="KnownPrimesResourceFile"/> with the primes from the given <see cref="PrimeJob"/> array.</returns>
         public static KnownPrimesResourceFile GenerateKnownPrimesResourceFromJobs(PrimeJob[] jobs)
         {
-            List<ulong> knownPrimes = new List<ulong>();
+            List<ulong> knownPrimes = new();
 
             ulong highest = 0;
 
@@ -371,6 +371,17 @@ namespace Primes.Common.Files
             /// <param name="comp">The value to serialize.</param>
             /// <returns><see cref="byte"/> containing the compression flags.</returns>
             public static byte GetByte(Comp comp) => comp.GetByte();
+
+
+
+            public override string ToString()
+            {
+                if (!IsCompressed()) return "None";
+                else if (NCC && ONSS) return $"INVALID:{flags:X2}";
+                else if (NCC) return "NCC";
+                else if (ONSS) return "ONSS";
+                else return $"INVALID:{flags:X2}";
+            }
         }
 
 
