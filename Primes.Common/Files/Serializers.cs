@@ -7,7 +7,7 @@ namespace Primes.Common.Files
     /// <summary>
     /// Class that contains several <see cref="PrimeJob"/> serialization related methods.
     /// </summary>
-    public static class PrimeJobSerializer
+    internal static class PrimeJobSerializer
     {
         //Version Definitions
         /*  v1.0.0
@@ -356,6 +356,7 @@ namespace Primes.Common.Files
         /// <returns></returns>
         public static void Serializev1_2_0(PrimeJob job, Stream stream)
         {
+            stream.Write(new byte[4] { job.FileVersion.major, job.FileVersion.minor, job.FileVersion.patch, job.FileCompression.GetByte() });
             stream.Write(BitConverter.GetBytes(job.Batch), 0, sizeof(uint));
             stream.Write(BitConverter.GetBytes(job.Start), 0, sizeof(ulong));
             stream.Write(BitConverter.GetBytes(job.Count), 0, sizeof(ulong));
@@ -466,7 +467,7 @@ namespace Primes.Common.Files
     /// <summary>
     /// Class that contains several <see cref="KnownPrimesResourceFile"/> serialization related methods.
     /// </summary>
-    public static class KnownPrimesResourceFileSerializer
+    internal static class KnownPrimesResourceFileSerializer
     {
         //Version Definitions
         /*  knownPrimes.rsrc v1.0.0

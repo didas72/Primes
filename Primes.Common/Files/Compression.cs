@@ -227,6 +227,8 @@ namespace Primes.Common.Files
                 ulong delta;
                 List<byte> block = new();
 
+                if (append.Length == 0) return;
+
                 if (last == 0)
                 {
                     block.AddRange(BitConverter.GetBytes(append[header++]));
@@ -969,7 +971,7 @@ namespace Primes.Common.Files
 
 
         /// <summary>
-        /// Exception thrown when <see cref="PrimeJob.Comp"/> represent an invalid compression method.
+        /// Exception thrown when <see cref="PrimeJob.Comp"/> represents an invalid compression method.
         /// </summary>
         public class InvalidCompressionMethodException : Exception
         {
