@@ -314,6 +314,14 @@ namespace Primes.UI
                 return;
             }
         }
+        private static void OnControlDisconnect(object sender, EventArgs e)
+        {
+            ConnectionData.DisableCheckTimer();
+            ConnectionData.RemoteEndpoint = null;
+
+            _ControlConnectionStatus.Text = "Not connected.";
+            _ControlStatus.Text = "Disconnected.";
+        }
         #endregion
 
         #region Files Menu Button Handles
@@ -757,7 +765,6 @@ namespace Primes.UI
 
 
         #region UIBuilding
-        //TODO: Add disconnect button to Control page
         private static Holder BuildMenuBar()
         {
             Button btn; Holder hld;
@@ -795,6 +802,7 @@ namespace Primes.UI
             hld.Add(txtBox = new("Status...", 20, new(2, 152), new(448, 28), Highlights)); txtBox.Id_Name = "STATUS"; _ControlStatus = txtBox;
             hld.Add(txtBox = new("Ping: XXXms", 20, new(2, 182), new(448, 28), Highlights)); txtBox.Id_Name = "PING"; _ControlPing = txtBox;
             hld.Add(btn = new("KILL SERVICE", 20, new(2, 538), new(168, 28), new(255, 255, 0, 255), new(255, 0, 0, 255), new(255, 100, 100, 255))); btn.OnPressed += OnControlKillService;
+            hld.Add(btn = new("Disconnect", new(2, 212), new(168, 28))); btn.OnPressed += OnControlDisconnect;
         }
         private static Holder _TestingHolder;
         private static void BuildTestingMenu(Holder pageHld)

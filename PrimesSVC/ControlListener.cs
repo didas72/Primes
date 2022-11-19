@@ -104,7 +104,6 @@ namespace Primes.SVC
             response = Array.Empty<byte>();
 
             //TODO: Handle freezes
-            //TODO: Start stop return as failed to start stop
             //TODO: More logging options
             //TODO: Here/PrimesUI, premature / unhandled disconnections
 
