@@ -190,12 +190,12 @@ namespace Primes.SVC
                     return true;
 
                 case "cbprog": //batch progress
-                    response = MessageBuilder.ResponseRequestSuccess(WorkCoordinator.GetCurrentBatchProgress().ToString());
-                    Log.LogEvent("Response is " + WorkCoordinator.GetCurrentBatchProgress().ToString(), "HandleRequestMessage");
+                    string prog = WorkCoordinator.GetCurrentBatchProgress().ToString();
+                    response = MessageBuilder.ResponseRequestSuccess(prog);
+                    Log.LogEvent("Response is " + prog, "HandleRequestMessage");
                     return true;
 
                 case "reslen": //resource length
-
                     try
                     {
                         long len = new FileInfo(Path.Combine(Globals.resourcesDir, "knownPrimes.rsrc")).Length;

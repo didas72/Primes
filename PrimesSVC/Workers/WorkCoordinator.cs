@@ -23,7 +23,7 @@ namespace Primes.SVC
         private static int maxJobQueue = -1;
         private static bool useBatchServer = true;
 
-        public static Worker[] workers; //return to private
+        private static Worker[] workers; //return to private
 
 
 
@@ -114,7 +114,7 @@ namespace Primes.SVC
 
             string dir = Path.GetDirectoryName(path);
             int left = Directory.GetFiles(dir, "*.primejob").Length;
-            return left / 1000f;
+            return 1f - (left / 1000f);
         }
 
 
@@ -161,10 +161,11 @@ namespace Primes.SVC
                 if (useBatchServer)
                 {
                     if (!GetOnlineJobs())//no more are available online, stop work
-                        StopWork();
+                        Log.LogEvent("Could not get online jobs.", "WorkCoordinator");
+                        //StopWork();
                 }
-                else
-                    StopWork();
+                //else
+                    //StopWork();
             }
         }
         private static bool GetOnlineJobs()

@@ -300,13 +300,13 @@ namespace Primes.UI
             if (SendAndAwaitMessage(MessageBuilder.Message("run", string.Empty, "fstop"), timeout, out byte[] response))
             {
                 MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
-                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
+                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("ACTION_PASS:"))
                 {
                     _ControlStatus.Text = "Failed to stop service.";
                     return;
                 }
 
-                _ControlStatus.Text = "Service stopping...";
+                _ControlStatus.Text = "Service stopped.";
             }
             else
             {

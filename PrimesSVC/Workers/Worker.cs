@@ -64,17 +64,15 @@ namespace Primes.SVC
 
 
 
-        //TODO: move back to local
-        public string jobPath, jobRename;
         private void WorkLoop()
         {
-            //string jobPath, jobRename;
+            string jobPath, jobRename;
 
             while (!shouldStop)
             {
                 try
                 {
-                    Log.LogEvent("Work loop", "Worker#?");
+                    Log.LogEvent("Work loop", $"Worker#{workerID}");
 
                     sw.Restart();
                     bufferHead = 0;
@@ -89,7 +87,7 @@ namespace Primes.SVC
                     Log.LogEvent($"Job {Path.GetFileNameWithoutExtension(jobPath)} assigned.", $"Worker#{workerID}");
 
                     jobRename = Path.ChangeExtension(jobPath, ".Rprimejob"); //do this first to (hopefully) prevent having it readded to the queue
-                    File.Move(jobPath, jobRename); //TODO: Fix consistently getting file is being used by another process
+                    File.Move(jobPath, jobRename);
                     job = PrimeJob.Deserialize(jobRename);
                     
 
@@ -131,7 +129,7 @@ namespace Primes.SVC
                     if (!shouldStop)
                         SaveJob(jobPath, jobRename);
                     else
-                        SaveJobPartial(jobPath, jobRename); //TODO:
+                        SaveJobPartial(jobPath, jobRename);
 
                     sw.Stop();
                 }
@@ -140,7 +138,7 @@ namespace Primes.SVC
                     Log.LogException("Exception while doing work.", $"Worker#{workerID}", e);
                 }
 
-                Thread.Sleep(500); //TODO: reset to Sleep(0);
+                Thread.Sleep(0);
             }
 
             Log.LogEvent("Exiting work loop.", $"Worker#{workerID}");

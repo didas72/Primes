@@ -340,6 +340,7 @@ namespace Primes.Common.Files
             FileStream fs = File.OpenRead(path);
             byte[] bytes = new byte[32]; //32 is enough for up to v1.2.0, might not be the case for later versions
             fs.Read(bytes, 0, 32);
+            fs.Close();
 
             Version ver = new(bytes[0], bytes[1], bytes[2]);
 
