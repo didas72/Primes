@@ -39,6 +39,7 @@ namespace Primes.UI
 
         #region Menus
         private static ControlWindow controlWindow;
+        private static TestingWindow testingWindow;
         #endregion
 
 
@@ -124,9 +125,8 @@ namespace Primes.UI
 
             Holder pageHld = BuildMenuBar();
 
-            controlWindow = new();
-            pageHld.Add(controlWindow.Window);
-            BuildTestingMenu(pageHld);
+            controlWindow = new(); pageHld.Add(controlWindow.Window);
+            testingWindow = new(); pageHld.Add(testingWindow.Window);
             BuildFilesMenu(pageHld);
 
             return true;
@@ -232,10 +232,6 @@ namespace Primes.UI
         #endregion
 
         #region Popup Button Handles
-        
-
-
-
         private static void OnPopupFileOpenPressed(Action<string, string> onClose)
         {
             TextList lst = OpenPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
@@ -483,40 +479,6 @@ namespace Primes.UI
             UI.Add(hld = new Holder(new(0, 30))); hld.Id_Name = "PAGE_HOLDER";
 
             return hld;
-        }
-        private static Holder _TestingHolder;
-        private static void BuildTestingMenu(Holder pageHld)
-        {
-            Holder hld, hld1, hld2; TextBox txtBox; Button btn; ProgressBar prgBar; TextList txtLst; InputField inp;
-            pageHld.Add(hld = new(Vector2i.Zero, "Testing")); hld.Id_Name = "TESTING"; _TestingHolder = hld;
-
-            hld.Add(hld1 = new(Vector2i.Zero, "Benchmarking")); hld1.Id_Name = "BENCHMARK";
-            hld.Add(hld2 = new(new(401, 0), "Stress Testing")); hld2.Id_Name = "STRESSTEST";//after divider
-
-            //divider
-            hld.Add(new Panel(new(399, 0), new(2, 570), Mid));
-
-            //=================
-            //benchmarking side
-            //=================
-            hld1.Add(new TextBox("Benchmark", 30, new(4, 4), new(391, 42), Highlights));
-            hld1.Add(btn = new("Single-threaded", new(2, 52), new(166, 28))); //btn.OnPressed += ;
-            hld1.Add(btn = new("Multi-threaded", new(172, 52), new(166, 28))); //btn.OnPressed += ;
-            hld1.Add(txtBox = new("Benchmark status...", 20, new(2, 82), new(296, 28), Highlights)); txtBox.Id_Name = "BENCHMARK_STATUS";
-            hld1.Add(prgBar = new(new(2, 112), new(296, 28))); prgBar.Id_Name = "BENCHMARK_PROGRESS";
-            hld1.Add(txtBox = new("Score: XXX,XXX.XXX", 20, new(2, 142), new(196, 26), Highlights)); txtBox.Id_Name = "BENCHMARK_SCORE";
-            hld1.Add(txtLst = new(new(2, 172), new(392, 60))); txtLst.Id_Name = "BENCHMARK_HISTORY";
-
-            //===================
-            //stress testing side
-            //===================
-            hld2.Add(new TextBox("Stress Test", 30, new(4, 4), new(391, 42), Highlights));
-            hld2.Add(new TextBox("Threads:", new(2, 52), new(95, 26)));
-            hld2.Add(inp = new(new(97, 52), new(71, 26))); inp.Text = "4";
-            hld2.Add(btn = new("Start/Stop", new(2, 82), new(166, 28))); //btn.OnPressed += ;
-            hld2.Add(txtBox = new("Test status...", 20, new(2, 112), new(296, 28), Highlights)); txtBox.Id_Name = "STRESSTEST_STATUS";
-            hld2.Add(prgBar = new(new(2, 142), new(296, 28))); prgBar.Id_Name = "STRESSTEST_PROGRESS";
-            hld2.Add(txtBox = new("CPU temp: XXX.X ºC", 20, new(2, 172), new(296, 26), Highlights)); txtBox.Id_Name = "CPU_TEMP";
         }
         private static Holder _FilesHolder;
         private static void BuildFilesMenu(Holder pageHld)
