@@ -13,6 +13,7 @@ using Raylib_cs;
 
 using Primes.Common.Net;
 using Primes.UI.Render;
+using Primes.UI.Windows;
 
 namespace Primes.UI
 {
@@ -34,7 +35,10 @@ namespace Primes.UI
          */
 
         private static Color Background = new(51, 51, 51, 255), Mid = new(77, 77, 77, 255), Foreground = new(102, 102, 102, 255), Text = new(0, 0, 0, 255), Highlights = new(0, 206, 255, 255);
+        #endregion
 
+        #region Menus
+        private static ControlWindow controlWindow;
         #endregion
 
 
@@ -120,11 +124,10 @@ namespace Primes.UI
 
             Holder pageHld = BuildMenuBar();
 
-            BuildControlMenu(pageHld);
+            controlWindow = new();
+            pageHld.Add(controlWindow.Window);
             BuildTestingMenu(pageHld);
             BuildFilesMenu(pageHld);
-
-            ConnectionData.OnConnectionCheck += OnConnectionCheck;
 
             return true;
         }
@@ -141,7 +144,7 @@ namespace Primes.UI
 
         private static void Update()
         {
-            if (openPopups.Count == 0)
+            if (OpenPopups.Count == 0)
             {
                 foreach (IRenderable rend in UI)
                 {
@@ -149,7 +152,7 @@ namespace Primes.UI
                 }
             }
             else
-                openPopups.Peek().Update(Vector2i.Zero);
+                OpenPopups.Peek().Update(Vector2i.Zero);
         }
 
         private static void Draw()
@@ -159,7 +162,7 @@ namespace Primes.UI
                 rend.Render(Vector2i.Zero);
             }
 
-            foreach (Holder holder in openPopups.Reverse())
+            foreach (Holder holder in OpenPopups.Reverse())
                 holder.Render(Vector2i.Zero);
         }
 
@@ -203,127 +206,6 @@ namespace Primes.UI
         }
         #endregion
 
-        #region Control Menu Button Handles
-        private static void OnControlRemoteConnectPressed(object sender, EventArgs e)
-        {
-            PopupControlConnectRemote();
-        }
-        private static void OnControlLocalConnectPressed(object sender, EventArgs e)
-        {
-            ConnectionData.RemoteEndpoint = new IPEndPoint(IPAddress.Loopback, 13031);
-
-            ConnectionData.EnableCheckTimer();
-            UpdateConnectionStatus();
-        }
-        private static void OnControlStartStopPressed(object sender, EventArgs e)
-        {
-            TimeSpan timeout = new(0, 0, 0, 0, 300);
-
-            if (SendAndAwaitMessage(MessageBuilder.Message("run", string.Empty, "trun"), timeout, out byte[] response))
-            {
-                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
-                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("ACTION_PASS:"))
-                {
-                    _ControlStatus.Text = "Start/stop failed.";
-                    return;
-                }
-
-                _ControlStatus.Text = "Started/stopped.";
-            }
-            else
-            {
-                _ControlStatus.Text = "Start/stop failed.";
-                return;
-            }
-        }
-        private static void OnControlLocalLaunchPressed(object sender, EventArgs e)
-        {
-            bool SVCrunning = Process.GetProcesses().Any((Process p) => p.ProcessName == "PrimesSVC.exe");
-            string newStatus;
-
-            if (SVCrunning)
-            {
-                newStatus = "Service already running.";
-            }
-            else
-            {
-                try
-                {
-                    ProcessStartInfo inf = new()
-                    {
-                        FileName = "cmd.exe",
-                        Arguments = "/C start PrimesSVC.exe",
-                        CreateNoWindow = true,
-                        ErrorDialog = false,
-                    };
-                    Process p = Process.Start(inf);
-
-                    if (!p.WaitForExit(20)) throw new Exception();
-                    if (p.ExitCode != 0) throw new Exception();
-
-                    newStatus = "Service started.";
-                }
-                catch { newStatus = "Failed to start service."; }
-            }
-
-            _ControlStatus.Text = newStatus;
-        }
-        private static void OnControlOpenPrimesFolder(object sender, EventArgs e)
-        {
-            Process.Start("explorer.exe", $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "primes")}");
-        }
-        private static void OnControlCheckForResourceUpdate(object sender, EventArgs e)
-        {
-            TimeSpan timeout = new(0, 0, 0, 0, 300);
-
-            if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "reslen"), timeout, out byte[] response))
-            {
-                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
-                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
-                {
-                    _ControlStatus.Text = "Failed to get resource info.";
-                    return;
-                }
-
-                _ControlStatus.Text = $"Reslen={((string)value)[13..]}. (not implemented)"; //TODO: Implement checking of resource version
-            }
-            else
-            {
-                _ControlStatus.Text = "Failed to get resource info.";
-                return;
-            }
-        }
-        private static void OnControlKillService(object sender, EventArgs e)
-        {
-            TimeSpan timeout = new(0, 0, 0, 1);
-
-            if (SendAndAwaitMessage(MessageBuilder.Message("run", string.Empty, "fstop"), timeout, out byte[] response))
-            {
-                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
-                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("ACTION_PASS:"))
-                {
-                    _ControlStatus.Text = "Failed to stop service.";
-                    return;
-                }
-
-                _ControlStatus.Text = "Service stopped.";
-            }
-            else
-            {
-                _ControlStatus.Text = "Failed to stop service.";
-                return;
-            }
-        }
-        private static void OnControlDisconnect(object sender, EventArgs e)
-        {
-            ConnectionData.DisableCheckTimer();
-            ConnectionData.RemoteEndpoint = null;
-
-            _ControlConnectionStatus.Text = "Not connected.";
-            _ControlStatus.Text = "Disconnected.";
-        }
-        #endregion
-
         #region Files Menu Button Handles
         private static void OnFilesOpenPressed(object sender, EventArgs e)
         {
@@ -350,22 +232,14 @@ namespace Primes.UI
         #endregion
 
         #region Popup Button Handles
-        private static void OnConnectRemotePressed(object sender, EventArgs e)
-        {
-            if (!ValidateRemoteAddress()) return;
-
-            UpdateConnectionStatus();
-            ConnectionData.EnableCheckTimer();
-
-            ClosePopup();
-        }
+        
 
 
 
         private static void OnPopupFileOpenPressed(Action<string, string> onClose)
         {
-            TextList lst = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
-            TextBox txt = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
+            TextList lst = OpenPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
+            TextBox txt = OpenPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
 
             try
             {
@@ -390,8 +264,8 @@ namespace Primes.UI
         }
         private static void OnPopupFileSelectedPressed(string filter)
         {
-            TextList lst = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
-            TextBox txt = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
+            TextList lst = OpenPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
+            TextBox txt = OpenPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
 
             string path;
             string file = lst.Lines[lst.Selected];
@@ -406,7 +280,7 @@ namespace Primes.UI
         }
         private static void OnPopupFileUpPressed(string filter)
         {
-            TextBox txt = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
+            TextBox txt = OpenPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
 
             try
             {
@@ -436,12 +310,12 @@ namespace Primes.UI
 
 
         #region Popups
-        private static readonly Stack<Holder> openPopups = new();
+        public static readonly Stack<Holder> OpenPopups = new();
         //normal popups should be 400x250, cornered at 200x175
         //info/error popups should be 250x125, cornered at 300x
 
         #region General Popups
-        public static void ShowPopup(Holder pop) => openPopups.Push(pop);
+        public static void ShowPopup(Holder pop) => OpenPopups.Push(pop);
         public static void PopupUnhandledException(Exception e)
         {
             Button btn;
@@ -452,7 +326,7 @@ namespace Primes.UI
             pop.Add(new TextBox($"Exception type: {e.GetType().ToString().Replace("System.", string.Empty)}", new(20, 92), new(360, 28)));
             pop.Add(btn = new("Close", new(172, 212), new(56, 26))); btn.OnPressed = OnPopupClosePressed;
 
-            openPopups.Push(pop);
+            OpenPopups.Push(pop);
         }
         public static void PopupErrorMessage(string message)
         {
@@ -463,7 +337,7 @@ namespace Primes.UI
             pop.Add(new TextBox(message, new(10, 35), new(280, 20)));
             pop.Add(btn = new("Close", new(122, 90), new(56, 25))); btn.OnPressed = OnPopupClosePressed;
 
-            openPopups.Push(pop);
+            OpenPopups.Push(pop);
         }
         public static void PopupStatusMessage(string title, string message)
         {
@@ -474,7 +348,7 @@ namespace Primes.UI
             pop.Add(new TextBox(message, new(10, 35), new(280, 20)));
             pop.Add(btn = new("Close", new(122, 90), new(56, 25))); btn.OnPressed = OnPopupClosePressed;
 
-            openPopups.Push(pop);
+            OpenPopups.Push(pop);
         }
         public static void PopupChoiceMessage(string title, string opt1, string opt2, EventHandler<int> choiceCallback)
         {
@@ -490,13 +364,13 @@ namespace Primes.UI
             pop.Add(btn = new(opt2, new(155, 35), new(135, 20))); btn.OnPressed += (object sender, EventArgs _) => PopupChoicePressed(sender, 2, choiceCallback);
             pop.Add(btn = new("Close", new(122, 90), new(56, 25))); btn.OnPressed += (object sender, EventArgs _) => PopupChoicePressed(sender, 0, choiceCallback);
 
-            openPopups.Push(pop);
+            OpenPopups.Push(pop);
         }
-        public static void OnPopupClosePressed(object sender, EventArgs e) => openPopups.Pop();
+        public static void OnPopupClosePressed(object sender, EventArgs e) => OpenPopups.Pop();
 
 
 
-        private static void ClosePopup() => openPopups.Pop();
+        public static void ClosePopup() => OpenPopups.Pop();
         private static void PopupOpenFile(string filter, Action<string, string> onClose)
         {
             Button btn; TextList lst; TextBox txt;
@@ -509,7 +383,7 @@ namespace Primes.UI
             pop.Add(btn = new Button("Cancel", new(180, 220), new(100, 20))); btn.OnPressed += (object sender, EventArgs e) => OnPopupFileCancelPressed(onClose);
             pop.Add(btn = new Button("Open", new(290, 220), new(100, 20))); btn.OnPressed += (object sender, EventArgs e) => OnPopupFileOpenPressed(onClose);
 
-            openPopups.Push(pop);
+            OpenPopups.Push(pop);
 
             FileOpenUpdate(filter, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
         }
@@ -517,22 +391,6 @@ namespace Primes.UI
         {
             ClosePopup();
             callback?.Invoke(sender, code);
-        }
-        #endregion
-
-        #region Control Popups
-        private static void PopupControlConnectRemote()
-        {
-            InputField field;
-            Button btn;
-            Holder pop = new(new(200, 175));
-            pop.Add(new Panel(new(0, 0), new(400, 250), new Color(100, 100, 100, 255)));
-            pop.Add(new TextBox("IP Address:", new(20, 20), new(200,20)));
-            pop.Add(field = new InputField(new(20, 45), new(300,30))); field.Id_Name = "IP"; field.Text = "127.0.0.1:13031";
-            pop.Add(btn = new("Connect", new(100, 212), new(90, 26))); btn.OnPressed += OnConnectRemotePressed;
-            pop.Add(btn = new("Close", new(210, 212), new(90, 26))); btn.OnPressed += OnPopupClosePressed;
-
-            openPopups.Push(pop);
         }
         #endregion
 
@@ -546,7 +404,7 @@ namespace Primes.UI
             pop.Add(btn = new("Job", new(10, 50), new(100, 20))); btn.OnPressed += OnPopupFilesOpenOpenJobPressed;
             pop.Add(btn = new("Resource", new(140, 50), new(100, 20))); btn.OnPressed += OnPopupFilesOpenOpenResourcePressed;
 
-            openPopups.Push(pop);
+            OpenPopups.Push(pop);
         }
         #endregion
         #endregion
@@ -565,178 +423,21 @@ namespace Primes.UI
         #endregion
 
 
-        #region Net Helper
-        private static bool ValidateRemoteAddress()
-        {
-            if (!IPEndPoint.TryParse(((InputField)openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "IP")).Text, out IPEndPoint endpoint))
-            {
-                PopupErrorMessage("Invalid IP and/or port.");
-                return false;
-            }
-
-            ConnectionData.RemoteEndpoint = endpoint;
-
-            return true;
-        }
-        private static void OnConnectionCheck(object sender, EventArgs e)
-        {
-            try
-            {
-                TimeSpan timeout = new(0, 0, 0, 0, 300);
-                if (!UpdateConnectionStatus()) return;
-                UpdateBatchNumber(timeout);
-                UpdateBatchProgress(timeout);
-                UpdateRunStatus(timeout);
-            }
-            catch
-            {
-                ConnectionData.DisableCheckTimer();
-            }
-        }
-        private static bool PingService(TimeSpan timeout)
-        {
-            Stopwatch sw = Stopwatch.StartNew();
-            bool ret = SendAndAwaitMessage(MessageBuilder.Ping(), timeout, out byte[] _);
-            sw.Stop();
-
-            _ControlPing.Text = $"Ping: {sw.Elapsed.Milliseconds}ms";
-
-            return ret;
-        }
-        private static bool UpdateConnectionStatus()
-        {
-            try
-            {
-                if (!PingService(new TimeSpan(0, 0, 0, 0, 300)))
-                {
-                    FailedConnection();
-                    _ControlConnectionStatus.Text = "Failed to connect.";
-                    return false;
-                }
-                else
-                {
-                    _ControlConnectionStatus.Text = "Connected.";
-                    return true;
-                }
-            }
-            catch
-            {
-                FailedConnection();
-                _ControlConnectionStatus.Text = "Failed to connect.";
-                return false;
-            }
-        }
-        private static void UpdateBatchNumber(TimeSpan timeout)
-        {
-            TextBox batchNumber = _ControlHolder.Children.Find((IRenderable rend) => rend.Id_Name == "BATCH_NUMBER") as TextBox;
-
-            if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "cbnum"), timeout, out byte[] response))
-            {
-                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
-                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
-                {
-                    batchNumber.Text = "Batch XX";
-                    return;
-                }
-
-                batchNumber.Text = "Batch " + ((string)value)[13..];
-            }
-            else
-            {
-                batchNumber.Text = "Batch XX";
-                return;
-            }
-        }
-        private static void UpdateBatchProgress(TimeSpan timeout)
-        {
-            ProgressBar batchPrg = _ControlHolder.Children.Find((IRenderable rend) => rend.Id_Name == "BATCH_PROGRESS") as ProgressBar;
-
-            if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "cbprog"), timeout, out byte[] response))
-            {
-                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
-                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
-                {
-                    batchPrg.Value = 0f;
-                    return;
-                }
-
-                batchPrg.Value = float.Parse(((string)value)[13..]);
-            }
-            else
-            {
-                batchPrg.Value = 0f;
-                return;
-            }
-        }
-        private static void UpdateRunStatus(TimeSpan timeout)
-        {
-            if (SendAndAwaitMessage(MessageBuilder.Message("req", string.Empty, "rstatus"), timeout, out byte[] response))
-            {
-                MessageBuilder.DeserializeMessage(response, out string messageType, out string target, out object value);
-                if (!MessageBuilder.ValidateReturnMessage(messageType, target, value) || !((string)value).Contains("REQUEST_PASS:"))
-                {
-                    _ControlRunStatus.Text = "Failed to check status.";
-                    return;
-                }
-
-                _ControlRunStatus.Text = ((string)value)[13..];
-            }
-            else
-            {
-                _ControlRunStatus.Text = "Failed to check status.";
-                return;
-            }
-        }
-
-        private static bool SendAndAwaitMessage(byte[] message, TimeSpan timeout, out byte[] response)
-        {
-            bool ret;
-            response = null;
-
-            try
-            {
-                TcpClient cli = new();
-                if (ConnectionData.RemoteEndpoint == null)
-                {
-                    FailedConnection();
-                    return false;
-                }
-
-                var result = cli.BeginConnect(ConnectionData.RemoteEndpoint.Address, ConnectionData.RemoteEndpoint.Port, null, null);
-
-                var success = result.AsyncWaitHandle.WaitOne(timeout);
-                MessageBuilder.SendMessage(message, cli);
-
-                ret = MessageBuilder.ReceiveMessage(cli.GetStream(), out response, timeout);
-                cli.Close();
-
-                return ret;
-            }
-            catch
-            {
-                FailedConnection();
-                return false;
-            }
-        }
-        private static void FailedConnection()
-        {
-            ConnectionData.DisableCheckTimer();
-        }
-        #endregion
+        
 
 
 
         private static void EnableOnlyMenu(Menu menu)
         {
-            foreach (Holder hld in ((Holder)UI.First((IRenderable rend) => rend is Holder)).Children)
+            foreach (Holder hld in ((Holder)UI.First((IRenderable rend) => rend is Holder)).Children.Cast<Holder>())
             {
                 hld.Enabled = menu.ToString() == hld.Id;
             }
         }
         private static void FileOpenUpdate(string filter, string path)
         {
-            TextList lst = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
-            TextBox txt = openPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
+            TextList lst = OpenPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
+            TextBox txt = OpenPopups.Peek().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
 
             txt.Text = path;
             lst.Lines.Clear();
@@ -782,27 +483,6 @@ namespace Primes.UI
             UI.Add(hld = new Holder(new(0, 30))); hld.Id_Name = "PAGE_HOLDER";
 
             return hld;
-        }
-        private static Holder _ControlHolder; private static TextBox _ControlConnectionStatus, _ControlRunStatus, _ControlStatus, _ControlPing;
-        private static void BuildControlMenu(Holder pageHld)
-        {
-            Holder hld; Button btn; TextBox txtBox; ProgressBar prgBar;
-            pageHld.Add(hld = new Holder(Vector2i.Zero, "Control")); hld.Id_Name = "CONTROL"; _ControlHolder = hld;
-
-            hld.Add(btn = new("Connect local", new(2, 2), new(168, 28))); btn.OnPressed += OnControlLocalConnectPressed;
-            hld.Add(btn = new("Connect remote", new(172, 2), new(168, 28))); btn.OnPressed += OnControlRemoteConnectPressed;
-            hld.Add(txtBox = new("Not connected.", 20, new(342, 2), new(338, 28), Highlights)); txtBox.Id_Name = "CONNECTION_STATUS"; _ControlConnectionStatus = txtBox;
-            hld.Add(btn = new("Start/Stop", new(2, 32), new(168, 28))); btn.OnPressed += OnControlStartStopPressed;
-            hld.Add(btn = new("Launch local", new(172, 32), new(168, 28))); btn.OnPressed += OnControlLocalLaunchPressed;
-            hld.Add(txtBox = new("Run status...", 20, new(342, 32), new(338, 28), Highlights)); txtBox.Id_Name = "RUN_STATUS"; _ControlRunStatus = txtBox;
-            hld.Add(prgBar = new(new(2, 62), new(338, 28))); prgBar.Id_Name = "BATCH_PROGRESS";
-            hld.Add(txtBox = new("Batch XXXX", 20, new(342, 62), new(98, 28), Highlights)); txtBox.Id_Name = "BATCH_NUMBER";
-            hld.Add(btn = new("Open primes folder", new(2, 92), new(338, 28))); btn.OnPressed += OnControlOpenPrimesFolder;
-            hld.Add(btn = new("Check for resource update", new(2, 122), new(338, 28))); btn.OnPressed += OnControlCheckForResourceUpdate;
-            hld.Add(txtBox = new("Status...", 20, new(2, 152), new(448, 28), Highlights)); txtBox.Id_Name = "STATUS"; _ControlStatus = txtBox;
-            hld.Add(txtBox = new("Ping: XXXms", 20, new(2, 182), new(448, 28), Highlights)); txtBox.Id_Name = "PING"; _ControlPing = txtBox;
-            hld.Add(btn = new("KILL SERVICE", 20, new(2, 538), new(168, 28), new(255, 255, 0, 255), new(255, 0, 0, 255), new(255, 100, 100, 255))); btn.OnPressed += OnControlKillService;
-            hld.Add(btn = new("Disconnect", new(2, 212), new(168, 28))); btn.OnPressed += OnControlDisconnect;
         }
         private static Holder _TestingHolder;
         private static void BuildTestingMenu(Holder pageHld)

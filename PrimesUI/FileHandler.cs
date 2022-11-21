@@ -56,13 +56,12 @@ namespace Primes.UI
             currentJob = new PrimeJob(PrimeJob.Version.Latest, PrimeJob.Comp.Default, 0, 0, 0, 0, new());
             currentViewResource = false;
             BuildTexts();
-            //TODO: Anything else?
         }
         public static void CreateNewResource()
         {
             currentResource = new KnownPrimesResourceFile(KnownPrimesResourceFile.Version.Latest, KnownPrimesResourceFile.Comp.Default, Array.Empty<ulong>());
             currentViewResource = true;
-            throw new NotImplementedException(); //TODO: Build texts for these
+            throw new NotImplementedException(); //TODO: Limit resource loading and text building
         }
 
 
@@ -73,6 +72,8 @@ namespace Primes.UI
         }
         public static void Find()
         {
+            //popup (near prime)
+
             throw new NotImplementedException(); //TODO: Implement find
         }
         public static void GoTo()
