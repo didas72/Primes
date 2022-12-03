@@ -48,7 +48,8 @@ namespace Primes.UI.Render
 
             if (IsSelected)
             {
-                int key = Raylib.GetKeyPressed();
+                int key = Raylib.GetKeyPressed(); //Doesn't consider Shift+Key combos
+                if (key == 0) return;
 
                 //DidasUtils.Logging.Log.LogEvent(key.ToString(), "InputField");
 
@@ -56,6 +57,8 @@ namespace Primes.UI.Render
                     Text += (char)key;
                 else if (key == 259 && Text.Length > 0)
                     Text = Text[0..^1];
+                else if (key == 340) //shift will be colon temporarily
+                    Text += ':';
             }
         }
 
