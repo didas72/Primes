@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.Windows.Forms;
+using System.Globalization;
+//using System.Windows.Forms;
 
 using Microsoft.Win32;
 using Microsoft.VisualBasic;
 
+using Raylib_cs;
+
 using DidasUtils;
 using DidasUtils.Logging;
+using DidasUtils.Numerics;
 
 using Primes.Common;
 using Primes.Common.Files;
@@ -68,19 +72,87 @@ namespace Primes.UI
 
         public static void SwitchView()
         {
+            if (currentJob == null && currentResource == null)
+                Program.PopupErrorMessage("No files open.");
+
             BuildContentText(!currentViewBinary);
         }
         public static void Find()
         {
-            //popup (near prime)
+            if (currentJob == null && currentResource == null)
+                Program.PopupErrorMessage("No files open.");
 
-            throw new NotImplementedException(); //TODO: Implement find
+            Button btn; InputField inp;
+            Holder pop = new(new(250, 230));
+            pop.Add(new Panel(new(0, 0), new(300, 120), new Color(50, 50, 50, 255)));
+            pop.Add(new TextBox("Number to find:", new(10, 10), new(280, 20)));
+            pop.Add(inp = new(new(10, 35), new(280, 20)));
+            pop.Add(btn = new("HEX", new(10, 85), new(70, 20))); btn.OnPressed += (object sender, EventArgs _) => OnFindSelected(inp, true);
+            pop.Add(btn = new("DEC", new(90, 85), new(70, 20))); btn.OnPressed += (object sender, EventArgs _) => OnFindSelected(inp, false);
+            pop.Add(btn = new("Cancel", new(210, 85), new(80, 20))); btn.OnPressed += (object sender, EventArgs _) => Program.ClosePopup();
+
+            Program.ShowPopup(pop);
+        }
+        private static void OnFindSelected(InputField inp, bool hex)
+        {
+            if (!ulong.TryParse(inp.Text, hex ? NumberStyles.HexNumber : NumberStyles.Integer, null, out ulong search))
+            {
+                Program.PopupErrorMessage("Provided index was in bad format.");
+                return;
+            }
+
+            //find
+
+            ulong[] pr = currentViewResource ? currentResource.Primes : currentJob.Primes.ToArray();
+
+            int min = 0, max = pr.Length / 2, index;
+
+            while (true)
+            {
+                index = (min + max) / 2;
+
+                if (pr[index] < search)
+                    min = index;
+                else if (pr[index] > search)
+                    max = index; 
+                else break;
+
+                if (max - min <= 1) break;
+            }
+
+            content.Selected = index / (currentViewBinary ? 8 : 1);
+            content.Scroll = content.Selected;
+
+            Program.ClosePopup();
         }
         public static void GoTo()
         {
-            //popup (choose index/address)
+            if (currentJob == null && currentResource == null)
+                Program.PopupErrorMessage("No files open.");
 
-            throw new NotImplementedException(); //TODO: Implement go to
+            Button btn; InputField inp;
+            Holder pop = new(new(250, 230));
+            pop.Add(new Panel(new(0, 0), new(300, 120), new Color(50, 50, 50, 255)));
+            pop.Add(new TextBox("Index to go to:", new(10, 10), new(280, 20)));
+            pop.Add(inp = new(new(10, 35), new(280, 20)));
+            pop.Add(btn = new("HEX", new(10, 85), new(70, 20))); btn.OnPressed += (object sender, EventArgs _) => OnGotoSelected(inp, true);
+            pop.Add(btn = new("DEC", new(90, 85), new(70, 20))); btn.OnPressed += (object sender, EventArgs _) => OnGotoSelected(inp, false);
+            pop.Add(btn = new("Cancel", new(210, 85), new(80, 20))); btn.OnPressed += (object sender, EventArgs _) => Program.ClosePopup();
+
+            Program.ShowPopup(pop);
+        }
+        private static void OnGotoSelected(InputField inp, bool hex)
+        {
+            if (!int.TryParse(inp.Text, hex ? NumberStyles.HexNumber : NumberStyles.Integer, null, out int index))
+            {
+                Program.PopupErrorMessage("Provided index was in bad format.");
+                return;
+            }
+
+            content.Selected = index / (currentViewBinary ? 8 : 1);
+            content.Scroll = content.Selected;
+
+            Program.ClosePopup();
         }
 
 
