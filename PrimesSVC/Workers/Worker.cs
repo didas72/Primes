@@ -72,8 +72,6 @@ namespace Primes.SVC
             {
                 try
                 {
-                    Log.LogEvent("Work loop", $"Worker#{workerID}");
-
                     sw.Restart();
                     bufferHead = 0;
                     jobPath = null;
@@ -90,8 +88,7 @@ namespace Primes.SVC
                     File.Move(jobPath, jobRename);
                     job = PrimeJob.Deserialize(jobRename);
                     
-
-                    Log.LogEvent($"Job fetched. {job.FileVersion}", $"Worker#{workerID}");
+                    Log.LogEvent($"Job {job.Start} fetched. {job.FileVersion}", $"Worker#{workerID}");
 
                     current = job.Start + job.Progress;
                     max = job.Start + job.Count;
