@@ -1,0 +1,3 @@
+# Primes (old)
+
+This directory contains the oldest code I could find related to the primes project. The filesystem creation date for the oldest code file reads Dec06 '21, but the icon dates back to at least 29Apr '21, so I'm pretty sure these dates are unreliable. The oldest photo I have of this project dates all the way back to 1Nov '20, a photo of my screen with a console app in the usual green on black colors. :) On the output, one can read 'Rate of 525 numbers checked per second.' Amazing how far we have gotten since then.
