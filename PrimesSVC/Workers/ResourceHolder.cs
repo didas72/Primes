@@ -33,7 +33,7 @@ namespace Primes.SVC
                     return true;
                 }
 
-                if (maxResMem > 0) //must implement partial deserialization first
+                if (maxResMem > 0)
                 {
                     FileStream fs = File.OpenRead(kprfPath);
                     file = KnownPrimesResourceFile.Deserialize(fs, maxResMem);

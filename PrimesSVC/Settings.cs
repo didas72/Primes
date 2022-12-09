@@ -32,6 +32,9 @@ namespace Primes.SVC
 
         public static bool InitSettings_WinReg()
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                throw new PlatformNotSupportedException("Registry settings are only available on Windows.");
+
             try
             {
                 RegistryKey softKey = Registry.CurrentUser.OpenSubKey("SOFTWARE", true);

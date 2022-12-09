@@ -30,24 +30,35 @@ namespace Primes.SVC
             {
                 string filePath = Path.Combine(Globals.homeDir, "serverCfg.cfg");
                 string idPath = Path.Combine(Globals.homeDir, "clientId.cfg");
+                string[] lines;
 
-                string[] lines = File.ReadAllLines(filePath);
-
-                for (int i = 0; i < lines.Length; i++)
+                if (File.Exists(filePath))
                 {
-                    if (string.IsNullOrWhiteSpace(lines[i])) continue;
-                    lines[i] = lines[i].Trim();
-                    if (lines[i].StartsWith("//")) continue;
+                    lines = File.ReadAllLines(filePath);
 
-                    if (lines[i].StartsWith("serverIp="))
-                        serverIP = lines[i][9..];
-                    else if (lines[i].StartsWith("serverPort="))
-                        serverPort = ushort.Parse(lines[i][11..]);
-                    else continue;
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        if (string.IsNullOrWhiteSpace(lines[i])) continue;
+                        lines[i] = lines[i].Trim();
+                        if (lines[i].StartsWith("//")) continue;
+
+                        if (lines[i].StartsWith("serverIp="))
+                            serverIP = lines[i][9..];
+                        else if (lines[i].StartsWith("serverPort="))
+                            if (!ushort.TryParse(lines[i][11..], out serverPort))
+                                throw new Exception("Invalid port value syntax.");
+                        else continue;
+                    }
+
+                    if (serverPort < 1024) throw new Exception("Invalid/no port was set.");
+                    if (string.IsNullOrEmpty(serverIP)) throw new Exception("IP was not set.");
                 }
-
-                if (serverPort < 1024) throw new Exception("Port was not set.");
-                if (string.IsNullOrEmpty(serverIP)) throw new Exception("IP was not set.");
+                else
+                {
+                    serverPort = 13031;
+                    serverIP = "127.0.0.1";
+                    File.WriteAllText(filePath, "serverIp=127.0.0.1\nserverPort=13031");
+                }
 
                 if (File.Exists(idPath))
                 {
