@@ -629,6 +629,8 @@ namespace Primes.Common.Files
 
                         if (offset > maxOff) WriteAbsolute(buffer[head-1]);
                         else WriteOffset((ushort)offset);
+
+                        lastWritten = buffer[head];
                     }
 
                     BaseStream.Flush();
