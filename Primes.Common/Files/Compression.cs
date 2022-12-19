@@ -497,6 +497,29 @@ namespace Primes.Common.Files
 
                     return read;
                 }
+                /// <summary>
+                /// Seeks to end and reads last value.
+                /// </summary>
+                /// <returns></returns>
+                public ulong ReadToLast()
+                {
+                    ushort offset;
+
+                    if (lastRead == ulong.MaxValue)
+                        lastRead = ReadAbsolute();
+
+                    while (BaseStream.Position < BaseStream.Length)
+                    {
+                        offset = ReadOffset();
+
+                        if (offset == 0)
+                            lastRead = ReadAbsolute();
+                        else
+                            lastRead += offset;
+                    }
+
+                    return lastRead;
+                }
 
 
 
@@ -610,6 +633,11 @@ namespace Primes.Common.Files
 
                     BaseStream.Flush();
                 }
+                /// <summary>
+                /// Sets last number written to stream, to allow for resuming of compression.
+                /// </summary>
+                /// <param name="last"></param>
+                public void SetLast(ulong last) => lastWritten = last;
 
 
 
