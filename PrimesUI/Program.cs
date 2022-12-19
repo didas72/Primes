@@ -139,7 +139,6 @@ namespace Primes.UI
             else
                 OpenPopups.Peek().Update(Vector2i.Zero);
         }
-
         private static void Draw()
         {
             foreach (IRenderable rend in UI)

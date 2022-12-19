@@ -36,7 +36,6 @@ namespace Primes.UI
 
 
 
-        //TODO: Make Open generic here and free code from Program.cs
         public static bool Open(string path)
         {
             if (Path.GetExtension(path).ToLowerInvariant() == ".rsrc")
@@ -73,14 +72,14 @@ namespace Primes.UI
         public static void SwitchView()
         {
             if (currentJob == null && currentResource == null)
-                Program.PopupErrorMessage("No files open.");
+            { Program.PopupErrorMessage("No file open."); return; }
 
             BuildContentText(!currentViewBinary);
         }
         public static void Find()
         {
             if (currentJob == null && currentResource == null)
-                Program.PopupErrorMessage("No files open.");
+            { Program.PopupErrorMessage("No file open."); return; }
 
             Button btn; InputField inp;
             Holder pop = new(new(250, 230));
@@ -100,8 +99,6 @@ namespace Primes.UI
                 Program.PopupErrorMessage("Provided index was in bad format.");
                 return;
             }
-
-            //find
 
             ulong[] pr = currentViewResource ? currentResource.Primes : currentJob.Primes.ToArray();
 
@@ -128,7 +125,7 @@ namespace Primes.UI
         public static void GoTo()
         {
             if (currentJob == null && currentResource == null)
-                Program.PopupErrorMessage("No files open.");
+            { Program.PopupErrorMessage("No file open."); return; }
 
             Button btn; InputField inp;
             Holder pop = new(new(250, 230));
@@ -224,9 +221,18 @@ namespace Primes.UI
             //TODO:
             throw new NotImplementedException();
         }
+        private static void OnExportChoice(object sender, int opt)
+        {
 
 
-        
+            if (opt == 1)
+                return; //ExportCSV(); //TODO: Save file popup (callback should call ExportCSV with proper arguments)
+            else if (opt == 2)
+                return; //ExportTxt(); //TODO: Save file popup (callback should call ExportTxt with proper arguments)
+        }
+
+
+
         private static bool OpenJob(string path)
         {
             try
@@ -255,14 +261,7 @@ namespace Primes.UI
         }
 
 
-
-        private static void OnExportChoice(object sender, int opt)
-        {
-            if (opt == 1)
-                return; //ExportCSV(); //TODO: Save file popup (callback should call ExportCSV with proper arguments)
-            else if (opt == 2)
-                return; //ExportTxt(); //TODO: Save file popup (callback should call ExportTxt with proper arguments)
-        }
+        
         private static void ExportCSV(string path)
         {
             FileStream fs = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.None);
