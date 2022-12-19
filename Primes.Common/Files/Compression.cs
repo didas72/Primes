@@ -576,6 +576,8 @@ namespace Primes.Common.Files
                         if (offset > maxOff) WriteAbsolute(value);
                         else WriteOffset((ushort)offset);
                     }
+
+                    lastWritten = value;
                     
                     BaseStream.Flush();
                 }
@@ -591,7 +593,7 @@ namespace Primes.Common.Files
                 {
                     if (buffer == null) throw new ArgumentNullException(nameof(buffer));
                     if (index < 0 || index >= buffer.Length) throw new ArgumentOutOfRangeException(nameof(index));
-                    if (count < 0 || count + index >= buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
+                    if (count < 0 || count + index > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
 
                     int head = index; ulong offset;
 

@@ -661,6 +661,17 @@ namespace Primes.Common.Files
 
 
 
+        public static KnownPrimesResourceFile Peekv1_2_0(Stream stream, out int primesInFile)
+        {
+            byte[] buff = new byte[5];
+            stream.Read(buff, 0, 5);
+            primesInFile = BitConverter.ToInt32(buff, 1);
+
+            return new KnownPrimesResourceFile(new(1,2,0), new KnownPrimesResourceFile.Comp(buff[0]), null);
+        }
+
+
+
         private static ulong[] GetRawPrimes(byte[] bytes)
         {
             if (bytes.Length % 8 != 0)

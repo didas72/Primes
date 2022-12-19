@@ -71,7 +71,7 @@ namespace Primes.Common.Files
         /// <summary>
         /// Reads a <see cref="KnownPrimesResourceFile"/> from a file.
         /// </summary>
-        /// <param name="path">Path of the file to read from.</param>
+        /// <param name="stream">Stream to read from.</param>
         /// <returns>Deserialized <see cref="KnownPrimesResourceFile"/></returns>
         /// <exception cref="IncompatibleVersionException"></exception>
         public static KnownPrimesResourceFile Deserialize(Stream stream)
@@ -109,6 +109,13 @@ namespace Primes.Common.Files
 
             return file;
         }
+        /// <summary>
+        /// Reads a <see cref="KnownPrimesResourceFile"/> from a file.
+        /// </summary>
+        /// <param name="stream">Stream to read from.</param>
+        /// <param name="maxBytes">Maximum size in bytes the deserialized primes can occupy.</param>
+        /// <returns>Deserialized <see cref="KnownPrimesResourceFile"/></returns>
+        /// <exception cref="IncompatibleVersionException"></exception>
         public static KnownPrimesResourceFile Deserialize(Stream stream, int maxBytes)
         {
             KnownPrimesResourceFile file;
@@ -157,6 +164,29 @@ namespace Primes.Common.Files
                     File.WriteAllBytes(path, bytes);
                 }
             }
+        }
+        public static KnownPrimesResourceFile Peek(Stream stream, out int primesInFile)
+        {
+            KnownPrimesResourceFile file;
+
+            byte[] verB = new byte[3];
+            stream.Read(verB, 0, 3);
+
+            Version ver = new(verB[0], verB[1], verB[2]);
+
+            if (!ver.IsCompatible())
+            {
+                throw new IncompatibleVersionException($"Attempted to deserialize known primes resource of version {ver} but no deserialization method was implemented for such version.");
+            }
+            else
+            {
+                if (ver.IsEqual(new Version(1, 2, 0)))
+                    file = KnownPrimesResourceFileSerializer.Peekv1_2_0(stream, out primesInFile);
+                else
+                    throw new IncompatibleVersionException($"Attempted to peek known primes resource of version {ver} but no peeking method was implemented for such version.");
+            }
+
+            return file;
         }
 
 
