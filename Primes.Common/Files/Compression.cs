@@ -625,12 +625,12 @@ namespace Primes.Common.Files
 
                     while (head < count)
                     {
-                        offset = buffer[head++] - lastWritten;
+                        offset = buffer[head] - lastWritten;
 
-                        if (offset > maxOff) WriteAbsolute(buffer[head-1]);
+                        if (offset > maxOff) WriteAbsolute(buffer[head]);
                         else WriteOffset((ushort)offset);
 
-                        lastWritten = buffer[head];
+                        lastWritten = buffer[head++];
                     }
 
                     BaseStream.Flush();
