@@ -5,6 +5,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Linq;
 
 using DidasUtils;
 using DidasUtils.Logging;
@@ -324,27 +325,11 @@ namespace JobManagement
         }
         public static void Temporary()
         {
-            string srcPath = "D:\\Primes\\working\\rejects", tgtPath = "D:\\Primes\\working\\redo";
-
-            byte[] buff = new byte[24];
-            byte[] zeros = new byte[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-            string[] files = Directory.GetFiles(srcPath, "*.rejected");
-
-            Console.WriteLine($"Resetting {files.Length} files.");
-
-            foreach (string s in files)
+            for (int i = 0; i < 100; i++)
             {
-                FileStream fs = File.OpenRead(s);
-                FileStream os = File.OpenWrite(Path.Combine(tgtPath, Path.GetFileNameWithoutExtension(s)));
-
-                fs.Read(buff, 0, 24);
-                os.Write(buff, 0, 24);
-                os.Write(zeros, 0, 8);
-
-                fs.Dispose();
-                os.Flush();
-                os.Dispose();
+                ulong start = 10000000ul * (ulong)i;
+                PrimeJob job = new(PrimeJob.Version.Latest, PrimeJob.Comp.Default, 1, start, 10000);
+                PrimeJob.Serialize(job, $"D:\\Documents\\primes\\jobs\\{start}.primejob");
             }
         }
 

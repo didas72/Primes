@@ -14,14 +14,14 @@ namespace Primes.Common
 		/// </summary>
 		/// <param name="number">The number to be checked.</param>
 		/// <returns>True if the number is prime, false otherwise.</returns>
-		public static bool IsPrime(ulong number) => IsPrime(number, 5, out _);
+		public static bool IsPrime(ulong number) => IsPrime(number, 3, out _);
 		/// <summary>
 		/// Checks if a number is prime or not, using PeakRead's method.
 		/// </summary>
 		/// <param name="number">The number to be checked.</param>
 		/// <param name="divider">The divider of the number checked if it is not prime, 0 otherwise.</param>
 		/// <returns>True if the number is prime, false otherwise.</returns>
-		public static bool IsPrime(ulong number, out ulong divider) => IsPrime(number, 5, out divider);
+		public static bool IsPrime(ulong number, out ulong divider) => IsPrime(number, 3, out divider);
 		/// <summary>
 		/// Checks if a number is prime or not, using PeakRead's method.
 		/// </summary>
@@ -52,7 +52,7 @@ namespace Primes.Common
 				return false;
 			}
 
-			current = Math.Clamp(current, 5, ulong.MaxValue);
+			current = Math.Clamp(current, 3, ulong.MaxValue);
 			ulong sqrt = UlongSqrtHigh(number);
 
 			while (current <= sqrt)
@@ -87,7 +87,7 @@ namespace Primes.Common
 				return false;
 
 			int i = 0;
-			ulong current = 5, sqrt = UlongSqrtHigh(number);
+			ulong current = 3, sqrt = UlongSqrtHigh(number);
 
 			while (current < sqrt)
 			{

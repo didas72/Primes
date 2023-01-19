@@ -286,11 +286,11 @@ namespace Primes.Exec
         }
         private static bool LoadResources()
         {
-            string knwonPrimesFilePath = Path.Combine(resourcesPath, "knownPrimes.rsrc");
+            string knownPrimesFilePath = Path.Combine(resourcesPath, "knownPrimes.rsrc");
 
             try
             {
-                if (!File.Exists(knwonPrimesFilePath))
+                if (!File.Exists(knownPrimesFilePath))
                 {
                     LogExtension.LogEvent(Log.EventType.Warning, "No knwon primes resource file found, skipping.", "ResourceLoading", false);
 
@@ -306,7 +306,9 @@ namespace Primes.Exec
 
             try
             {
-                KnownPrimesResourceFile file = KnownPrimesResourceFile.Deserialize(knwonPrimesFilePath);
+                FileStream fs = File.OpenRead(knownPrimesFilePath);
+                KnownPrimesResourceFile file = KnownPrimesResourceFile.Deserialize(fs);
+                fs.Dispose();
 
                 knowPrimes = file.Primes;
 

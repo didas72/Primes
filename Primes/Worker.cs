@@ -82,7 +82,7 @@ namespace Primes.Exec
 
 
                     if (Program.resourcesLoaded)
-                        result = PrimesMath.IsPrime(current, ref Program.knowPrimes);
+                        result = PrimesMath.IsPrime(current, Program.knowPrimes);
                     else
                         result = PrimesMath.IsPrime(current);
 
