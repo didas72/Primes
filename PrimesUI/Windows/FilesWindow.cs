@@ -14,10 +14,6 @@ namespace Primes.UI.Windows
 {
     internal class FilesWindow : BaseWindow
     {
-
-
-
-
         public FilesWindow()
         {
             Button btn; TextBox txtBox; TextList lst;
@@ -124,19 +120,17 @@ namespace Primes.UI.Windows
             txt.Text = path;
             lst.Lines.Clear();
 
+            lst.Scroll = 0;
+
             if (path == string.Empty) //show drive list
             {
                 foreach (string d in Environment.GetLogicalDrives())
-                {
                     lst.Lines.Add(">" + d);
-                }
             }
             else
             {
                 string[] subDirs = Directory.GetDirectories(path);
                 string[] files = Directory.GetFiles(path, filter);
-
-                lst.Scroll = 0;
 
                 foreach (string dir in subDirs) //diff appearance for folders
                     lst.Lines.Add(">" + Path.GetFileName(dir));
