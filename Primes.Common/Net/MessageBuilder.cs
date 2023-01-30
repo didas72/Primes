@@ -156,7 +156,7 @@ namespace Primes.Common.Net
                         break;
 
                     case 1:
-                        value = Encoding.UTF8.GetString(msg, head, msg.Length - head);
+                        value = valueLength == 0 ? null : Encoding.UTF8.GetString(msg, head, msg.Length - head);
                         break;
                 }
             }

@@ -170,7 +170,8 @@ namespace Primes.SVC
         }
         private static bool GetOnlineJobs()
         {
-            Scheduler.DisableBatchGetRetry();//this will kill the timer, so there are never two running instances of this
+            Scheduler.DisableBatchGetRetry();
+            //kill the timer so there are never two running instances of this
             //plus when it is brought back the timer will have reset
 
             if (!BatchManager.IsServerAccessible())

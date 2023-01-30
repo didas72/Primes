@@ -14,9 +14,11 @@ namespace BatchServer
         private readonly string wrappedFilePath;
         private readonly string lockPath;
         private int opCount; //keeps track of how many operations have occurred, once a certain value has been reached, update file (reduces file IO)
+        private uint highestAssignedID; //cannot be -1, initialized to 0
 
         private readonly List<Client> clients;
         private readonly List<Batch> batches;
+        private readonly Queue<Action> pendingActions;
 
 
 
@@ -28,10 +30,11 @@ namespace BatchServer
         //file structure
         /* 
          * 1) "CLIENTS"
-         * 2) clients, table with (uint)clientId, (List<uint>)assignedBatches, (long)lastAccess (for expiring), (long)uniqueId (for log)
+         * 2) clients, table with (uint)clientId, (List<uint>)assignedBatches, (long)lastAccess (for expiring)
          * 3) "BATCHES"
          * 4) batches, table with (uint)batchNum, (byte)status, (long)lastAssigned (or -1)
          * 5) "END"
+         * 6) (uint) highestAssignedID, always increment assigned IDs, to avoid reusing IDs and having old users return nad interfere with new users
          * 
          * Notes: clients is the main table, in case of any conflicts, clients retains priority
          *        clients should have their own log, which keeps track of access DateTimes, IPs, operations and any other significant event
@@ -43,6 +46,7 @@ namespace BatchServer
         {
             clients = new();
             batches = new();
+            pendingActions = new();
 
             opCount = 0;
             MaxAssignedBatches = maxAssignedBatches;
@@ -64,23 +68,24 @@ namespace BatchServer
             File.Create(lockPath).Close();
 
             if (!File.Exists(filePath)) //fresh
-                File.WriteAllText(filePath, "CLIENTS\nBATCHES\nEND");
+                File.WriteAllText(filePath, "CLIENTS\nBATCHES\nEND\n0");
 
             DeserializeFile(); //first time
         }
 
 
 
-        public bool ValidateClientId(uint clientId) => clientId != 0 && clients.Any((Client cli) => cli.clientId == clientId);
+        public bool ExistsClientId(uint clientId) => clientId != 0 && clients.Any((Client cli) => cli.clientId == clientId);
         //0 if none
-        public uint GetNewClientId()
+        public uint PeekNewClientId()
         {
-            uint lowest = 0;
-
-            foreach (Client cli in clients)
-                if (cli.clientId > lowest) lowest = cli.clientId;
-
-            return ++lowest;
+            return highestAssignedID + 1;
+        }
+        //ignore safety check, done externally
+        public void AddNewClient()
+        {
+            Client cli = new(++highestAssignedID, new(), DateTime.Now.Ticks);
+            clients.Add(cli);
         }
         //ignore safety check, done externally
         public bool BatchLimitReached(uint clientId) => clients.First((Client c) => c.clientId == clientId).assignedBatches.Count >= MaxAssignedBatches;
@@ -110,6 +115,22 @@ namespace BatchServer
 
 
 
+        public void AddPending(Action act)
+        {
+            pendingActions.Enqueue(act);
+        }
+        public void ApplyAllPending()
+        {
+            while (pendingActions.Count != 0)
+                pendingActions.Dequeue().Invoke();
+        }
+        public void DiscardAllPending()
+        {
+            pendingActions.Clear();
+        }
+
+
+
         private void CountOp()
         {
             if (++opCount >= MaxDesyncOps)
@@ -131,7 +152,7 @@ namespace BatchServer
             FileStream fs = File.OpenRead(wrappedFilePath);
             StreamReader reader = new(fs);
 
-            string line = string.Empty;
+            string line;
             int stage = 0;
 
             while (!reader.EndOfStream)
@@ -151,9 +172,16 @@ namespace BatchServer
                         break;
 
                     case 2:
-                        if (line == "END") goto DeserializeFile_end;
+                        if (line == "END") stage = 3;
                         else batches.Add(Batch.FromString(line));
                         break;
+
+                    case 3:
+                        if (!string.IsNullOrWhiteSpace(line))
+                            break;
+                        highestAssignedID = uint.Parse(line);
+                        stage = 99;
+                        goto DeserializeFile_end;
                 }
             }
 
@@ -161,7 +189,7 @@ namespace BatchServer
 
             reader.Close();
 
-            if (line != "END") throw new Exception("Client data is corrupted.");
+            if (stage != 99) throw new Exception("Client data is corrupted.");
         }
         private void SerializeFile()
         {
@@ -173,6 +201,7 @@ namespace BatchServer
             writer.WriteLine("BATHCES");
             foreach (Batch b in batches) writer.WriteLine(b.ToString());
             writer.WriteLine("END");
+            writer.WriteLine(highestAssignedID.ToString());
 
             writer.Flush();
             writer.Close();
@@ -248,17 +277,15 @@ namespace BatchServer
             public uint clientId;
             public List<uint> assignedBatches;
             public long lastAccess;
-            public long uniqueId;
             public DateTime LastAccessTime { get => DateTime.FromBinary(lastAccess); set => lastAccess = value.ToBinary(); }
 
 
 
-            public Client(uint clientId, List<uint> assignedBatches, long lastAccess, long uniqueId)
+            public Client(uint clientId, List<uint> assignedBatches, long lastAccess)
             {
                 this.clientId = clientId;
                 this.assignedBatches = assignedBatches;
                 this.lastAccess = lastAccess;
-                this.uniqueId = uniqueId;
             }
 
 
@@ -267,7 +294,7 @@ namespace BatchServer
             {
                 //check ToString for format
                 string[] parts = source.Split(';');
-                if (parts.Length != 4) throw new FormatException();
+                if (parts.Length != 3) throw new FormatException();
 
                 uint clientId = uint.Parse(parts[0]);
 
@@ -276,9 +303,8 @@ namespace BatchServer
                     assignedBatches.Add(uint.Parse(subPts[i]));
 
                 long lastAccess = long.Parse(parts[2]);
-                long uniqueId = long.Parse(parts[3]);
 
-                return new(clientId, assignedBatches, lastAccess, uniqueId);
+                return new(clientId, assignedBatches, lastAccess);
             }
             public override string ToString()
             {
@@ -287,7 +313,7 @@ namespace BatchServer
                 foreach (uint assgn in assignedBatches)
                     ret += $"{assgn},";
 
-                return ret.TrimEnd(',') + $";{lastAccess};{uniqueId}";
+                return ret.TrimEnd(',') + $";{lastAccess}";
             }
         }
         private class Batch

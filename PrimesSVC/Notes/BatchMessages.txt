@@ -22,7 +22,7 @@ Message structure, spaces as dividers:
 -Target (Eg 'Batch_status') (<target length> lds)
 -Value length (int32, 0+)
 -Value type (uint8, 0 = binary, 1 = string; exclude if Value length = 0)
--Value (Eg 'zero_avail' as an error code or 'get' as a status, formatted as specified in value type, exclude if Value length = 0)
+-Value (Eg 'get' as a status, formatted as specified in value type, exclude if Value length = 0)
 
 Requests (no target):
 -Intent 'intent'
