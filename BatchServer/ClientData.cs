@@ -190,7 +190,7 @@ namespace BatchServer
                         break;
 
                     case 3:
-                        if (!string.IsNullOrWhiteSpace(line))
+                        if (string.IsNullOrWhiteSpace(line))
                             break;
                         highestAssignedID = uint.Parse(line);
                         stage = 99;
@@ -211,7 +211,7 @@ namespace BatchServer
 
             writer.WriteLine("CLIENTS");
             foreach (Client cli in clients) writer.WriteLine(cli.ToString());
-            writer.WriteLine("BATHCES");
+            writer.WriteLine("BATCHES");
             foreach (Batch b in batches) writer.WriteLine(b.ToString());
             writer.WriteLine("END");
             writer.WriteLine(highestAssignedID.ToString());

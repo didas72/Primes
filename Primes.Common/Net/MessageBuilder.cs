@@ -128,7 +128,7 @@ namespace Primes.Common.Net
 
 
 
-        public static bool ReceiveMessage(NetworkStream ns, out byte[] message, TimeSpan timeout = new TimeSpan())
+        public static bool ReceiveMessage(NetworkStream ns, out byte[] message, TimeSpan timeout)
         {
             message = SegmentedData.ReadFromSocket(ns, 4096, timeout);
             return message.Length != 0;

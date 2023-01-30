@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Threading;
 
 using DidasUtils;
 using DidasUtils.Logging;
@@ -22,7 +23,12 @@ namespace BatchServer
 
             Log.LogEvent("Server started.", "Main");
 
-            //TODO: execution loop, probably will join the control listener or something similar
+            //TODO: Change execution loop to instead join the control listener when done
+            while (true)
+            {
+                if (Console.KeyAvailable) break;
+                Thread.Sleep(10);
+            }
 
             Log.LogEvent("Server stopping...", "Main");
             StopServer();

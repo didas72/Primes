@@ -325,7 +325,61 @@ namespace JobManagement
         }
         public static void Temporary()
         {
-            
+            Console.WriteLine("Sleeping 2s...");
+            Thread.Sleep(2000);
+            Console.WriteLine("Starting...");
+
+            uint clientId = 0;
+            TcpClient cli = new();
+
+            try
+            {
+                cli.Connect("127.0.0.1", 13032);
+                if (!cli.Connected) throw new Exception("Failed connection");
+                Socket soc = cli.Client;
+                NetworkStream ns = cli.GetStream();
+
+                if (!MessageBuilder.ReceiveMessage(ns, out byte[] msg, TimeSpan.FromSeconds(1))) throw new Exception("Failed to get intent request message.");
+                MessageBuilder.DeserializeMessage(msg, out string msgType, out string tgt, out object value);
+                if (!MessageBuilder.ValidateRequestMessage(msgType, tgt, value)) throw new Exception("Unexpected");
+                if ((string)value != "intent") throw new Exception("Unexpcted");
+
+                MessageBuilder.SendMessage(MessageBuilder.Message("ret", string.Empty, $"get;{clientId}"), ns);
+
+                if (!MessageBuilder.ReceiveMessage(ns, out msg, TimeSpan.FromSeconds(1))) throw new Exception("Failed to get server response.");
+                MessageBuilder.DeserializeMessage(msg, out msgType, out tgt, out value); Console.WriteLine($"{msgType}:{tgt}:{value}");
+                if (MessageBuilder.ValidateErrorMessage(msgType, tgt, value))
+                {
+                    string[] parts = ((string)value).Split(";");
+                    if (parts.Length != 2) throw new Exception("Recieved an invalid error message.");
+                    clientId = uint.Parse(parts[0]);
+                    Console.WriteLine("New/Same id: " + clientId);
+                    Log.LogEvent($"Batch server denied new batch. Reason: {parts[1]}", "GetBatch");
+                    cli.Close();
+                    if (parts[1] == "NoAvailableBatches")
+                        throw new Exception("No avialable batches");
+                    else if (parts[1] == "LimitReached")
+                        throw new Exception("Limit reached");
+                    else
+                        throw new Exception("Unspecified");
+                }
+                else if (!MessageBuilder.ValidateDataMessage(msgType, tgt, value)) throw new Exception($"Unexpected1 {msgType}:{tgt}:{value==null}");
+
+                //generated batches are relatively small (~10k) so it's not too bad to use the normal messaging system
+                byte[] bytes = (byte[])value;
+                File.WriteAllBytes(Path.Combine(Environment.CurrentDirectory, "batchDownload.7z.tmp"), bytes); //extraction is done externally
+
+                MessageBuilder.SendMessage(MessageBuilder.Message("ack", string.Empty, string.Empty), ns);
+                ns.Close();
+                cli.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Failed to get new batch: " + e);
+                try { cli?.Close(); } catch { }
+            }
+
+            Console.WriteLine("Success?");
         }
 
 

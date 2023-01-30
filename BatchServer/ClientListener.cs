@@ -9,6 +9,7 @@ using DidasUtils;
 using DidasUtils.Logging;
 
 using Primes.Common.Net;
+using System.Security.Cryptography.X509Certificates;
 
 namespace BatchServer
 {
@@ -55,6 +56,8 @@ namespace BatchServer
         {
             listener.Start();
 
+            Console.WriteLine("Listener started"); //FIXME: Remove this
+
             while (running)
             {
                 while (!listener.Pending())
@@ -64,19 +67,22 @@ namespace BatchServer
                 }
 
                 TcpClient cli = listener.AcceptTcpClient();
-                Log.LogEvent($"Client connected from '{((IPEndPoint)cli.Client.RemoteEndPoint).Address}:{((IPEndPoint)cli.Client.RemoteEndPoint).Address}'.", "ClientListenLoop");
+                Log.LogEvent($"Client connected from '{((IPEndPoint)cli.Client.RemoteEndPoint).Address}:{((IPEndPoint)cli.Client.RemoteEndPoint).Port}'.", "ClientListenLoop");
 
                 try
                 {
                     //directly handle, no need to check for concurrent connections, clients can retry later
-
                     NetworkStream ns = cli.GetStream();
 
                     MessageBuilder.SendMessage(MessageBuilder.Message("req", string.Empty, "intent"), ns); //get intent
 
+                    Console.WriteLine("Requested intent"); //FIXME: Remove this
+
                     if (!MessageBuilder.ReceiveMessage(ns, out byte[] msg, timeout)) throw new Exception("Failed to get intent return message.");
                     MessageBuilder.DeserializeMessage(msg, out string msgType, out string tgt, out object value);
                     if (!MessageBuilder.ValidateReturnMessage(msgType, tgt, value)) throw new Exception(unexpectedMsgErr);
+
+                    Console.WriteLine("Valid return"); //FIXME: Remove this
 
                     string[] parts = ((string)value).Split(";");
                     if (parts.Length != 2) throw new Exception(invalidMsgErr);
@@ -104,6 +110,7 @@ namespace BatchServer
                     cli.Close();
 
                     Globals.clientData.ApplyAllPending();
+                    Log.LogEvent("Request served.", "ClientListenLoop");
                 }
                 catch (Exception e)
                 {
@@ -115,28 +122,37 @@ namespace BatchServer
 
         ClientListenLoop_end:
             listener.Stop();
+            Console.WriteLine("Listener stopped"); //FIXME: Remove this
         }
 
 
 
         private void HandleGet(NetworkStream ns, uint clientId)
         {
+            Console.WriteLine("Handling Get"); //FIXME: Remvoe this
+
             uint batch;
-            if (!Globals.clientData.ExistsClientId(clientId)) { 
+            if (!Globals.clientData.ExistsClientId(clientId)) {
                 clientId = Globals.clientData.PeekNewClientId();
                 Globals.clientData.AddPending(Globals.clientData.AddNewClient);
             }
-            else if (Globals.clientData.BatchLimitReached(clientId)) MessageBuilder.SendMessage(MessageBuilder.Message("err", null, "LimitReached"), ns);
-            if ((batch = Globals.clientData.FindFreeBatch()) == 0) MessageBuilder.SendMessage(MessageBuilder.Message("err", null, "NoAvailableBatches"), ns);
+            else if (Globals.clientData.BatchLimitReached(clientId)) { MessageBuilder.SendMessage(MessageBuilder.Message("err", null, $"{clientId};LimitReached"), ns); return; }
+            if ((batch = Globals.clientData.FindFreeBatch()) == 0) { MessageBuilder.SendMessage(MessageBuilder.Message("err", null, $"{clientId};NoAvailableBatches"), ns); return; }
 
             Globals.clientData.AddPending(() => Globals.clientData.AssignBatch(clientId, batch));
+
+            Console.WriteLine("Sending batch"); //FIXME: Remove this
 
             byte[] batchBytes = File.ReadAllBytes(Path.Combine(Globals.sourceDir, batch + ".7z"));
             MessageBuilder.SendMessage(MessageBuilder.Message("dta", null, batchBytes), ns);
 
-            if (!MessageBuilder.ReceiveMessage(ns, out byte[] replyBytes)) throw new Exception(noAckErr);
+            Console.WriteLine("Sent batch"); //FIXME: Remove this
+
+            if (!MessageBuilder.ReceiveMessage(ns, out byte[] replyBytes, TimeSpan.FromSeconds(1))) throw new Exception(noAckErr);
             MessageBuilder.DeserializeMessage(replyBytes, out string replyType, out string replyTarget, out object replyValue);
             if (!MessageBuilder.ValidateAckMessage(replyType, replyTarget, replyValue)) throw new Exception(unexpectedMsgErr);
+
+            Console.WriteLine("Valid ack"); //FIXME: Remove this
         }
         private void HandleRet(NetworkStream ns, uint clientId)
         {
