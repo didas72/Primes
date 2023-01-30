@@ -325,12 +325,7 @@ namespace JobManagement
         }
         public static void Temporary()
         {
-            for (int i = 0; i < 100; i++)
-            {
-                ulong start = 10000000ul * (ulong)i;
-                PrimeJob job = new(PrimeJob.Version.Latest, PrimeJob.Comp.Default, 1, start, 10000);
-                PrimeJob.Serialize(job, $"D:\\Documents\\primes\\jobs\\{start}.primejob");
-            }
+            
         }
 
 

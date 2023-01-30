@@ -74,7 +74,7 @@ namespace BatchServer
                     { "maxAssignedBatches", "5" },
                     { "maxDesyncOps", "10" },
                     { "batchExpireHours", "120" }, //5 days
-                    { "clientExpireHours", "720" }, //1 month
+                    { "clientExpireHours", "2160" }, //3 months
                     { "clientPort", "13032" },
                     { "controlPort", "13033" },
                     { "forceLoadCliDta", bool.FalseString }
@@ -168,7 +168,7 @@ namespace BatchServer
                 string filePath = Path.Combine(Globals.homeDir, "cliDta.dta");
 
                 Globals.clientData = new(filePath, Globals.settings.GetBool("forceLoadCliDta"), Globals.settings.GetInt("maxAssignedBatches"), Globals.settings.GetInt("maxDesyncOps"), TimeSpan.FromHours(Globals.settings.GetInt("batchExpireHours")), TimeSpan.FromHours(Globals.settings.GetInt("clientExpireHours")));
-                Globals.clientData.OnExpireElements(null, null);
+                Globals.clientData.OnTimedActions(null, null);
 
                 Globals.ExpireElementsTimer = new()
                 {
@@ -176,7 +176,7 @@ namespace BatchServer
                     Interval = 1000 * 60 * 60 * 3, //every 3 hours
                 };
 
-                Globals.ExpireElementsTimer.Elapsed += Globals.clientData.OnExpireElements;
+                Globals.ExpireElementsTimer.Elapsed += Globals.clientData.OnTimedActions;
                 Globals.ExpireElementsTimer.Start();
             }
             catch (Exception e)

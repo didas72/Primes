@@ -4,7 +4,6 @@ using System.Linq;
 using System.IO;
 using System.Timers;
 
-using DidasUtils;
 using DidasUtils.Logging;
 
 namespace BatchServer
@@ -19,6 +18,8 @@ namespace BatchServer
         private readonly List<Client> clients;
         private readonly List<Batch> batches;
         private readonly Queue<Action> pendingActions;
+
+        private readonly object _INTERNAL_LOCK_ = new();
 
 
 
@@ -84,8 +85,11 @@ namespace BatchServer
         //ignore safety check, done externally
         public void AddNewClient()
         {
-            Client cli = new(++highestAssignedID, new(), DateTime.Now.Ticks);
-            clients.Add(cli);
+            lock (_INTERNAL_LOCK_)
+            {
+                Client cli = new(++highestAssignedID, new(), DateTime.Now.Ticks);
+                clients.Add(cli);
+            }
         }
         //ignore safety check, done externally
         public bool BatchLimitReached(uint clientId) => clients.First((Client c) => c.clientId == clientId).assignedBatches.Count >= MaxAssignedBatches;
@@ -94,23 +98,29 @@ namespace BatchServer
         //ignore safety check, done externally
         public void AssignBatch(uint clientId, uint batchNum)
         {
-            Client cli = clients.First((Client c) => c.clientId == clientId);
-            Batch b = batches.First((Batch b) => b.batchNum == batchNum);
+            lock (_INTERNAL_LOCK_)
+            {
+                Client cli = clients.First((Client c) => c.clientId == clientId);
+                Batch b = batches.First((Batch b) => b.batchNum == batchNum);
 
-            cli.assignedBatches.Add(batchNum);
-            b.status = Batch.Assigned;
+                cli.assignedBatches.Add(batchNum);
+                b.status = Batch.Assigned;
 
-            CountOp();
+                CountOp();
+            }
         }
         //ignore safety check, done externally
         public bool BatchAssignedToClient(uint clientId, uint batchNum) => clients.First((Client c) => c.clientId == clientId).assignedBatches.Contains(batchNum);
         //ignore safety check, done externally
         public void MarkBatchAsComplete(uint clientId, uint batchNum)
         {
-            clients.First((Client c) => c.clientId == clientId).assignedBatches.Remove(batchNum);
-            batches.First((Batch b) => b.batchNum == batchNum).status = Batch.Complete;
+            lock (_INTERNAL_LOCK_)
+            {
+                clients.First((Client c) => c.clientId == clientId).assignedBatches.Remove(batchNum);
+                batches.First((Batch b) => b.batchNum == batchNum).status = Batch.Complete;
 
-            CountOp();
+                CountOp();
+            }
         }
 
 
@@ -121,8 +131,11 @@ namespace BatchServer
         }
         public void ApplyAllPending()
         {
-            while (pendingActions.Count != 0)
-                pendingActions.Dequeue().Invoke();
+            lock (_INTERNAL_LOCK_)
+            {
+                while (pendingActions.Count != 0)
+                    pendingActions.Dequeue().Invoke();
+            }
         }
         public void DiscardAllPending()
         {
@@ -217,55 +230,52 @@ namespace BatchServer
 
 
 
-        public void OnExpireElements(object sender, ElapsedEventArgs e)
+        public void OnTimedActions(object sender, ElapsedEventArgs e)
         {
-            ExpireClients();
-            ExpireBatches();
-            ForceSerialize();
+            lock (_INTERNAL_LOCK_)
+            {
+                ExpireClients();
+                ExpireBatches();
+                ForceSerialize();
+            }
         }
         private void ExpireClients()
         {
             Queue<Client> pendingRemoves = new();
 
-            lock (clients)
+            foreach (Client cli in clients)
             {
-                foreach (Client cli in clients)
+                if (cli.LastAccessTime - DateTime.Now > ClientExpireTime)
                 {
-                    if (cli.LastAccessTime - DateTime.Now > ClientExpireTime)
-                    {
-                        //expire batches first
-                        foreach (uint batch in cli.assignedBatches)
-                            batches.First((Batch b) => b.batchNum == batch).status = Batch.Free;
+                    //expire batches first
+                    foreach (uint batch in cli.assignedBatches)
+                        batches.First((Batch b) => b.batchNum == batch).status = Batch.Free;
 
-                        //queue remove client
-                        pendingRemoves.Enqueue(cli);
-                    }
+                    //queue remove client
+                    pendingRemoves.Enqueue(cli);
                 }
-
-                while (pendingRemoves.Count > 0) clients.Remove(pendingRemoves.Dequeue());
             }
+
+            while (pendingRemoves.Count > 0) clients.Remove(pendingRemoves.Dequeue());
         }
         private void ExpireBatches()
         {
-            lock (batches)
+            foreach (Batch b in batches)
             {
-                foreach (Batch b in batches)
+                if (b.LastAssignedTime - DateTime.Now > BatchExpireTime)
                 {
-                    if (b.LastAssignedTime - DateTime.Now > BatchExpireTime)
+                    //update clients first
+                    foreach (Client cli in clients)
                     {
-                        //update clients first
-                        foreach (Client cli in clients)
+                        if (cli.assignedBatches.Contains(b.batchNum))
                         {
-                            if (cli.assignedBatches.Contains(b.batchNum))
-                            {
-                                cli.assignedBatches.Remove(b.batchNum);
-                                break;
-                            }
+                            cli.assignedBatches.Remove(b.batchNum);
+                            break;
                         }
-
-                        //free batch
-                        b.status = Batch.Free;
                     }
+
+                    //free batch
+                    b.status = Batch.Free;
                 }
             }
         }
