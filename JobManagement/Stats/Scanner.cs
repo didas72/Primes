@@ -8,7 +8,7 @@ using DidasUtils.Files;
 
 using Primes.Common.Files;
 
-namespace JobManagement
+namespace JobManagement.Stats
 {
     public class Scanner
     {
@@ -111,7 +111,7 @@ namespace JobManagement
                     int assignedThread = 0;
                     int i = 0;
 
-                    while(true)
+                    while (true)
                     {
                         if (threads[i] == null)
                         {

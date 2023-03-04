@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace JobManagement
+namespace JobManagement.Stats
 {
     public class TwinPrimes
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace JobManagement
+namespace JobManagement.Stats
 {
     public class ScanResults
     {
@@ -55,13 +55,13 @@ namespace JobManagement
         }
 
 
-        public double AverageZippedSize() => (double)TotalZippedSize() / (double)ZippedSizes.Count;
-        public double AverageNCCSize() => (double)TotalNCCSize() / (double)NCCSizes.Count;
-        public double AverageRawSize() => (double)TotalRawSize() / (double)RawSizes.Count;
+        public double AverageZippedSize() => TotalZippedSize() / (double)ZippedSizes.Count;
+        public double AverageNCCSize() => TotalNCCSize() / (double)NCCSizes.Count;
+        public double AverageRawSize() => TotalRawSize() / (double)RawSizes.Count;
 
 
-        public double AverageZippedRatio() => (double)TotalZippedSize() / (double)TotalRawSize();
-        public double AverageNCCRatio() => (double)TotalNCCSize() / (double)TotalRawSize();
+        public double AverageZippedRatio() => TotalZippedSize() / (double)TotalRawSize();
+        public double AverageNCCRatio() => TotalNCCSize() / (double)TotalRawSize();
         #endregion
 
         #region Primes in files
@@ -75,7 +75,7 @@ namespace JobManagement
             return total;
         }
 
-        public double AveragePrimesPerFile() => (double)TotalPrimeCount() / (double)PrimesPerFiles.Count;
+        public double AveragePrimesPerFile() => TotalPrimeCount() / (double)PrimesPerFiles.Count;
         #endregion
 
         #region Primes statistics
@@ -88,7 +88,7 @@ namespace JobManagement
             for (int i = 0; i < PrimeDensities.Count; i++)
                 total += PrimeDensities[i].Density;
 
-            return total / (double)PrimeDensities.Count;
+            return total / PrimeDensities.Count;
         }
 
         /*public double AveragePrimeGap()
@@ -149,7 +149,7 @@ namespace JobManagement
 
             stream.Write(BitConverter.GetBytes(results.TwinPrimes.Count), 0, 4);
             foreach (TwinPrimes twins in results.TwinPrimes)
-                stream.Write(JobManagement.TwinPrimes.Serialize(twins), 0, 8);
+                stream.Write(Stats.TwinPrimes.Serialize(twins), 0, 8);
 
             Console.WriteLine($"{results.TwinPrimes.Count} {stream.Length}");
 
@@ -213,7 +213,7 @@ namespace JobManagement
             for (int i = 0; i < TwinPrimes.Length; i++)
             {
                 stream.Read(buffer, 0, buffer.Length);
-                TwinPrimes[i] = JobManagement.TwinPrimes.Deserialize(buffer);
+                TwinPrimes[i] = Stats.TwinPrimes.Deserialize(buffer);
             }
             ret.TwinPrimes = new List<TwinPrimes>(TwinPrimes);
 

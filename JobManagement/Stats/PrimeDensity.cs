@@ -1,13 +1,13 @@
 ﻿using System;
 
-namespace JobManagement
+namespace JobManagement.Stats
 {
     public class PrimeDensity
     {
         public ulong start;
         public ulong length;
         public ulong count;
-        public double Density { get { return (double)count / (double)length; } }
+        public double Density { get { return count / (double)length; } }
 
 
 

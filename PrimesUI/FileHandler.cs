@@ -292,6 +292,8 @@ namespace Primes.UI
 
 
         #region TextBuilding
+        //TODO: Below header add file stats (size and compression ratio maybe)
+
         private static void BuildTexts()
         {
             if (currentViewResource)
