@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Linq;
+using System.IO.Compression;
 
 using DidasUtils;
 using DidasUtils.Logging;
@@ -17,19 +18,21 @@ using Primes.Common;
 using Primes.Common.Files;
 using Primes.Common.Net;
 
+using JobManagement.Stats;
+
 namespace JobManagement
 {
     class Program
     {
         public const string basePath = "E:\\Documents\\primes\\working\\";
         public const ulong perJob = 10000000;
-        private static readonly bool useSendStreamData = false;
 
         public static List<string> prints = new();
-
         private static ScanResults results;
 
-        private readonly static Task todo = Task.Temporary;
+        private readonly static Task todo = Task.Temporary1;
+
+
 
         private static void Main()
         {
@@ -63,6 +66,14 @@ namespace JobManagement
                     TestCorrection();
                     break;
 
+                case Task.Temporary1:
+                    Temporary1();
+                    break;
+
+                case Task.Temporary2:
+                    Temporary2();
+                    break;
+
                 default:
                     Red("Invalid/Unhandled task");
                     break;
@@ -75,7 +86,7 @@ namespace JobManagement
         
 
 
-        public static void DoScan()
+        private static void DoScan()
         {
             DateTime start = DateTime.Now;
 
@@ -151,7 +162,7 @@ namespace JobManagement
             stream.Flush();
             stream.Close();
         }
-        public static void ProcessScanResults()
+        private static void ProcessScanResults()
         {
             string resultsPath = Path.Combine(basePath, "outp\\results.bin");
            
@@ -185,7 +196,7 @@ namespace JobManagement
 
             File.WriteAllText(Path.Combine(basePath, "outp\\densities.csv"), densityCSV.TrimEnd('\n').Replace(".", ","));
         }
-        public static void TestCorrection()
+        private static void TestCorrection()
         {
             FileStream r = File.OpenRead(Path.Combine(basePath, "rejects\\8030000000.primejob.rejected"));
             FileStream w = File.OpenWrite(Path.Combine(basePath, "rejects\\8030000000.primejob.rejected.fix"));
@@ -323,8 +334,9 @@ namespace JobManagement
 
             curr = test;
         }
-        public static void Temporary()
+        private static void Temporary()
         {
+
             Console.WriteLine("Sleeping 2s...");
             Thread.Sleep(2000);
             Console.WriteLine("Starting...");
@@ -380,6 +392,177 @@ namespace JobManagement
             }
 
             Console.WriteLine("Success?");
+        }
+        private static void Temporary1()
+        {
+            const float total = 406560454; //~387M (knownPrimes.rsrc)
+            const string src = "knownPrimes.rsrc";
+
+            //Benchmark builtin vs DidasUtils mapped 7z vs lz4
+            FileStream fs;
+            FileStream cs;
+            Stopwatch sw = new();
+
+            #region 7z
+            Console.WriteLine("DU 7z Fast");
+            sw.Start();
+            SevenZip.Compress7z(src, "TestRDM.7z1", 4, 1);
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.7z1").Length / total}");
+
+
+            Console.WriteLine("DU 7z Normal");
+            sw.Restart();
+            SevenZip.Compress7z(src, "TestRDM.7z5", 4, 5);
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.7z5").Length / total}");
+
+
+            Console.WriteLine("DU 7z Smallest size");
+            sw.Restart();
+            SevenZip.Compress7z(src, "TestRDM.7z9", 4, 9);
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.7z9").Length / total}");
+            #endregion
+
+            #region builtin
+            Console.WriteLine("Brotli Fast");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.brt0");
+            BrotliStream bs = new(cs, CompressionLevel.Fastest);
+            fs.CopyTo(bs);
+            bs.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.brt0").Length / total}");
+
+
+            Console.WriteLine("Brotli Normal");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.brt5");
+            bs = new(cs, CompressionLevel.Optimal);
+            fs.CopyTo(bs);
+            bs.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.brt5").Length / total}");
+
+
+            Console.WriteLine("Brotli Smallest size");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.brt9");
+            bs = new(cs, CompressionLevel.SmallestSize);
+            fs.CopyTo(bs);
+            bs.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.brt9").Length / total}");
+
+
+            Console.WriteLine("GZip Fastest");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.gz1");
+            GZipStream gs = new(cs, CompressionLevel.Fastest);
+            fs.CopyTo(gs);
+            gs.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.gz1").Length / total}");
+
+
+            Console.WriteLine("GZip Normal");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.gz5");
+            gs = new(cs, CompressionLevel.Optimal);
+            fs.CopyTo(gs);
+            gs.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.gz5").Length / total}");
+
+
+            Console.WriteLine("GZip Smallest size");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.gz9");
+            gs = new(cs, CompressionLevel.SmallestSize);
+            fs.CopyTo(gs);
+            gs.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.gz9").Length / total}");
+
+
+            Console.WriteLine("Deflate Fastest");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.df1");
+            DeflateStream ds = new(cs, CompressionLevel.Fastest);
+            fs.CopyTo(ds);
+            ds.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.df1").Length / total}");
+
+
+            Console.WriteLine("Deflate Normal");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.df5");
+            ds = new(cs, CompressionLevel.Fastest);
+            fs.CopyTo(ds);
+            ds.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.df5").Length / total}");
+
+
+            Console.WriteLine("Deflate Smallest size");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.df9");
+            ds = new(cs, CompressionLevel.Fastest);
+            fs.CopyTo(ds);
+            ds.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.df9").Length / total}");
+
+
+            Console.WriteLine("Zlib Fastest");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.zl1");
+            ZLibStream zs = new(cs, CompressionLevel.Fastest);
+            fs.CopyTo(zs);
+            zs.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.zl1").Length / total}");
+
+
+            Console.WriteLine("Zlib Normal");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.zl5");
+            zs = new(cs, CompressionLevel.Optimal);
+            fs.CopyTo(zs);
+            zs.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.zl5").Length / total}");
+
+
+            Console.WriteLine("Zlib Smallest size");
+            sw.Restart();
+            fs = File.OpenRead(src); cs = File.OpenWrite("TestRDM.zl9");
+            zs = new(cs, CompressionLevel.SmallestSize);
+            fs.CopyTo(zs);
+            zs.Dispose(); cs.Dispose(); fs.Dispose();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.zl9").Length / total}");
+            #endregion
+
+            #region Lz4
+            Console.WriteLine("Lz4 Normal");
+            sw.Restart();
+            Process.Start("inc/lz4.exe", $"{src} TestRDM.lz4").WaitForExit();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.lz4").Length / total}");
+
+            Console.WriteLine("Lz4 Smalles size");
+            sw.Restart();
+            Process.Start("inc/lz4.exe", $"-9 {src} TestRDM.lzh").WaitForExit();
+            sw.Stop();
+            Console.WriteLine($"T: {sw.Elapsed.TotalMilliseconds:F2}ms; R: {new FileInfo("TestRDM.lzh").Length / total}");
+            #endregion
+        }
+        private static void Temporary2()
+        {
+
         }
 
 
@@ -460,6 +643,7 @@ namespace JobManagement
         }
 
 
+#if false
 
         #region Benchmarking
         private static void BenchFuckingMarkAntS(ulong start, ulong end)
@@ -522,6 +706,20 @@ namespace JobManagement
 
             return false;
         }
+#endif
+
+        /* Primes mass storage format
+         * Objectives:
+         * - Forward/backward seeking
+         * - Fast seeking/searching
+         * - Decently fast access speeds
+         * - Decent compression ratio (<5%)
+         * 
+         * Compression:
+         * After testing it seems that LZMA -mx1 is the best option
+         * 
+         */
+
 
 
 
@@ -592,6 +790,8 @@ namespace JobManagement
             ProcessScanResults,
             GenerateBatches,
             Temporary,
+            Temporary1,
+            Temporary2,
             TestCorrection,
         }
     }

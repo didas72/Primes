@@ -22,4 +22,10 @@
     <ProjectReference Include="..\Primes.Common\Primes.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="inc\lz4.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
