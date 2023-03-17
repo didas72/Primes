@@ -30,7 +30,7 @@ namespace JobManagement
         public static List<string> prints = new();
         private static ScanResults results;
 
-        private readonly static Task todo = Task.Temporary1;
+        private readonly static Task todo = Task.Temporary2;
 
 
 
