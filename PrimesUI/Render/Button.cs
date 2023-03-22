@@ -29,7 +29,11 @@ namespace Primes.UI.Render
         {
             Text = text; FontSize = 20; Position = position; Size = size; TextColor = Color.WHITE; NormalColor = Color.GRAY; SelectedColor = Color.BLUE; 
         }
-        public Button(string text, int fontSize,Vector2i position, Vector2i size, Color textColor, Color normalColor, Color selectedColor)
+        public Button(string text, int fontSize, Vector2i position, Vector2i size)
+        {
+            Text = text; FontSize = fontSize; Position = position; Size = size; TextColor = Color.WHITE; NormalColor = Color.GRAY; SelectedColor = Color.BLUE;
+        }
+        public Button(string text, int fontSize, Vector2i position, Vector2i size, Color textColor, Color normalColor, Color selectedColor)
         {
             Text = text; FontSize = fontSize; Position = position; Size = size; TextColor = textColor; NormalColor = normalColor; SelectedColor = selectedColor;
         }

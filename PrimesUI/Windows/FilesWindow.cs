@@ -59,17 +59,19 @@ namespace Primes.UI.Windows
             PopupFilesOpen();
         }
 
-        private static void OnPopupFilesOpenPressed(string status, string path)
+        private static void OnPopupFilesOpenPressed(FileSelector.OpenStatus status, string path)
         {
-            if (status == "CANCEL") return;
+            Program.ClosePopup();
 
-            if (status == "INVALID")
+            if (status == FileSelector.OpenStatus.Cancel) return;
+
+            if (status == FileSelector.OpenStatus.Invalid)
             {
                 Program.PopupErrorMessage("Invalid path/file!");
                 return;
             }
 
-            if (status != "OK") throw new NotImplementedException();
+            if (status != FileSelector.OpenStatus.Ok) throw new NotImplementedException();
 
             if (!FileHandler.Open(path))
             {
@@ -92,21 +94,14 @@ namespace Primes.UI.Windows
 
             Program.ShowPopup(pop);
         }
-        private static void PopupOpenFile(string filter, Action<string, string> onClose)
+        private static void PopupOpenFile(string filter, Action<FileSelector.OpenStatus, string> onClose)
         {
-            Button btn; TextList lst; TextBox txt;
             Holder pop = new(new(200, 175));
-            pop.Add(new Panel(new(0, 0), new(400, 250), Background));
-            pop.Add(new TextBox("Select file to open:", new(10, 10), new(280, 20)));
-            pop.Add(txt = new TextBox("Path: ", new(40, 30), new(350, 20))); txt.Id_Name = "CURRENT_PATH";
-            pop.Add(btn = new Button("^", new(10, 30), new(20, 20))); btn.OnPressed += (object sender, EventArgs e) => OnPopupFileUpPressed(filter);
-            pop.Add(lst = TextList.CreateSelectable(new(10, 50), new(380, 175))); lst.Id_Name = "DIR_LISTING"; lst.OnSelected += (object sender, EventArgs e) => OnPopupFileSelectedPressed(filter);
-            pop.Add(btn = new Button("Cancel", new(180, 220), new(100, 20))); btn.OnPressed += (object sender, EventArgs e) => OnPopupFileCancelPressed(onClose);
-            pop.Add(btn = new Button("Open", new(290, 220), new(100, 20))); btn.OnPressed += (object sender, EventArgs e) => OnPopupFileOpenPressed(onClose);
+            pop.Add(new FileSelector(Vector2i.Zero, new(400, 250),
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                new string[] { filter, "*.*" }, onClose));
 
             Program.ShowPopup(pop);
-
-            FileOpenUpdate(filter, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
         }
 
 
@@ -143,65 +138,6 @@ namespace Primes.UI.Windows
 
 
         #region Popup button handles
-        private static void OnPopupFileOpenPressed(Action<string, string> onClose)
-        {
-            TextList lst = Program.GetOpenPopup().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
-            TextBox txt = Program.GetOpenPopup().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
-
-            try
-            {
-                string path = Path.Combine(txt.Text, lst.Lines[lst.Selected]);
-                Program.ClosePopup();
-                Log.LogEvent($"Selected path is {path}", "PopupFileOpenPressed");
-
-                if (!File.Exists(path))
-                {
-                    Log.LogEvent(Log.EventType.Error, "File does not exists.", "PopupFileOpenPressed");
-                    onClose("INVALID", string.Empty);
-                }
-                else
-                    onClose("OK", path);
-            }
-            catch (Exception e) { Log.LogException("Failed to open file.", "PopupFileOpenPressed", e); onClose("INVALID", string.Empty); }
-        }
-        private static void OnPopupFileCancelPressed(Action<string, string> onClose)
-        {
-            onClose("CANCEL", string.Empty);
-            Program.ClosePopup();
-        }
-        private static void OnPopupFileSelectedPressed(string filter)
-        {
-            TextList lst = Program.GetOpenPopup().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
-            TextBox txt = Program.GetOpenPopup().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
-
-            string path;
-            string file = lst.Lines[lst.Selected];
-
-            if (file.StartsWith('>')) //directory
-            {
-                path = Path.Combine(txt.Text, file.TrimStart('>'));
-                FileOpenUpdate(filter, path);
-            }
-
-            //do nothing if file
-        }
-        private static void OnPopupFileUpPressed(string filter)
-        {
-            TextBox txt = Program.GetOpenPopup().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
-
-            try
-            {
-                string path = Path.GetDirectoryName(txt.Text);
-                FileOpenUpdate(filter, path);
-            }
-            catch
-            {
-                FileOpenUpdate(filter, string.Empty);
-            }
-        }
-
-
-
         private static void OnPopupFilesOpenOpenJobPressed(object sender, EventArgs e)
         {
             Program.ClosePopup();

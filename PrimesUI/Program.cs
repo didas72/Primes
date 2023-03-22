@@ -25,6 +25,7 @@ namespace Primes.UI
         private static ControlWindow controlWindow;
         private static TestingWindow testingWindow;
         private static FilesWindow filesWindow;
+        private static SettingsWindow settingsWindow;
         #endregion
 
 
@@ -121,6 +122,7 @@ namespace Primes.UI
             controlWindow = new(); pageHld.Add(controlWindow.Window);
             testingWindow = new(); pageHld.Add(testingWindow.Window);
             filesWindow = new(); pageHld.Add(filesWindow.Window);
+            settingsWindow = new(); pageHld.Add(settingsWindow.Window);
 
             return true;
         }
