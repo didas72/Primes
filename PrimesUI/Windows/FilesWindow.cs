@@ -103,36 +103,6 @@ namespace Primes.UI.Windows
 
             Program.ShowPopup(pop);
         }
-
-
-
-
-        private static void FileOpenUpdate(string filter, string path)
-        {
-            TextList lst = Program.GetOpenPopup().Children.First((IRenderable rend) => rend.Id_Name == "DIR_LISTING") as TextList;
-            TextBox txt = Program.GetOpenPopup().Children.First((IRenderable rend) => rend.Id_Name == "CURRENT_PATH") as TextBox;
-
-            txt.Text = path;
-            lst.Lines.Clear();
-
-            lst.Scroll = 0;
-
-            if (path == string.Empty) //show drive list
-            {
-                foreach (string d in Environment.GetLogicalDrives())
-                    lst.Lines.Add(">" + d);
-            }
-            else
-            {
-                string[] subDirs = Directory.GetDirectories(path);
-                string[] files = Directory.GetFiles(path, filter);
-
-                foreach (string dir in subDirs) //diff appearance for folders
-                    lst.Lines.Add(">" + Path.GetFileName(dir));
-                foreach (string file in files)
-                    lst.Lines.Add(Path.GetFileName(file));
-            }
-        }
         #endregion
 
 

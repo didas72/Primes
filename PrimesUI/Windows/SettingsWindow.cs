@@ -19,9 +19,7 @@ namespace Primes.UI.Windows
     {
         public SettingsWindow()
         {
-            Window = new(Vector2i.Zero, "Settings") { Id_Name = "SETTINGS" };
-
-            Window.Add(new FileSelector(Vector2i.Zero, new(400, 250), Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), new string[] { "*.*", "*.primejob", "TumaComisola.*" }, null));
+            
         }
     }
 }

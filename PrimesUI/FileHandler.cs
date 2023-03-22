@@ -3,10 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Globalization;
-//using System.Windows.Forms;
-
-using Microsoft.Win32;
-using Microsoft.VisualBasic;
 
 using Raylib_cs;
 
@@ -293,7 +289,7 @@ namespace Primes.UI
 
         #region TextBuilding
         //TODO: Below header add file stats (size and compression ratio maybe)
-
+        //TODO: Partial loading (use streams)
         private static void BuildTexts()
         {
             if (currentViewResource)
