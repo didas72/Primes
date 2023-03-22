@@ -22,8 +22,7 @@ namespace Primes.UI
         private static bool currentViewBinary = false;
         private static bool currentViewResource = false;
 
-        private static PrimeJob currentJob;
-        private static KnownPrimesResourceFile currentResource;
+        private static Stream curStream;
 
 
 
@@ -32,18 +31,19 @@ namespace Primes.UI
 
 
 
-        public static bool Open(string path)
+        //TODO: Actually check for valid file and dump binary if invalid
+        public static bool OpenFromFile(string path)
         {
             if (Path.GetExtension(path).ToLowerInvariant() == ".rsrc")
-                return OpenResource(path);
+                return OpenResourceFromFile(path);
             else
-                return OpenJob(path);
+                return OpenJobFromFile(path);
         }
-        public static bool SaveJob(string path)
+        public static bool SaveJob(Stream output)
         {
             throw new NotImplementedException(); //TODO: Implement save job
         }
-        public static bool SaveResource(string path)
+        public static bool SaveResource(Stream output)
         {
             throw new NotImplementedException();  //TODO: Implement save resource
         }
@@ -52,25 +52,30 @@ namespace Primes.UI
 
         public static void CreateNewJob()
         {
-            currentJob = new PrimeJob(PrimeJob.Version.Latest, PrimeJob.Comp.Default, 0, 0, 0, 0, new());
+            //TODO: Ask to save first
+            curStream?.Dispose();
+            curStream = new MemoryStream();
             currentViewResource = false;
             BuildTexts();
         }
         public static void CreateNewResource()
         {
-            currentResource = new KnownPrimesResourceFile(KnownPrimesResourceFile.Version.Latest, KnownPrimesResourceFile.Comp.Default, Array.Empty<ulong>());
-            currentViewResource = true;
+            //TODO: Ask to save first
             throw new NotImplementedException(); //TODO: Limit resource loading and text building
+            curStream?.Dispose();
+            curStream = new MemoryStream(); 
+            currentViewResource = true;
         }
 
 
 
         public static void SwitchView()
         {
-            if (currentJob == null && currentResource == null)
+            if (curStream == null)
             { Program.PopupErrorMessage("No file open."); return; }
 
-            BuildContentText(!currentViewBinary);
+            currentViewBinary = !currentViewBinary;
+            BuildContentText();
         }
         public static void Find()
         {
@@ -229,7 +234,7 @@ namespace Primes.UI
 
 
 
-        private static bool OpenJob(string path)
+        private static bool OpenJobFromFile(string path)
         {
             try
             {
@@ -241,7 +246,7 @@ namespace Primes.UI
 
             return true;
         }
-        private static bool OpenResource(string path)
+        private static bool OpenResourceFromFile(string path)
         {
             try
             {
@@ -295,21 +300,21 @@ namespace Primes.UI
             if (currentViewResource)
             {
                 BuildResourceHeaderText();
-                BuildResourceContentText(false);
+                BuildResourceContentText();
             }
             else
             {
                 BuildJobHeaderText();
-                BuildJobContentText(false);
+                BuildJobContentText();
             }
         }
 
-        private static void BuildContentText(bool binaryView)
+        private static void BuildContentText()
         {
             if (currentViewResource)
-                BuildResourceContentText(binaryView);
+                BuildResourceContentText();
             else
-                BuildJobContentText(binaryView);
+                BuildJobContentText();
         }
 
         private static void BuildJobHeaderText()
@@ -328,13 +333,11 @@ namespace Primes.UI
             header.Lines.Add($"Count: {currentJob.Count} ({Utils.FormatNumber(currentJob.Count).Replace(".00", string.Empty)})");
             header.Lines.Add($"Progress: {currentJob.Progress} ({(currentJob.Progress * 100f / (float)currentJob.Count).ToString("F2").Replace(".00", string.Empty)}%)");
         }
-        private static void BuildJobContentText(bool binaryView)
+        private static void BuildJobContentText()
         {
-            currentViewBinary = binaryView;
-
             content.Lines.Clear();
 
-            if (binaryView)
+            if (currentViewBinary)
                 BuildJobBinaryContentText();
             else
                 BuildJobNormalContentText();
@@ -386,29 +389,22 @@ namespace Primes.UI
             else if (currentResource.FileVersion.Equals(new KnownPrimesResourceFile.Version(1, 2, 0)))
                 header.Lines.Add($"Compression: {currentResource.FileCompression}");
         }
-        private static void BuildResourceContentText(bool binaryView)
+        private static void BuildResourceContentText()
         {
-            currentViewBinary = binaryView;
-
             content.Lines.Clear();
 
-            if (binaryView)
+            if (currentViewBinary)
                 BuildResourceBinaryContentText();
             else
                 BuildResourceNormalContentText();
         }
         private static void BuildResourceBinaryContentText()
         {
-            currentViewBinary = false;
-
             throw new Exception("I guarantee you don't have RAM for this.");
         }
         private static void BuildResourceNormalContentText()
         {
-            for (int i = 0; i < currentResource.Primes.Length; i++)
-            {
-                content.Lines.Add($"{i:D4}: {currentResource.Primes[i]}");
-            }
+            throw new Exception("I guarantee you don't have RAM for this.");
         }
         #endregion
     }
