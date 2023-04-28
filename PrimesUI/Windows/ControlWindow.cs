@@ -236,7 +236,7 @@ namespace Primes.UI.Windows
         private bool PingService(TimeSpan timeout)
         {
             Stopwatch sw = Stopwatch.StartNew();
-            bool ret = SendAndAwaitMessage(MessageBuilder.Ping(), timeout, out byte[] _);
+            bool ret = SendAndAwaitMessage(MessageBuilder.BuildPingMessage(), timeout, out byte[] _);
             sw.Stop();
 
             PingText.Text = $"Ping: {sw.Elapsed.Milliseconds}ms";

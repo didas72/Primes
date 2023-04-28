@@ -24,13 +24,13 @@ namespace JobManagement
 {
     class Program
     {
-        public const string basePath = "E:\\Documents\\primes\\working\\";
+        public const string basePath = "D:\\Primes\\working\\";
         public const ulong perJob = 10000000;
 
         public static List<string> prints = new();
         private static ScanResults results;
 
-        private readonly static Task todo = Task.Temporary2;
+        private readonly static Task todo = Task.Temporary3;
 
 
 
@@ -72,6 +72,14 @@ namespace JobManagement
 
                 case Task.Temporary2:
                     Temporary2();
+                    break;
+
+                case Task.Temporary3:
+                    Temporary3();
+                    break;
+
+                case Task.Temporary4:
+                    Temporary4();
                     break;
 
                 default:
@@ -336,7 +344,6 @@ namespace JobManagement
         }
         private static void Temporary()
         {
-
             Console.WriteLine("Sleeping 2s...");
             Thread.Sleep(2000);
             Console.WriteLine("Starting...");
@@ -561,6 +568,35 @@ namespace JobManagement
             #endregion
         }
         private static void Temporary2()
+        {
+            FileStream fs = File.OpenRead(Path.Combine(basePath, "rsrc\\knownPrimes.rsrc"));
+            KnownPrimesResourceFile kprf = KnownPrimesResourceFile.Deserialize(fs);
+            fs.Dispose();
+
+            for (int i = 120000000; i < kprf.Primes.Length; i++)
+            {
+                if (!PrimesMath.IsPrime(kprf.Primes[i]))
+                {
+                    Red($"Not a prime: {kprf.Primes[i]} at {i}.");
+                    break;
+                }
+
+                if ((i % 1000000) == 0)
+                    Console.WriteLine($"{i/1000000}M/{kprf.Primes.Length/1000000}M ({(i * 100 / kprf.Primes.Length)}%)");
+            }
+        }
+        private static void Temporary3()
+        {
+            string path = Path.Combine(basePath, "redo_complete");
+
+            foreach(string folder in Directory.GetDirectories(path))
+            {
+                Console.WriteLine($"Checking folder {Path.GetFileName(folder)}...");
+                PrimeJob.CheckJobsInFolder(folder, out int good, out int bad);
+                Console.WriteLine($"Check complete. {good} good and {bad} bad.");
+            }
+        }
+        private static void Temporary4()
         {
 
         }
@@ -792,6 +828,8 @@ namespace JobManagement
             Temporary,
             Temporary1,
             Temporary2,
+            Temporary3,
+            Temporary4,
             TestCorrection,
         }
     }

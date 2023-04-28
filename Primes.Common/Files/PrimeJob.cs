@@ -667,7 +667,7 @@ namespace Primes.Common.Files
             /// <summary>
             /// Checks if and object is an equal version.
             /// </summary>
-            /// <param name="other"></param>
+            /// <param name="obj"></param>
             /// <returns></returns>
             public override bool Equals(object obj)
             {

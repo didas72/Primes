@@ -117,6 +117,7 @@ namespace Primes.SVC
             try
             {
                 cli.Connect(serverIP, serverPort);
+
                 if (!cli.Connected) throw new Exception(failedConnErr);
                 Socket soc = cli.Client;
                 NetworkStream ns = cli.GetStream();
@@ -236,7 +237,7 @@ namespace Primes.SVC
                 MessageBuilder.SendStreamData(fs, ns, timeout.Milliseconds);
                 fs.Close();
 
-                if (!MessageBuilder.ReceiveMessage(ns, out msg)) throw new Exception("Failed to get acknowledgement message.");
+                if (!MessageBuilder.ReceiveMessage(ns, out msg, timeout)) throw new Exception("Failed to get acknowledgement message.");
                 MessageBuilder.DeserializeMessage(msg, out msgType, out tgt, out value);
                 if (!MessageBuilder.ValidateAckMessage(msgType, tgt, value)) throw new Exception(unexpectedMsgErr);
 

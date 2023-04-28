@@ -50,9 +50,9 @@ namespace Primes.UI.Render
 
         public void Update(Vector2i localOffset)
         {
-            Vector2 mousePos = Raylib.GetMousePosition() - (Vector2)localOffset;
+            Vector2 mousePos = Raylib.GetMousePosition() - (Vector2)localOffset - (Vector2)Position;
             
-            if (mousePos.X > Position.x && mousePos.X < Position.x + Size.x && mousePos.Y > Position.y && mousePos.Y < Position.y + Size.y)
+            if (mousePos.X > 0 && mousePos.X < Size.x && mousePos.Y > 0 && mousePos.Y < Size.y)
             {
                 int scrollMult = (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? 20 : 1) * (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL) ? 50 : 1);
 
@@ -61,7 +61,7 @@ namespace Primes.UI.Render
 
                 if (AllowSelect)
                 {
-                    highlit = (int)Math.Round(mousePos.Y / FontSize) - 3 + Scroll;
+                    highlit = (int)Math.Round(mousePos.Y / FontSize) + Scroll;
 
                     if (Raylib.IsMouseButtonPressed(0))
                     {
@@ -70,7 +70,6 @@ namespace Primes.UI.Render
                             OnSelected?.Invoke(this, EventArgs.Empty);
                     }
                 } 
-            }
         }
         public void Render(Vector2i localOffset)
         {

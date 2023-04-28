@@ -77,10 +77,6 @@ namespace Primes.Common.Net
 
 
 
-        public static byte[] Ping() => Message("png", string.Empty, string.Empty);
-
-
-
         public static byte[] ResponseActionSuccess(string comment = "") => Message("ret", string.Empty, "ACTION_PASS:" + comment);
         public static byte[] ResponseActionFail(string comment = "") => Message("ret", string.Empty, "ACTION_FAIL:" + comment);
         public static byte[] ResponseActionInvalid(string comment = "") => Message("ret", string.Empty, "ACTION_NVAL:" + comment);
@@ -88,6 +84,18 @@ namespace Primes.Common.Net
 
         public static byte[] ResponseRequestSuccess(string comment = "") => Message("ret", string.Empty, "REQUEST_PASS:" + comment);
         public static byte[] ResponseRequestInvalid(string comment = "") => Message("ret", string.Empty, "REQUEST_NVAL:" + comment);
+
+
+
+        public static byte[] BuildReturnMessage(string value) => Message("ret", string.Empty, value);
+        public static byte[] BuildActionMessage(string value) => Message("run", string.Empty, value);
+        public static byte[] BuildRequestMessage(string value) => Message("req", string.Empty, value);
+        public static byte[] BuildErrorMessage(string value) => Message("err", string.Empty, value);
+        public static byte[] BuildDataMessage(string value) => Message("dta", string.Empty, value);
+        public static byte[] BuildDataMessage(byte[] value) => Message("dta", string.Empty, value);
+        public static byte[] BuildPingMessage() => Message("png", string.Empty, string.Empty);
+        public static byte[] BuildAckMessage() => Message("ack", string.Empty, string.Empty);
+
 
 
         public static bool ValidateReturnMessage(string messageType, string target, object value)
@@ -295,6 +303,7 @@ namespace Primes.Common.Net
             }
             catch (Exception e)
             {
+                //Doesn't check for initialized log
                 Log.LogException("Failed to receive data to stream.", "ReceiveStreamData", e);
                 try { ns.WriteTimeout = prevReadMillis; } catch { }
                 return false;

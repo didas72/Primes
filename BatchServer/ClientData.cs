@@ -28,7 +28,7 @@ namespace BatchServer
         public TimeSpan BatchExpireTime { get; }
         public TimeSpan ClientExpireTime { get; }
 
-        //file structure
+        //File structure
         /* 
          * 1) "CLIENTS"
          * 2) clients, table with (uint)clientId, (List<uint>)assignedBatches, (long)lastAccess (for expiring)

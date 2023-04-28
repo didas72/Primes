@@ -71,10 +71,10 @@ namespace BatchServer
 
                 try
                 {
-                    //directly handle, no need to check for concurrent connections, clients can retry later
+                    //Directly handle, no need to check for concurrent connections, clients can retry later
                     NetworkStream ns = cli.GetStream();
 
-                    MessageBuilder.SendMessage(MessageBuilder.Message("req", string.Empty, "intent"), ns); //get intent
+                    MessageBuilder.SendMessage(MessageBuilder.BuildRequestMessage("intent"), ns); //get intent
 
                     Console.WriteLine("Requested intent"); //FIXME: Remove this
 
@@ -91,15 +91,15 @@ namespace BatchServer
                     switch (parts[0])
                     {
                         case "get":
-                            HandleGet(ns, clientId);
+                            HandleGet(ns, clientId, timeout);
                             break;
 
                         case "ret":
-                            HandleRet(ns, clientId);
+                            HandleRet(ns, clientId, timeout);
                             break;
 
                         case "reget":
-                            HandleReget(ns, clientId);
+                            HandleReget(ns, clientId, timeout);
                             break;
 
                         default:
@@ -127,40 +127,92 @@ namespace BatchServer
 
 
 
-        private void HandleGet(NetworkStream ns, uint clientId)
+        private void HandleGet(NetworkStream ns, uint clientId, TimeSpan timeout)
         {
-            Console.WriteLine("Handling Get"); //FIXME: Remvoe this
+            Console.WriteLine("Handling Get"); //FIXME: Remove this
 
             uint batch;
             if (!Globals.clientData.ExistsClientId(clientId)) {
                 clientId = Globals.clientData.PeekNewClientId();
                 Globals.clientData.AddPending(Globals.clientData.AddNewClient);
             }
-            else if (Globals.clientData.BatchLimitReached(clientId)) { MessageBuilder.SendMessage(MessageBuilder.Message("err", null, $"{clientId};LimitReached"), ns); return; }
-            if ((batch = Globals.clientData.FindFreeBatch()) == 0) { MessageBuilder.SendMessage(MessageBuilder.Message("err", null, $"{clientId};NoAvailableBatches"), ns); return; }
+            else if (Globals.clientData.BatchLimitReached(clientId))
+            {
+                MessageBuilder.SendMessage(MessageBuilder.BuildErrorMessage($"{clientId};LimitReached"), ns);
+                return;
+            }
+            if ((batch = Globals.clientData.FindFreeBatch()) == 0)
+            {
+                MessageBuilder.SendMessage(MessageBuilder.BuildErrorMessage($"{clientId};NoAvailableBatches"), ns);
+                return;
+            }
 
             Globals.clientData.AddPending(() => Globals.clientData.AssignBatch(clientId, batch));
 
             Console.WriteLine("Sending batch"); //FIXME: Remove this
 
             byte[] batchBytes = File.ReadAllBytes(Path.Combine(Globals.sourceDir, batch + ".7z"));
-            MessageBuilder.SendMessage(MessageBuilder.Message("dta", null, batchBytes), ns);
+            MessageBuilder.SendMessage(MessageBuilder.BuildDataMessage(batchBytes), ns);
 
             Console.WriteLine("Sent batch"); //FIXME: Remove this
 
-            if (!MessageBuilder.ReceiveMessage(ns, out byte[] replyBytes, TimeSpan.FromSeconds(1))) throw new Exception(noAckErr);
+            if (!MessageBuilder.ReceiveMessage(ns, out byte[] replyBytes, timeout)) throw new Exception(noAckErr);
             MessageBuilder.DeserializeMessage(replyBytes, out string replyType, out string replyTarget, out object replyValue);
             if (!MessageBuilder.ValidateAckMessage(replyType, replyTarget, replyValue)) throw new Exception(unexpectedMsgErr);
 
             Console.WriteLine("Valid ack"); //FIXME: Remove this
         }
-        private void HandleRet(NetworkStream ns, uint clientId)
+        private void HandleRet(NetworkStream ns, uint clientId, TimeSpan timeout)
         {
-            //TODO: Implement HandleRet
+            Console.WriteLine("Handling Ret"); //FIXME: Remove this
+
+            if (!Globals.clientData.ExistsClientId(clientId))
+            {
+                clientId = Globals.clientData.PeekNewClientId();
+                Globals.clientData.AddPending(Globals.clientData.AddNewClient);
+            }
+
+            MessageBuilder.SendMessage(MessageBuilder.BuildRequestMessage("batchNum"), ns); //get batchNum
+
+            Console.WriteLine("Requesting batchNum"); //FIXME: Remove this
+
+            if (!MessageBuilder.ReceiveMessage(ns, out byte[] msg, timeout)) throw new Exception("Failed to get batchNum return message.");
+            MessageBuilder.DeserializeMessage(msg, out string msgType, out string tgt, out object value);
+            if (!MessageBuilder.ValidateReturnMessage(msgType, tgt, value)) throw new Exception(unexpectedMsgErr);
+
+            if (!Globals.clientData.BatchAssignedToClient(clientId, uint.Parse((string)value)))
+            {
+                MessageBuilder.SendMessage(MessageBuilder.Message("err", null, $"{clientId};BatchNotAssigned"), ns);
+                return;
+            }
+
+            Console.WriteLine("Requesting batch " + (string)value); //FIXME: Remove this
+
+            MessageBuilder.SendMessage(MessageBuilder.BuildRequestMessage((string)value), ns);
+
+            Console.WriteLine("Receiving batch"); //FIXME: Remove this
+
+            FileStream fs = File.OpenWrite(Path.Combine(Globals.cacheDir, (string)value + ".7z"));
+            if (!MessageBuilder.ReceiveStreamData(fs, ns, timeout.Milliseconds))
+            {
+                fs.Close();
+                File.Move(Path.Combine(Globals.cacheDir, (string)value + ".7z"),
+                    Path.Combine(Globals.cacheDir, (string)value + ".7z.failed"));
+                return;
+            }
+            fs.Close();
+
+            Console.WriteLine("Received batch"); //FIXME: Remove this
+
+            MessageBuilder.SendMessage(MessageBuilder.BuildAckMessage(), ns);
+
+            Console.WriteLine("Valid ack"); //FIXME: Remove this
         }
-        private void HandleReget(NetworkStream ns, uint clientId)
+        private void HandleReget(NetworkStream ns, uint clientId, TimeSpan timeout)
         {
             //TODO: Implement HandleReget
+
+            throw new NotImplementedException();
         }
     }
 }
