@@ -5,6 +5,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <StartupObject>JobManagement.Program</StartupObject>
     <ApplicationIcon></ApplicationIcon>
+    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

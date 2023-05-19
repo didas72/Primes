@@ -3,9 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
-using System.Net;
 using System.Net.Sockets;
-using System.Linq;
 using System.IO.Compression;
 
 using DidasUtils;
@@ -19,6 +17,7 @@ using Primes.Common.Files;
 using Primes.Common.Net;
 
 using JobManagement.Stats;
+using System.Runtime.ConstrainedExecution;
 
 namespace JobManagement
 {
@@ -30,7 +29,7 @@ namespace JobManagement
         public static List<string> prints = new();
         private static ScanResults results;
 
-        private readonly static Task todo = Task.Temporary3;
+        private readonly static Task todo = Task.Temporary2;
 
 
 
@@ -569,21 +568,7 @@ namespace JobManagement
         }
         private static void Temporary2()
         {
-            FileStream fs = File.OpenRead(Path.Combine(basePath, "rsrc\\knownPrimes.rsrc"));
-            KnownPrimesResourceFile kprf = KnownPrimesResourceFile.Deserialize(fs);
-            fs.Dispose();
-
-            for (int i = 120000000; i < kprf.Primes.Length; i++)
-            {
-                if (!PrimesMath.IsPrime(kprf.Primes[i]))
-                {
-                    Red($"Not a prime: {kprf.Primes[i]} at {i}.");
-                    break;
-                }
-
-                if ((i % 1000000) == 0)
-                    Console.WriteLine($"{i/1000000}M/{kprf.Primes.Length/1000000}M ({(i * 100 / kprf.Primes.Length)}%)");
-            }
+            TestCompressionNew();
         }
         private static void Temporary3()
         {
@@ -598,7 +583,6 @@ namespace JobManagement
         }
         private static void Temporary4()
         {
-
         }
 
 
@@ -679,6 +663,8 @@ namespace JobManagement
         }
 
 
+
+
 #if false
 
         #region Benchmarking
@@ -744,19 +730,162 @@ namespace JobManagement
         }
 #endif
 
-        /* Primes mass storage format
-         * Objectives:
-         * - Forward/backward seeking
-         * - Fast seeking/searching
-         * - Decently fast access speeds
-         * - Decent compression ratio (<5%)
-         * 
-         * Compression:
-         * After testing it seems that LZMA -mx1 is the best option
-         * 
-         */
+#if false
+        private static void TestFermatSpeed()
+        {
+            FileStream fs = File.OpenRead("D:\\Primes\\working\\rsrc\\knownPrimes.rsrc");
+            KnownPrimesResourceFile kprf = KnownPrimesResourceFile.Deserialize(fs);
+            fs.Dispose();
 
+            ulong count = 1024ul * 16;//1024ul * 1024;
+            ulong start = 1000000000000000;//1024ul * 1024 * 1024 * 128;
 
+            bool[] isPrimeF = new bool[count];
+            bool[] isPrimeN = new bool[count];
+
+            long nMs, fMs;
+
+            Stopwatch sw = new();
+
+            Thread.Sleep(100);
+
+            sw.Start();
+            for (ulong i = 0; i < count; i++)
+            {
+                isPrimeF[i] = CompoundIsPrime2Res(i + start, kprf.Primes);
+            }
+            sw.Stop();
+            fMs = sw.ElapsedMilliseconds;
+
+            sw.Restart();
+            for (ulong i = 0; i < count; i++)
+            {
+                isPrimeN[i] = PrimesMath.IsPrime(i + start, kprf.Primes);
+            }
+            sw.Stop();
+            nMs = sw.ElapsedMilliseconds;
+
+            int falsePos = 0, falseNeg = 0;
+
+            for (ulong i = 0; i < count; i++)
+            {
+                if (isPrimeF[i] != isPrimeN[i])
+                {
+                    if (isPrimeF[i]) falsePos++;
+                    else falseNeg++;
+                }
+            }
+
+            Console.WriteLine($"Had {falseNeg} false negatives and {falsePos} false positives.");
+            Console.WriteLine($"Resrouced elapsed {nMs}ms.");
+            Console.WriteLine($"Fermat&Resourced elapsed {fMs}ms.");
+            Console.WriteLine($"Fermat was {(nMs / (float)fMs):F2}x faster.");
+        }
+        private static bool IsPrime(ulong num)
+        {
+            //a^p [mod p]
+
+            UInt128 p = (UInt128)num;
+            UInt128 a_preserve = 2;
+            UInt128 a = a_preserve;
+            UInt128 cur = a;
+            num--;
+
+            while (num != 0)
+            {
+                if ((num & 1) != 0)
+                {
+                    cur *= a;
+                    cur %= p;
+                }
+
+                a *= a;
+                a %= p;
+                num >>= 1;
+
+                if (cur == 0) return false; //OPTIMIZATION
+            }
+            
+            //Console.WriteLine($"Cur: {cur}");
+
+            return cur == a_preserve;
+        }
+        private static bool IsPrime2(ulong num)
+        {
+            //a^p [mod p]
+
+            UInt128 p = (UInt128)num;
+            UInt128 a_preserve = 2;
+            UInt128 a = a_preserve;
+            UInt128 cur = a;
+            num--;
+            num--; //OPTIMIZATION 2
+
+            while (num != 0)
+            {
+                if ((num & 1) != 0)
+                {
+                    cur *= a;
+                    cur %= p;
+                }
+
+                a *= a;
+                a %= p;
+                num >>= 1;
+
+                if (cur == 0) return false; //OPTIMIZATION 1
+            }
+
+            //Console.WriteLine($"Cur: {cur}");
+
+            //return cur == a_preserve;
+            return cur == 1; //OPTIMIZATION 2
+        }
+        private static bool CompoundIsPrime(ulong num)
+        {
+            if (IsPrime(num))
+                return PrimesMath.IsPrime(num);
+
+            return false;
+        }
+        private static bool CompoundIsPrime2(ulong num)
+        {
+            if (IsPrime2(num))
+                return PrimesMath.IsPrime(num);
+
+            return false;
+        }
+        private static bool CompoundIsPrime2Res(ulong num, ulong[] res)
+        {
+            if (IsPrime2(num))
+                return PrimesMath.IsPrime(num, res);
+
+            return false;
+        }
+        private static UInt128 Exp2(int num)
+        {
+            //2^1 = 2
+            //2^2 = 4
+            //2^3 = 2^2 * 2 = 8
+            //2^5 = (2^4) * 2 = ((2^2)^2) * 2
+            //2^11 = (2^10) * 2 = ((2^5)^2) * 2 = (((2^4) * 2)^2) * 2 = ((((2^2)^2) * 2)^2) * 2
+
+            UInt128 a = 2;
+            UInt128 cur = 2;
+            num--;
+
+            while (num != 0)
+            {
+                if ((num & 1) != 0)
+                    cur *= a;
+
+                a *= a;
+                num >>= 1;
+            }
+
+            return cur;
+        }
+#endif
 
 
         #region Prints

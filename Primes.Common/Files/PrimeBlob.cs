@@ -20,7 +20,7 @@ namespace Primes.Common.Files
         //Filesystem approach: Fixed size blocks with allocation table
         //Linked list approach: Pointers everywhere and allow segmentation of data, possible defragmentation
 
-        //TODO: Must consider entry table growth
+        //TODO: Must consider entry table growth (same strat as appending/editing)
 
         /*
          * File format 'high level' strategy:
@@ -83,7 +83,7 @@ namespace Primes.Common.Files
          *  -First block is 'Backup Block'.
          *  -*'Lowest number stored' should be all 0xFF if the block is an 'XOR Block'.
          * 
-         * Block head:
+         * Blocks:
          *  +-------+-------+-----------------------+
          *  | Off   | Len   | Description           |
          *  +-------+-------+-----------------------+
@@ -103,12 +103,17 @@ namespace Primes.Common.Files
 
 
 
+        /// <summary>
+        /// The file structure version.
+        /// </summary>
         public Version FileVersion { get; }
 
 
 
-
-        public readonly struct Version
+        /// <summary>
+        /// Struct that represents a file verion.
+        /// </summary>
+        public readonly struct Version : IEquatable<Version>
         {
             public readonly byte major;
             public readonly byte minor;
@@ -116,9 +121,48 @@ namespace Primes.Common.Files
 
 
 
+            /// <summary>
+            /// Default constructor.
+            /// </summary>
+            /// <param name="major"></param>
+            /// <param name="minor"></param>
+            /// <param name="patch"></param>
             public Version(byte major, byte minor, byte patch)
             {
                 this.major = major; this.minor = minor; this.patch = patch;
+            }
+
+
+
+            /// <summary>
+            /// Determines whether the specified object is equal to the current object.
+            /// </summary>
+            /// <param name="other"></param>
+            /// <returns></returns>
+            public bool Equals(Version other)
+            {
+                return major == other.major && minor == other.minor && patch == other.patch;
+            }
+            /// <summary>
+            /// Determines whether the specified object is equal to the current object.
+            /// </summary>
+            /// <param name="obj"></param>
+            /// <returns></returns>
+            public override bool Equals(object obj)
+            {
+                return obj is Version && Equals((Version)obj);
+            }
+            public static bool operator ==(Version left, Version right)
+            {
+                return left.Equals(right);
+            }
+            public static bool operator !=(Version left, Version right)
+            {
+                return !(left == right);
+            }
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(major, minor, patch);
             }
         }
     }
