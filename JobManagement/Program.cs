@@ -17,12 +17,14 @@ using Primes.Common.Files;
 using Primes.Common.Net;
 
 using JobManagement.Stats;
-using System.Runtime.ConstrainedExecution;
 
 namespace JobManagement
 {
     class Program
     {
+        //Here goes code that will only get executed a few times for testing purpose and will never be used again.
+        //Please ignore this project.
+
         public const string basePath = "D:\\Primes\\working\\";
         public const ulong perJob = 10000000;
 
@@ -35,11 +37,6 @@ namespace JobManagement
 
         private static void Main()
         {
-            //Here goes code that will only get executed a few times for testing purpose and will never be used again.
-            //Please ignore this project.
-
-            //Currently set to scan and update compression
-
             Log.InitLog("E:\\Documents\\primes\\", "JobManagement.txt");
 
             Blue("Start");
