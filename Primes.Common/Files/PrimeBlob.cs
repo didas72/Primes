@@ -17,8 +17,8 @@ namespace Primes.Common.Files
         //Options:
         //Append only: No deleting/rewritting blocks at all
         //Shift delete: Deletion requires shifting of entire file and correction block pointers, potentailly with file copying
-        //Filesystem approach: Fixed size blocks with allocation table
-        //Linked list approach: Pointers everywhere and allow segmentation of data, possible defragmentation
+        //Filesystem approach: Fixed size blocks with allocation table, probably will fragment
+        //Linked list approach: Pointers everywhere and allow segmentation of data, probably will fragment
 
         //TODO: Must consider entry table growth (same strat as appending/editing)
 

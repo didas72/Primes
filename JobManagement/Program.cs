@@ -580,6 +580,87 @@ namespace JobManagement
         }
         private static void Temporary4()
         {
+            
+        }
+
+
+
+        private static void TestCompressionNew()
+        {
+            PrimeJob job = PrimeJob.Deserialize(Path.Combine(basePath, "0.primejob"));
+
+            Console.WriteLine($"First {job.Primes[0]} sec {job.Primes[1]}");
+
+            //get min and max diffs
+            ulong minDiff = ulong.MaxValue, maxDiff = 0;
+
+            for (int i = 1; i < job.Primes.Count; i++)
+            {
+                ulong diff = job.Primes[i] - job.Primes[i - 1];
+
+                if (diff > maxDiff) maxDiff = diff;
+                if (diff < minDiff) minDiff = diff;
+            }
+
+            //get diff range
+            ulong diffRange = maxDiff - minDiff;
+
+            Console.WriteLine($"Min {minDiff} max {maxDiff} range {diffRange}");
+
+            ulong validDiffCount = 0;
+            bool includeDiff1 = false;
+
+            //either this or include special case for 2
+            if (minDiff == 1)
+            {
+                validDiffCount++;
+                diffRange--;
+                includeDiff1 = true;
+            }
+
+            validDiffCount += diffRange / 2;
+
+            Console.WriteLine($"Valid diff count {validDiffCount}");
+
+            //check how many bits for the diffRange
+            int bits = 1;
+
+            while (bits < 64)
+            {
+                if ((1ul << bits) >= validDiffCount)
+                    break;
+
+                bits++;
+            }
+
+            Console.WriteLine($"Needs {bits} bits to reach up to {1ul << bits} diffs of {validDiffCount} diffs");
+
+            //create compression flags
+            //b7    - reserved (0)
+            //b6    - include special case 1 (1 = include)
+            //b5->0 - bits per diff - 1 (0x3F = 64; 0x00 = 1)
+            byte compressionFlags = (byte)(bits - 1 | (includeDiff1 ? 0x40 : 0x00));
+
+            BitList outp = new();
+
+            outp.AddByte(compressionFlags);
+
+            //compress diffs
+            bool[] tmp = new bool[bits];
+            for (int i = 1; i < job.Primes.Count; i++)
+            {
+                ulong diff = job.Primes[i] - job.Primes[i - 1];
+
+                for (int b = 0; b < bits; b++)
+                    tmp[b] = (diff & 1ul << b) != 0;
+
+                outp.AddRange(tmp);
+            }
+
+            Console.WriteLine($"Compression complete for a total of {outp.Count} bits ({Mathf.DivideRoundUp(outp.Count, 8) / 1024} kB)");
+        }
+        private static void TestCoreNCC_Uncompress()
+        {
             ulong[] ul = new ulong[664579];
             Stopwatch sw = new();
 
@@ -662,83 +743,6 @@ namespace JobManagement
                         break;
                 }
             }
-        }
-
-
-
-        private static void TestCompressionNew()
-        {
-            PrimeJob job = PrimeJob.Deserialize(Path.Combine(basePath, "0.primejob"));
-
-            Console.WriteLine($"First {job.Primes[0]} sec {job.Primes[1]}");
-
-            //get min and max diffs
-            ulong minDiff = ulong.MaxValue, maxDiff = 0;
-
-            for (int i = 1; i < job.Primes.Count; i++)
-            {
-                ulong diff = job.Primes[i] - job.Primes[i - 1];
-
-                if (diff > maxDiff) maxDiff = diff;
-                if (diff < minDiff) minDiff = diff;
-            }
-
-            //get diff range
-            ulong diffRange = maxDiff - minDiff;
-
-            Console.WriteLine($"Min {minDiff} max {maxDiff} range {diffRange}");
-
-            ulong validDiffCount = 0;
-            bool includeDiff1 = false;
-
-            //either this or include special case for 2
-            if (minDiff == 1)
-            {
-                validDiffCount++;
-                diffRange--;
-                includeDiff1 = true;
-            }
-
-            validDiffCount += diffRange / 2;
-
-            Console.WriteLine($"Valid diff count {validDiffCount}");
-
-            //check how many bits for the diffRange
-            int bits = 1;
-
-            while (bits < 64)
-            {
-                if ((1ul << bits) >= validDiffCount)
-                    break;
-
-                bits++;
-            }
-
-            Console.WriteLine($"Needs {bits} bits to reach up to {1ul << bits} diffs of {validDiffCount} diffs");
-
-            //create compression flags
-            //b7    - reserved (0)
-            //b6    - include special case 1 (1 = include)
-            //b5->0 - bits per diff - 1 (0x3F = 64; 0x00 = 1)
-            byte compressionFlags = (byte)(bits - 1 | (includeDiff1 ? 0x40 : 0x00));
-
-            BitList outp = new();
-
-            outp.AddByte(compressionFlags);
-
-            //compress diffs
-            bool[] tmp = new bool[bits];
-            for (int i = 1; i < job.Primes.Count; i++)
-            {
-                ulong diff = job.Primes[i] - job.Primes[i - 1];
-
-                for (int b = 0; b < bits; b++)
-                    tmp[b] = (diff & 1ul << b) != 0;
-
-                outp.AddRange(tmp);
-            }
-
-            Console.WriteLine($"Compression complete for a total of {outp.Count} bits ({Mathf.DivideRoundUp(outp.Count, 8) / 1024} kB)");
         }
 
 
