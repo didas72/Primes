@@ -31,7 +31,7 @@ namespace JobManagement
         public static List<string> prints = new();
         private static ScanResults results;
 
-        private readonly static Task todo = Task.Temporary2;
+        private readonly static Task todo = Task.Temporary4;
 
 
 
@@ -580,6 +580,88 @@ namespace JobManagement
         }
         private static void Temporary4()
         {
+            ulong[] ul = new ulong[664579];
+            Stopwatch sw = new();
+
+            sw.Start();
+            int err = CoreWrapper.NCC_Uncompress("D:\\Primes\\working\\0.primejob", ul, (ulong)ul.LongLength, 32);
+            sw.Stop();
+            Console.WriteLine($"C: {sw.ElapsedMilliseconds}ms {ul.Length} {err}");
+
+            sw.Restart();
+            PrimeJob pj = PrimeJob.Deserialize("D:\\Primes\\working\\0.primejob");
+            sw.Stop();
+            Console.WriteLine($"C#: {sw.ElapsedMilliseconds}ms {pj.Primes.Count}");
+
+            sw.Restart();
+            err = CoreWrapper.NCC_Uncompress("D:\\Primes\\working\\0.primejob", ul, (ulong)ul.LongLength, 32);
+            sw.Stop();
+            Console.WriteLine($"C: {sw.ElapsedMilliseconds}ms {ul.Length} {err}");
+
+            sw.Restart();
+            pj = PrimeJob.Deserialize("D:\\Primes\\working\\0.primejob");
+            sw.Stop();
+            Console.WriteLine($"C#: {sw.ElapsedMilliseconds}ms {pj.Primes.Count}");
+
+            sw.Restart();
+            err = CoreWrapper.NCC_Uncompress("D:\\Primes\\working\\0.primejob", ul, (ulong)ul.LongLength, 32);
+            sw.Stop();
+            Console.WriteLine($"C: {sw.ElapsedMilliseconds}ms {ul.Length} {err}");
+
+            sw.Restart();
+            pj = PrimeJob.Deserialize("D:\\Primes\\working\\0.primejob");
+            sw.Stop();
+            Console.WriteLine($"C#: {sw.ElapsedMilliseconds}ms {pj.Primes.Count}");
+
+            sw.Restart();
+            err = CoreWrapper.NCC_Uncompress("D:\\Primes\\working\\0.primejob", ul, (ulong)ul.LongLength, 32);
+            sw.Stop();
+            Console.WriteLine($"C: {sw.ElapsedMilliseconds}ms {ul.Length} {err}");
+
+            sw.Restart();
+            pj = PrimeJob.Deserialize("D:\\Primes\\working\\0.primejob");
+            sw.Stop();
+            Console.WriteLine($"C#: {sw.ElapsedMilliseconds}ms {pj.Primes.Count}");
+
+            sw.Restart();
+            err = CoreWrapper.NCC_Uncompress("D:\\Primes\\working\\0.primejob", ul, (ulong)ul.LongLength, 32);
+            sw.Stop();
+            Console.WriteLine($"C: {sw.ElapsedMilliseconds}ms {ul.Length} {err}");
+
+            sw.Restart();
+            pj = PrimeJob.Deserialize("D:\\Primes\\working\\0.primejob");
+            sw.Stop();
+            Console.WriteLine($"C#: {sw.ElapsedMilliseconds}ms {pj.Primes.Count}");
+
+            sw.Restart();
+            err = CoreWrapper.NCC_Uncompress("D:\\Primes\\working\\0.primejob", ul, (ulong)ul.LongLength, 32);
+            sw.Stop();
+            Console.WriteLine($"C: {sw.ElapsedMilliseconds}ms {ul.Length} {err}");
+
+            sw.Restart();
+            pj = PrimeJob.Deserialize("D:\\Primes\\working\\0.primejob");
+            sw.Stop();
+            Console.WriteLine($"C#: {sw.ElapsedMilliseconds}ms {pj.Primes.Count}");
+
+            sw.Restart();
+            err = CoreWrapper.NCC_Uncompress("D:\\Primes\\working\\0.primejob", ul, (ulong)ul.LongLength, 32);
+            sw.Stop();
+            Console.WriteLine($"C: {sw.ElapsedMilliseconds}ms {ul.Length} {err}");
+
+            sw.Restart();
+            pj = PrimeJob.Deserialize("D:\\Primes\\working\\0.primejob");
+            sw.Stop();
+            Console.WriteLine($"C#: {sw.ElapsedMilliseconds}ms {pj.Primes.Count}");
+
+            for (int i = 0, o = 0; i < ul.Length; i++)
+            {
+                if (ul[i] != pj.Primes[i])
+                {
+                    Console.WriteLine($"Diff {ul[i]} != {pj.Primes[i]} at {i}");
+                    if (++o >= 10)
+                        break;
+                }
+            }
         }
 
 
