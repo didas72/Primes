@@ -580,7 +580,34 @@ namespace JobManagement
         }
         private static void Temporary4()
         {
-            
+            string path = Path.Combine(basePath, "200\\");
+            int[] offsetCounts = new int[0x10000];
+            byte[] bytes = new byte[2]; ushort offset;
+
+            foreach (string file in Directory.GetFiles(path))
+            {
+                FileStream fs = File.OpenRead(file);
+                fs.Seek(40, SeekOrigin.Begin);
+
+                while (fs.Read(bytes, 0, 2) == 2)
+                {
+                    offset = BitConverter.ToUInt16(bytes, 0);
+
+                    /*if (offset == 0)
+                    {
+                        Console.WriteLine($"Dafuq? '{Path.GetFileName(file)}' @{fs.Position - 2}");
+                        return;
+                    }*/
+
+                    offsetCounts[offset]++;
+                }
+
+                fs.Dispose();
+            }
+
+            for (int i = 0; i < offsetCounts.Length; i++)
+                if (offsetCounts[i] != 0)
+                    Console.WriteLine($"Offset: {i}; Count: {offsetCounts[i]}");
         }
 
 
